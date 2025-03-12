@@ -1,1 +1,1 @@
-# financeHub
+# financeInformation
