@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue';
+import { DashboardDataDTO } from '../model/DashboardDataDTO';
+import dashboardAPI from '../api/dashboardAPI';
+import { fetchRequest } from '../util/fetchRequest';
 
 const economicIndicators = ref([
   { label: '코스피', value: '2,650.23', change: '+1.2%', isPositive: true },
@@ -31,6 +34,25 @@ const economicEvents = ref([
   { title: '삼성전자 실적발표', date: '2024-04-01' },
   { title: '미국 고용지표 발표', date: '2024-04-05' }
 ])
+
+const dashboardData = ref<DashboardDataDTO | null>(null);
+
+const fetchDashboardData = async() => {
+  try {
+    const result: DashboardDataDTO = await fetchRequest<DashboardDataDTO>("/dashboard/data", "GET");
+
+    console.log("Dashboard Data:", result);
+    dashboardData.value = result;
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error); 
+    throw error;
+  }
+}
+
+onMounted(() => {
+  fetchDashboardData();
+})
+
 </script>
 
 <template>
@@ -86,10 +108,18 @@ const economicEvents = ref([
     <!-- 주요 이벤트 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
       <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">오늘의 시장 주요 이벤트</h2>
+        <h2 class="text-xl font-bold text-gray-800 mb-4">오늘의 주요 뉴스</h2>
         <ul class="space-y-3">
-          <li 
+          <!-- <li 
             v-for="(event, index) in marketEvents" 
+            :key="index"
+            class="flex items-start"
+          >
+            <span class="inline-block w-2 h-2 mt-2 mr-3 bg-blue-500 rounded-full"></span>
+            <span class="text-gray-600">{{ event }}</span>
+          </li> -->
+          <li 
+            v-for="(event, index) in dashboardData" 
             :key="index"
             class="flex items-start"
           >
