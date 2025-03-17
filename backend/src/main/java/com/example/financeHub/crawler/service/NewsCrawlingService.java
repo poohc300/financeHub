@@ -29,9 +29,6 @@ public class NewsCrawlingService {
         options.addArguments("--disable-default-apps");
         options.addArguments("--disable-notifications");
         options.addArguments("--disable-blink-features=AutomationControlled");
-
-        // Selenium Manager를 활용한 WebDriver 초기화 (Selenium 4.6 이상에서 동작)
-        driver = new ChromeDriver(options);
     }
 
     // 크롤링 메서드
@@ -39,16 +36,24 @@ public class NewsCrawlingService {
         List<CrawledNewsDTO> newsList = new ArrayList<>();
 
         try {
+            driver = new ChromeDriver(options);
             // 네이버 경제 뉴스 페이지 이동
             driver.get(BASE_URL);
 
             // 뉴스 항목 찾기 (CSS Selector 사용)
-            List<WebElement> newsElements = driver.findElements(By.cssSelector(".newsList li a"));
+            
+            // ul 태그 가져오기
+            WebElement ulElement = driver.findElement(By.cssSelector("#newsMainTop > div > div > div > div.main_news > ul"));
+
+            // ul 내의 li 항목 가져오기
+            List<WebElement> listItems = ulElement.findElements(By.tagName("li"));
 
             // 각 뉴스 제목과 링크 추출 및 DTO로 저장
-            for (WebElement element : newsElements) {
-                String title = element.getText();
-                String link = element.getAttribute("href");
+            for (WebElement element : listItems) {
+        	// a 태그를 가져와야 href 가져올 수 있음
+        	WebElement linkElement = element.findElement(By.tagName("a"));
+                String title = linkElement.getText();
+                String link = linkElement.getAttribute("href");
 
                 // DTO 객체 생성 및 리스트 추가
                 CrawledNewsDTO newsDTO = new CrawledNewsDTO();
@@ -64,7 +69,13 @@ public class NewsCrawlingService {
                 driver.quit();
             }
         }
-        System.out.println(newsList);
         return newsList;
+    }
+    
+    public List<CrawledNewsDTO> getTodayNews() {
+	List<CrawledNewsDTO> result = new ArrayList<>();
+	result = crawler();
+	
+	return result; 
     }
 }

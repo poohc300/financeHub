@@ -1,4 +1,4 @@
-package com.example.financeHub.dashboard.controller;
+package com.example.financeHub.crawler.controller;
 
 import java.util.List;
 
@@ -13,17 +13,17 @@ import com.example.financeHub.crawler.model.CrawledNewsDTO;
 import com.example.financeHub.crawler.service.NewsCrawlingService;
 
 @RestController
-@RequestMapping("/dashboard")
-public class DashboardController {
-    
+@RequestMapping("/crawler")
+public class crawlerController {
+
     @Autowired
     @Lazy
-    private NewsCrawlingService crawlingService;
+    private NewsCrawlingService crawlerService;
     
-    @GetMapping("/data")
-    public ResponseEntity getData() {
-	List<CrawledNewsDTO> result = crawlingService.getTodayNews();
+    @GetMapping("/getTodayNews")
+    public ResponseEntity getTodayNews() {
+	List<CrawledNewsDTO> result = crawlerService.getTodayNews();
 	return ResponseEntity.ok(result);
     }
-
+    
 }
