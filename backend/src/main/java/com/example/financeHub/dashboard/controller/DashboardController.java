@@ -10,19 +10,28 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.financeHub.crawler.model.CrawledNewsDTO;
+import com.example.financeHub.crawler.service.IpoCrawlerService;
+import com.example.financeHub.crawler.service.NewsCrawlerService;
 import com.example.financeHub.crawler.service.NewsCrawlingService;
 
 @RestController
 @RequestMapping("/dashboard")
 public class DashboardController {
     
-    @Autowired
-    @Lazy
-    private NewsCrawlingService crawlingService;
+   
+    private final NewsCrawlerService newsCrawlerService;
+    private final IpoCrawlerService ipoCrawlerService;
+    
+    public DashboardController(NewsCrawlerService newsCrawlerService, IpoCrawlerService ipoCrawlerService) {
+	this.newsCrawlerService = newsCrawlerService;
+	this.ipoCrawlerService = ipoCrawlerService;
+    }
+    
+    
     
     @GetMapping("/data")
     public ResponseEntity getData() {
-	List<CrawledNewsDTO> result = crawlingService.getTodayNews();
+	List<CrawledNewsDTO> result = newsCrawlerService.getTodayNews();
 	return ResponseEntity.ok(result);
     }
 
