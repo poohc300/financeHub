@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { DashboardDataDTO } from '../model/DashboardDataDTO';
+import { CrawledIpoDTO, CrawledNewsDTO, DashboardDataDTO } from '../model/DashboardDataDTO';
 import dashboardAPI from '../api/dashboardAPI';
 import { fetchRequest } from '../util/fetchRequest';
 
@@ -35,14 +35,14 @@ const economicEvents = ref([
   { title: '미국 고용지표 발표', date: '2024-04-05' }
 ])
 
-const dashboardData = ref<DashboardDataDTO | null>(null);
+const ipoList = ref<CrawledIpoDTO[] | null>(null);
+const newsList = ref<CrawledNewsDTO[] | null>(null);
 
 const fetchDashboardData = async() => {
   try {
-    const result: DashboardDataDTO = await fetchRequest<DashboardDataDTO>("/dashboard/data", "GET");
-
-    console.log("Dashboard Data:", result);
-    dashboardData.value = result;
+    const {crawledNewsList, crawledIpoList} = await fetchRequest<DashboardDataDTO>("/dashboard/data", "GET");
+    newsList.value = crawledNewsList;
+    ipoList.value = crawledIpoList;
   } catch (error) {
     console.error("Error fetching dashboard data:", error); 
     throw error;
@@ -119,7 +119,7 @@ onMounted(() => {
             <span class="text-gray-600">{{ event }}</span>
           </li> -->
           <li 
-            v-for="(event, index) in dashboardData" 
+            v-for="(event, index) in newsList" 
             :key="index"
             class="flex items-start"
           >
@@ -131,10 +131,10 @@ onMounted(() => {
 
       <!-- 경제 캘린더 -->
       <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">오늘의 주요 경제 이벤트</h2>
+        <h2 class="text-xl font-bold text-gray-800 mb-4">공모주 일정</h2>
         <ul class="space-y-3">
           <li 
-            v-for="(event, index) in economicEvents" 
+            v-for="(event, index) in ipoList" 
             :key="index"
             class="flex items-start"
           >
