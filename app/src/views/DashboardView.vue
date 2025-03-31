@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { CrawledIpoDTO, CrawledNewsDTO, DashboardDataDTO } from '../model/DashboardDataDTO';
-import dashboardAPI from '../api/dashboardAPI';
 import { fetchRequest } from '../util/fetchRequest';
+import Calendar from '../components/Calendar.vue';
+import { CalendarEventDTO } from '../model/CalendarEventDTO';
 
 const economicIndicators = ref([
   { label: '코스피', value: '2,650.23', change: '+1.2%', isPositive: true },
@@ -21,22 +22,35 @@ const topGainers = ref([
   { rank: 5, name: '현대차', price: '234,500', change: '+4.7%', volume: '3,456,789' }
 ])
 
-const marketEvents = ref([
-  '한국은행 기준금리 동결 결정',
-  '미 연준 FOMC 회의 결과 발표',
-  '주요 기업 실적 발표 시즌 시작',
-  '국제 유가 상승세 지속'
-])
+const ipoList = ref<CrawledIpoDTO[]>([]);
+const newsList = ref<CrawledNewsDTO[]>([]);
+  const calendarEvents = computed<CalendarEventDTO[]>(() => {
+  if (ipoList.value && ipoList.value.length > 0) {
+    return ipoList.value.map(ipo => {
+      // period 값을 '~'로 분리하여 시작일과 종료일로 분리
+      const startDate = ipo.period.split('~')[0];
+      const endDate = ipo.period.split('~')[1];
+      const year = startDate.split('.')[0];
 
-const economicEvents = ref([
-  { title: '한국은행 금통위', date: '2024-03-25' },
-  { title: 'FOMC 회의', date: '2024-03-26' },
-  { title: '삼성전자 실적발표', date: '2024-04-01' },
-  { title: '미국 고용지표 발표', date: '2024-04-05' }
-])
+      // const startFormatted = startDate.replace(/\./g, '-');
+      // const endFormatted = `${year}-${endDate.replace(/\./g, '-')}`; // '-' 로 변환환
+      const startFormatted = `${startDate.replace(/\./g, '-')}T00:00:00`;
+      const endFormatted = `${year}-${endDate.replace(/\./g, '-')}T23:59:59`;
 
-const ipoList = ref<CrawledIpoDTO[] | null>(null);
-const newsList = ref<CrawledNewsDTO[] | null>(null);
+      console.log(startFormatted);
+      console.log(endFormatted);
+      console.log(ipo.companyName);
+      
+
+      return {
+        title: ipo.companyName,
+        start: startFormatted,  // 변환된 시작일
+        end: endFormatted,      // 변환된 종료일
+      };
+    }) || [];
+  }
+  return [];
+});
 
 const fetchDashboardData = async() => {
   try {
@@ -132,16 +146,24 @@ onMounted(() => {
       <!-- 경제 캘린더 -->
       <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <h2 class="text-xl font-bold text-gray-800 mb-4">공모주 일정</h2>
-        <ul class="space-y-3">
+          <!-- 캘린더 조건부 렌더링 -->
+          <Calendar 
+          v-if="calendarEvents && calendarEvents.length > 0" 
+          :events="calendarEvents" 
+        />
+      
+        <!-- 데이터가 없을 때 표시 -->
+        <p v-else class="text-gray-600">현재 공모주 일정이 없습니다.</p>
+        <!-- <ul class="space-y-3">
           <li 
-            v-for="(event, index) in ipoList" 
+            v-for="(event, index) in calendarEvents" 
             :key="index"
             class="flex items-start"
           >
             <span class="inline-block w-2 h-2 mt-2 mr-3 bg-blue-500 rounded-full"></span>
             <span class="text-gray-600">{{ event }}</span>
           </li>
-        </ul>
+        </ul> -->
       </div>
     </div>
   </div>

@@ -7,4 +7,7 @@ export default defineConfig({
     port: 3000, // 원하는 포트 번호로 변경
   },
   plugins: [vue()],
+  resolve: {
+    extensions: ['.mjs', '.js', '.ts', '.json'],
+  },
 })
