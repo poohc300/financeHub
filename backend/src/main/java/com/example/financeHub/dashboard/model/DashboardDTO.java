@@ -11,4 +11,5 @@ public class DashboardDTO {
 
     private List<CrawledNewsDTO> crawledNewsList;
     private List<CrawledIpoDTO> crawledIpoList;
+    private List<GoldMarketDailyTradingDto> goldMarketDailyTradingList;
 }
