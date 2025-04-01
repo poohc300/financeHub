@@ -29,11 +29,29 @@ export interface CrawledIpoDTO {
     underWriter: string; // 주간사
 }
 
+/** ✅ 금시장 일별 매매 정보 DTO */
+export interface GoldMarketTradingDTO {
+    basDd: string;  // 기준일자
+    isuCd: string;  // 종목코드
+    isuNm: string;  // 종목명
+    tddClsprc: string;  // 종가
+    cmpprevddPrc: string;  // 대비
+    flucRt: string;  // 등락률
+    tddOpnprc: string;  // 시가
+    tddHgprc: string;  // 고가
+    tddLwprc: string;  // 저가
+    accTrdvol: string;  // 거래량
+    accTrdval: string;  // 거래대금
+}
+
+
 export interface DashboardDataDTO {
     economicIndicators: EconomicIndicatorsDTO[];
     topGainers: TopGainersDTO[];
     crawledNewsList: CrawledNewsDTO[];
     crawledIpoList: CrawledIpoDTO[];
+    goldMarketTradingData: GoldMarketTradingDTO[];  // 추가된 필드
+
 }
 
 
