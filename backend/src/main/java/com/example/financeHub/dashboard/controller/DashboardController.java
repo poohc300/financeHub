@@ -15,7 +15,11 @@ import com.example.financeHub.crawler.service.IpoCrawlerService;
 import com.example.financeHub.crawler.service.NewsCrawlerService;
 import com.example.financeHub.crawler.service.NewsCrawlingService;
 import com.example.financeHub.dashboard.model.DashboardDTO;
+import com.example.financeHub.dashboard.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.dashboard.model.GoldMarketDailyTradingDto;
+import com.example.financeHub.dashboard.model.KosdaqDailyTradingDTO;
+import com.example.financeHub.dashboard.model.KospiDailyTradingDTO;
+import com.example.financeHub.dashboard.model.OilMarketDailyTradingDTO;
 import com.example.financeHub.dashboard.service.KrxDataService;
 
 @RestController
@@ -43,21 +47,34 @@ public class DashboardController {
     public ResponseEntity getData() {
 	List<CrawledNewsDTO> todayNews = newsCrawlerService.getTodayNews();
 	List<CrawledIpoDTO> todayIpoList = ipoCrawlerService.getTodayIpoList();
-	List<GoldMarketDailyTradingDto> todayGoldMarket = krxDataService.getDailyGoldMarketTradingInfo();
-	
+	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataService.getDailyGoldMarketTradingInfo();
+	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataService.getDailtyOilMarketTradingInfo();
+	List<KospiDailyTradingDTO> latestKospiMarket = krxDataService.getDailyKospiInfo();
+	List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataService.getDailyKosdaqInfo();
 	
 	DashboardDTO dashboardDTO = new DashboardDTO();
 	dashboardDTO.setCrawledNewsList(todayNews);
 	dashboardDTO.setCrawledIpoList(todayIpoList);
-	dashboardDTO.setGoldMarketDailyTradingList(todayGoldMarket);
+	dashboardDTO.setGoldMarketDailyTradingList(latestGoldMarket);
+	dashboardDTO.setOilMarketDailtyTradingList(latestOilMarket);
+	dashboardDTO.setKospiDailyTradingList(latestKospiMarket);
+	dashboardDTO.setKosdaqDailyTradingList(latestKosdaqMarket);
 	return ResponseEntity.ok(dashboardDTO);
     }
     
     @GetMapping("/test")
     public ResponseEntity test() {
-	List<GoldMarketDailyTradingDto> todayGoldMarket = krxDataService.getDailyGoldMarketTradingInfo();
+	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataService.getDailyGoldMarketTradingInfo();
+	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataService.getDailtyOilMarketTradingInfo();
+	List<KospiDailyTradingDTO> latestKospiMarket = krxDataService.getDailyKospiInfo();
+	List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataService.getDailyKosdaqInfo();
+
 	DashboardDTO dashboardDTO = new DashboardDTO();
-	dashboardDTO.setGoldMarketDailyTradingList(todayGoldMarket);
+	dashboardDTO.setGoldMarketDailyTradingList(latestGoldMarket);
+	dashboardDTO.setOilMarketDailtyTradingList(latestOilMarket);
+	dashboardDTO.setKospiDailyTradingList(latestKospiMarket);
+	dashboardDTO.setKosdaqDailyTradingList(latestKosdaqMarket);
+
 	return ResponseEntity.ok(dashboardDTO);
 
 

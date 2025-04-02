@@ -6,7 +6,7 @@ import lombok.Data;
  * OutBlock_1 데이터 구조에 맞게 설계됨
  */
 @Data
-public class GoldMarketDailyTradingDto {
+public class GoldMarketDailyTradingDTO {
     
     /**
      * 기준일자
