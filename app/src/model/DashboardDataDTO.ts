@@ -44,14 +44,38 @@ export interface GoldMarketTradingDTO {
     accTrdval: string;  // 거래대금
 }
 
+export interface OilMarketDailtyTradingDTO {
+    basDd: string;  // 기준일자
+    oilNm: string;  // 유종구분
+    wtAvgPrc: string;  // 가중평균가격_경쟁
+    wtDisAvgPrc: string;  // 가중평균가격_협의
+    accTrdvol: string;  // 거래량
+    accTrdVal: string;  // 거래대금
+}
+
+export interface KospiDailyTradingDTO {
+    basDd: string;  // 기준일자
+    idxClss: string;  // 계열구분
+    idxNm: string;  // 지수명
+    clsprcIdx: string;  // 종가
+    cmpprevddIdx: string;  // 대비
+    flucRt: string;  // 등락률
+    opnprcIdx: string;  // 시가
+    hgprcIdx: string;  // 고가
+    lwprcIdx: string;  // 저가
+    accTrdvol: string;  // 거래량
+    accTrdval: string;  // 거래대금
+    mktcap: string;  // 상장시가총액
+}
 
 export interface DashboardDataDTO {
     economicIndicators: EconomicIndicatorsDTO[];
     topGainers: TopGainersDTO[];
     crawledNewsList: CrawledNewsDTO[];
     crawledIpoList: CrawledIpoDTO[];
-    goldMarketTradingData: GoldMarketTradingDTO[];  // 추가된 필드
-
+    goldMarketDailyTradingList: GoldMarketTradingDTO[];
+    oilMarketDailyTradingList: OilMarketDailtyTradingDTO[];
+    kospiDailyTradingList: KospiDailyTradingDTO[];
 }
 
 
