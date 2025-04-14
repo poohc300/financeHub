@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { CrawledIpoDTO, CrawledNewsDTO, DashboardDataDTO } from '../model/DashboardDataDTO';
+import { ref, onMounted, computed, watchEffect } from 'vue';
+import { CrawledIpoDTO, CrawledNewsDTO, GoldMarketTradingDTO, DashboardDataDTO, EconomicIndicatorsDTO, OilMarketDailtyTradingDTO, KospiDailyTradingDTO } from '../model/DashboardDataDTO';
 import { fetchRequest } from '../util/fetchRequest';
 import Calendar from '../components/Calendar.vue';
 import { CalendarEventDTO } from '../model/CalendarEventDTO';
@@ -24,7 +24,11 @@ const topGainers = ref([
 
 const ipoList = ref<CrawledIpoDTO[]>([]);
 const newsList = ref<CrawledNewsDTO[]>([]);
-  const calendarEvents = computed<CalendarEventDTO[]>(() => {
+const goldMarketInfo = ref<GoldMarketTradingDTO[]>([]);
+const oilMarketInfo = ref<OilMarketDailtyTradingDTO[]>([]);
+const kospiInfo = ref<KospiDailyTradingDTO[]>([]);
+
+const calendarEvents = computed<CalendarEventDTO[]>(() => {
   if (ipoList.value && ipoList.value.length > 0) {
     return ipoList.value.map(ipo => {
       // period 값을 '~'로 분리하여 시작일과 종료일로 분리
@@ -52,11 +56,56 @@ const newsList = ref<CrawledNewsDTO[]>([]);
   return [];
 });
 
+/**
+ * fetch된 데이터 EconomicIndicators에 변환
+ *
+ * 1) 금
+ * 2) 석유
+ * 3) ..
+ */
+const mapGold = (data: GoldMarketTradingDTO):EconomicIndicatorsDTO => {
+  return {
+    label: data.isuNm,
+    value: data.tddOpnprc,
+    change: data.flucRt,
+    isPositive: parseFloat(data.flucRt) >= 0,
+  };
+}
+
+const mapOil = (data: OilMarketDailtyTradingDTO):EconomicIndicatorsDTO => {
+  // 오일은 등락률이 제공되지 않아서 전날 오일값의 값과 금일값 비교해야함함
+  return {
+    label: data.oilNm,
+    value: data.wtAvgPrc,
+    change: '',
+    isPositive: true
+  }
+}
+const mapKospi = (data: KospiDailyTradingDTO):EconomicIndicatorsDTO => {
+  return {
+    label: data.idxNm,
+    value: data.opnprcIdx,
+    change: data.flucRt,
+    isPositive: parseFloat(data.flucRt) >= 0,
+  }
+}
+
+// fetch
 const fetchDashboardData = async() => {
   try {
-    const {crawledNewsList, crawledIpoList} = await fetchRequest<DashboardDataDTO>("/dashboard/data", "GET");
+    const {
+      crawledNewsList, 
+      crawledIpoList, 
+      goldMarketDailyTradingList,
+      oilMarketDailyTradingList,
+      kospiDailyTradingList,
+    } = await fetchRequest<DashboardDataDTO>("/dashboard/data", "GET");
     newsList.value = crawledNewsList;
     ipoList.value = crawledIpoList;
+    goldMarketInfo.value = goldMarketDailyTradingList;
+    oilMarketInfo.value = oilMarketDailyTradingList;
+    kospiInfo.value = kospiDailyTradingList;
+
   } catch (error) {
     console.error("Error fetching dashboard data:", error); 
     throw error;
@@ -67,14 +116,24 @@ onMounted(() => {
   fetchDashboardData();
 })
 
+watchEffect(() => {
+
+  economicIndicators.value = [
+    ...goldMarketInfo.value.map(mapGold),
+    ...oilMarketInfo.value.map(mapOil),
+    ...kospiInfo.value.map(mapKospi),
+  ]
+});
+
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8">대시보드</h1>
     
     <!-- 경제 지표 -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <h1 class="text-xl font-bold text-gray-800 mb-4">주요 경제 지표</h1>
+
       <div 
         v-for="(indicator, index) in economicIndicators" 
         :key="index"
