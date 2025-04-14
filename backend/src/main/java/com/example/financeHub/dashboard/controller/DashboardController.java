@@ -56,7 +56,7 @@ public class DashboardController {
 	dashboardDTO.setCrawledNewsList(todayNews);
 	dashboardDTO.setCrawledIpoList(todayIpoList);
 	dashboardDTO.setGoldMarketDailyTradingList(latestGoldMarket);
-	dashboardDTO.setOilMarketDailtyTradingList(latestOilMarket);
+	dashboardDTO.setOilMarketDailyTradingList(latestOilMarket);
 	dashboardDTO.setKospiDailyTradingList(latestKospiMarket);
 	dashboardDTO.setKosdaqDailyTradingList(latestKosdaqMarket);
 	return ResponseEntity.ok(dashboardDTO);
@@ -71,7 +71,7 @@ public class DashboardController {
 
 	DashboardDTO dashboardDTO = new DashboardDTO();
 	dashboardDTO.setGoldMarketDailyTradingList(latestGoldMarket);
-	dashboardDTO.setOilMarketDailtyTradingList(latestOilMarket);
+	dashboardDTO.setOilMarketDailyTradingList(latestOilMarket);
 	dashboardDTO.setKospiDailyTradingList(latestKospiMarket);
 	dashboardDTO.setKosdaqDailyTradingList(latestKosdaqMarket);
 

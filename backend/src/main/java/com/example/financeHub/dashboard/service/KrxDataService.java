@@ -274,6 +274,11 @@ public class KrxDataService {
 	
 	LocalDate date = LocalDate.now();
 	
+	// 월요일이면 전주 금요일로 조정
+	if(date.getDayOfWeek() == DayOfWeek.MONDAY) {
+	    return date.minusDays(3);
+	}
+	
 	// 일요일이면 금요일로 조정 
 	if(date.getDayOfWeek() == DayOfWeek.SUNDAY) {
 	    return date.minusDays(2);
