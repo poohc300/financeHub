@@ -3,21 +3,8 @@ package com.example.financeHub.krx.util;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
-import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
-
-@Component
 public class KrxCommonUtil {
  
     /**
@@ -35,7 +22,6 @@ public class KrxCommonUtil {
    }
    /**
     * YYYYMMDD 포맷으로 변환
-    * @param date
     * @return
     */
    public static String formatDate(LocalDate date) {
