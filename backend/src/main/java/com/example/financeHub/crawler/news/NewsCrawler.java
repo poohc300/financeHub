@@ -1,6 +1,5 @@
-package com.example.financeHub.crawler.service;
+package com.example.financeHub.crawler.news;
 
-import com.example.financeHub.crawler.model.CrawledNewsDTO;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -12,19 +11,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class NewsCrawlerService {
+public class NewsCrawler {
 
     private static final String BASE_URL = "https://finance.naver.com/news/";
 
     private final ChromeOptions options;
 
-    public NewsCrawlerService(ChromeOptions options) {
+    public NewsCrawler(ChromeOptions options) {
         this.options = options;
     }
 
-    public List<CrawledNewsDTO> crawler() {
+    public List<NewsDTO> crawler() {
         WebDriver driver = null; // WebDriver를 메서드 내에서 선언
-        List<CrawledNewsDTO> newsList = new ArrayList<>();
+        List<NewsDTO> newsList = new ArrayList<>();
 
         try {
             driver = new ChromeDriver(options); // WebDriver 인스턴스 생성
@@ -41,7 +40,7 @@ public class NewsCrawlerService {
                 String link = linkElement.getAttribute("href"); // 뉴스 링크
 
                 // DTO로 저장
-                CrawledNewsDTO newsDTO = new CrawledNewsDTO();
+                NewsDTO newsDTO = new NewsDTO();
                 newsDTO.setTitle(title);
                 newsDTO.setLink(link);
                 newsList.add(newsDTO);
@@ -58,7 +57,7 @@ public class NewsCrawlerService {
     }
 
     // 오늘의 뉴스를 가져오는 메서드
-    public List<CrawledNewsDTO> getTodayNews() {
+    public List<NewsDTO> getTodayNews() {
         return crawler(); // 크롤링 메서드 호출
     }
     

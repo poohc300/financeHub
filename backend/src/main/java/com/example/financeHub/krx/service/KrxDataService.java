@@ -1,4 +1,4 @@
-package com.example.financeHub.dashboard.service;
+package com.example.financeHub.krx.service;
 
 import java.lang.invoke.StringConcatFactory;
 import java.time.DayOfWeek;
@@ -18,10 +18,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.example.financeHub.dashboard.model.GoldMarketDailyTradingDTO;
-import com.example.financeHub.dashboard.model.KosdaqDailyTradingDTO;
-import com.example.financeHub.dashboard.model.KospiDailyTradingDTO;
-import com.example.financeHub.dashboard.model.OilMarketDailyTradingDTO;
+import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
+import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
+import com.example.financeHub.krx.model.KospiDailyTradingDTO;
+import com.example.financeHub.krx.model.OilMarketDailyTradingDTO;
 
 import net.bytebuddy.matcher.MethodReturnTypeMatcher;
 

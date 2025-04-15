@@ -1,4 +1,6 @@
-package com.example.financeHub.dashboard.model;
+package com.example.financeHub.krx.model;
+
+import com.example.financeHub.config.HashUtil;
 
 import lombok.Data;
 
@@ -37,4 +39,10 @@ public class OilMarketDailyTradingDTO {
      * 거래대금
      */
     private String accTrdVal;
+    
+    // 해시 생성 
+    public String generateHash() {
+	String key = basDd + "|" + oilNm + "|" + wtAvgPrc;
+	return HashUtil.generateHash(key);
+    }
 }

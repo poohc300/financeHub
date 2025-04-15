@@ -1,8 +1,10 @@
-package com.example.financeHub.crawler.model;
+package com.example.financeHub.crawler.ipo;
+import com.example.financeHub.config.HashUtil;
+
 import lombok.Data;
 
 @Data
-public class CrawledIpoDTO {
+public class IpoDTO {
 
     private String companyName; // 종목명
     private String link; // 링크
@@ -11,4 +13,9 @@ public class CrawledIpoDTO {
     private String expectedOfferingPrice; // 희암공모가
     private String subscriptionRate; // 청약경쟁률
     private String underWriter; // 주간사 
+    
+    public String generateHash() {
+	String key = companyName + "|" + link + "|" + period;
+	return HashUtil.generateHash(key);
+    }
 }

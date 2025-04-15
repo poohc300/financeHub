@@ -1,4 +1,6 @@
-package com.example.financeHub.dashboard.model;
+package com.example.financeHub.krx.model;
+import com.example.financeHub.config.HashUtil;
+
 import lombok.Data;
 
 /**
@@ -62,4 +64,10 @@ public class GoldMarketDailyTradingDTO {
      * 거래대금
      */
     private String accTrdval;
+    
+    // 해시 생성 
+    public String generateHash() {
+	String key = basDd + "|" + isuNm + "|" + tddClsprc;
+	return HashUtil.generateHash(key);
+    }
 }
