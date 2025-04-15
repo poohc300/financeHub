@@ -9,31 +9,31 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.financeHub.crawler.model.CrawledIpoDTO;
-import com.example.financeHub.crawler.model.CrawledNewsDTO;
-import com.example.financeHub.crawler.service.IpoCrawlerService;
-import com.example.financeHub.crawler.service.NewsCrawlerService;
+import com.example.financeHub.crawler.ipo.IpoDTO;
+import com.example.financeHub.crawler.ipo.IpoCrawler;
+import com.example.financeHub.crawler.news.NewsDTO;
+import com.example.financeHub.crawler.news.NewsCrawler;
 import com.example.financeHub.crawler.service.NewsCrawlingService;
 import com.example.financeHub.dashboard.model.DashboardDTO;
-import com.example.financeHub.dashboard.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.dashboard.model.GoldMarketDailyTradingDto;
-import com.example.financeHub.dashboard.model.KosdaqDailyTradingDTO;
-import com.example.financeHub.dashboard.model.KospiDailyTradingDTO;
-import com.example.financeHub.dashboard.model.OilMarketDailyTradingDTO;
-import com.example.financeHub.dashboard.service.KrxDataService;
+import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
+import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
+import com.example.financeHub.krx.model.KospiDailyTradingDTO;
+import com.example.financeHub.krx.model.OilMarketDailyTradingDTO;
+import com.example.financeHub.krx.service.KrxDataService;
 
 @RestController
 @RequestMapping("/dashboard")
 public class DashboardController {
     
    
-    private final NewsCrawlerService newsCrawlerService;
-    private final IpoCrawlerService ipoCrawlerService;
+    private final NewsCrawler newsCrawlerService;
+    private final IpoCrawler ipoCrawlerService;
     private final KrxDataService krxDataService;
     
     public DashboardController(
-	    NewsCrawlerService newsCrawlerService,
-	    IpoCrawlerService ipoCrawlerService,
+	    NewsCrawler newsCrawlerService,
+	    IpoCrawler ipoCrawlerService,
 	    KrxDataService krxDataService
 	    ) {
 	this.newsCrawlerService = newsCrawlerService;
@@ -45,8 +45,8 @@ public class DashboardController {
     
     @GetMapping("/data")
     public ResponseEntity getData() {
-	List<CrawledNewsDTO> todayNews = newsCrawlerService.getTodayNews();
-	List<CrawledIpoDTO> todayIpoList = ipoCrawlerService.getTodayIpoList();
+	List<NewsDTO> todayNews = newsCrawlerService.getTodayNews();
+	List<IpoDTO> todayIpoList = ipoCrawlerService.getTodayIpoList();
 	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataService.getDailyGoldMarketTradingInfo();
 	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataService.getDailtyOilMarketTradingInfo();
 	List<KospiDailyTradingDTO> latestKospiMarket = krxDataService.getDailyKospiInfo();

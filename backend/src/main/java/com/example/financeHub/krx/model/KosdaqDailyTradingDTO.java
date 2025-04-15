@@ -1,11 +1,13 @@
-package com.example.financeHub.dashboard.model;
+package com.example.financeHub.krx.model;
+
+import com.example.financeHub.config.HashUtil;
 
 import lombok.Data;
 /**
- * kospi 시리즈 일별 시세 정보 
+ * kosdaq 시리즈 지수의 시세 정보 
  */
 @Data
-public class KospiDailyTradingDTO {
+public class KosdaqDailyTradingDTO {
 
     /**
      * 기준일자
@@ -66,4 +68,10 @@ public class KospiDailyTradingDTO {
      * 상장시가총액
      */
     private String mktcap;
+    
+    // 해시 생성 
+    public String generateHash() {
+	String key = basDd + "|" + idxNm + "|" + clsprcIdx;
+	return HashUtil.generateHash(key);
+    }
 }

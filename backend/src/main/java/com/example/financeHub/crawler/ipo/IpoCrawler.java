@@ -1,4 +1,4 @@
-package com.example.financeHub.crawler.service;
+package com.example.financeHub.crawler.ipo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,23 +10,22 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.stereotype.Service;
 
-import com.example.financeHub.crawler.model.CrawledIpoDTO;
-import com.example.financeHub.crawler.model.CrawledNewsDTO;
+import com.example.financeHub.crawler.news.NewsDTO;
 
 @Service
-public class IpoCrawlerService {
+public class IpoCrawler {
 
     private static final String BASE_URL = "https://www.38.co.kr/html/fund/?o=k";
 
     private final ChromeOptions options;
 
-    public IpoCrawlerService(ChromeOptions options) {
+    public IpoCrawler(ChromeOptions options) {
 	this.options = options;
     }
 
-    public List<CrawledIpoDTO> crawler() {
+    public List<IpoDTO> crawler() {
 	WebDriver driver = null; // WebDriver를 메서드 내에서 선언
-	List<CrawledIpoDTO> ipoList = new ArrayList<>();
+	List<IpoDTO> ipoList = new ArrayList<>();
 
 	try {
 	    driver = new ChromeDriver(options); // WebDriver 인스턴스 생성
@@ -41,7 +40,7 @@ public class IpoCrawlerService {
 	    for (WebElement row : rows) {
 		List<WebElement> cells = row.findElements(By.tagName("td"));
 		// DTO로 저장
-		CrawledIpoDTO ipoDTO = new CrawledIpoDTO();
+		IpoDTO ipoDTO = new IpoDTO();
 		
 		WebElement linkElement = cells.get(0).findElement(By.tagName("a"));
 		String companyName = linkElement.getText().trim();
@@ -74,8 +73,8 @@ public class IpoCrawlerService {
 	return ipoList;
     }
     
-    public List<CrawledIpoDTO> getTodayIpoList() {
-	List<CrawledIpoDTO> ipoList = crawler();
+    public List<IpoDTO> getTodayIpoList() {
+	List<IpoDTO> ipoList = crawler();
 	return ipoList;
     }
 }

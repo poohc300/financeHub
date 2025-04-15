@@ -1,0 +1,26 @@
+<mapper namespace="com.example.financeHub.crawler.mapper.CrawledIpoMapper">
+
+	<insert id="" parameterType="com.example.financeHub.crawler.model.crawledIpoDTO">
+		INSERT INTO crawled_ipo (
+			company_name,
+			link,
+			period,
+			fixed_offering_price,
+			expected_offering_price,
+			subscription_rate,
+			under_writer,
+			hash
+		)
+		VALUES (
+			#{companyName},
+			#{link},
+			#{period},
+			#{fixedOfferingPrice},
+			#{expectedOfferingPrice},
+			#{subscriptionRate},
+			#{underWriter},
+			#{hash}
+		)
+		ON CONFLICT (hash) DO NOTHING
+	</insert>
+</mapper>
