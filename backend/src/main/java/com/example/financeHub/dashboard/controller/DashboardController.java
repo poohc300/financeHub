@@ -2,8 +2,6 @@ package com.example.financeHub.dashboard.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +11,7 @@ import com.example.financeHub.crawler.ipo.IpoDTO;
 import com.example.financeHub.crawler.ipo.IpoCrawler;
 import com.example.financeHub.crawler.news.NewsDTO;
 import com.example.financeHub.crawler.news.NewsCrawler;
-import com.example.financeHub.crawler.service.NewsCrawlingService;
 import com.example.financeHub.dashboard.model.DashboardDTO;
-import com.example.financeHub.dashboard.model.GoldMarketDailyTradingDto;
 import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
 import com.example.financeHub.krx.model.KospiDailyTradingDTO;

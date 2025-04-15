@@ -1,15 +1,12 @@
 package com.example.financeHub.krx.service;
 
-import java.lang.invoke.StringConcatFactory;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.naming.java.javaURLContextFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +20,6 @@ import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
 import com.example.financeHub.krx.model.KospiDailyTradingDTO;
 import com.example.financeHub.krx.model.OilMarketDailyTradingDTO;
 
-import net.bytebuddy.matcher.MethodReturnTypeMatcher;
 
 @Service
 public class KrxDataService {
