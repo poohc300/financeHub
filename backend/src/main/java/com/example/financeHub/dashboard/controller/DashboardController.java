@@ -43,10 +43,10 @@ public class DashboardController {
     public ResponseEntity getData() {
 	List<NewsDTO> todayNews = newsCrawlerService.getTodayNews();
 	List<IpoDTO> todayIpoList = ipoCrawlerService.getTodayIpoList();
-	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataService.getDailyGoldMarketTradingInfo();
-	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataService.getDailtyOilMarketTradingInfo();
-	List<KospiDailyTradingDTO> latestKospiMarket = krxDataService.getDailyKospiInfo();
-	List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataService.getDailyKosdaqInfo();
+	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataService.getGoldMarketDailyTradingInfo();
+	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataService.getOilMarketDailyTradingInfo();
+	List<KospiDailyTradingDTO> latestKospiMarket = krxDataService.getKospiDailyTradingInfo();
+	List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataService.getKosdaqDailyTradingInfo();
 	
 	DashboardDTO dashboardDTO = new DashboardDTO();
 	dashboardDTO.setCrawledNewsList(todayNews);
