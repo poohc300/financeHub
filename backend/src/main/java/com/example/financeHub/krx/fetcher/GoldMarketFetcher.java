@@ -46,7 +46,6 @@ public class GoldMarketFetcher {
                     result.add(dto);
 		}
 	    }
-	    
 	} catch (Exception e) {
             System.err.println("API 호출 중 오류 발생: " + e.getMessage());
 	}
