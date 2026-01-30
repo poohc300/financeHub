@@ -21,6 +21,14 @@
         </foreach>
     </select>
 
+    <select id="selectLatestNews" resultType="com.example.financeHub.crawler.news.NewsDTO">
+        SELECT title, link, published_at AS publishedAt, data_hash AS dataHash
+        FROM financeHub.news
+        WHERE published_at = (SELECT MAX(published_at) FROM financeHub.news)
+        ORDER BY created_at DESC
+        LIMIT 20
+    </select>
+
     <!-- IPO -->
     <insert id="batchInsertIpo" parameterType="list">
         INSERT INTO financeHub.ipo
@@ -38,6 +46,15 @@
         <foreach collection="hashes" item="hash" open="(" separator="," close=")">
             #{hash}
         </foreach>
+    </select>
+
+    <select id="selectLatestIpo" resultType="com.example.financeHub.crawler.ipo.IpoDTO">
+        SELECT company_name AS companyName, link, period, fixed_offering_price AS fixedOfferingPrice,
+               expected_offering_price AS expectedOfferingPrice, subscription_rate AS subscriptionRate,
+               under_writer AS underWriter, data_hash AS dataHash
+        FROM financeHub.ipo
+        ORDER BY created_at DESC
+        LIMIT 50
     </select>
 
     <!-- Scheduler Execution Log -->

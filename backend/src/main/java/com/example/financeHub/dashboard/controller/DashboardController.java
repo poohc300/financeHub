@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.financeHub.crawler.ipo.IpoDTO;
 import com.example.financeHub.crawler.ipo.IpoCrawler;
+import com.example.financeHub.crawler.mapper.CrawlerDataMapper;
 import com.example.financeHub.crawler.news.NewsDTO;
 import com.example.financeHub.crawler.news.NewsCrawler;
 import com.example.financeHub.dashboard.model.DashboardDTO;
+import com.example.financeHub.krx.mapper.KrxDataMapper;
 import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
 import com.example.financeHub.krx.model.KospiDailyTradingDTO;
@@ -21,33 +23,39 @@ import com.example.financeHub.krx.service.KrxDataService;
 @RestController
 @RequestMapping("/dashboard")
 public class DashboardController {
-    
-   
+
+
     private final NewsCrawler newsCrawlerService;
     private final IpoCrawler ipoCrawlerService;
     private final KrxDataService krxDataService;
-    
+    private final KrxDataMapper krxDataMapper;
+    private final CrawlerDataMapper crawlerDataMapper;
+
     public DashboardController(
 	    NewsCrawler newsCrawlerService,
 	    IpoCrawler ipoCrawlerService,
-	    KrxDataService krxDataService
+	    KrxDataService krxDataService,
+	    KrxDataMapper krxDataMapper,
+	    CrawlerDataMapper crawlerDataMapper
 	    ) {
 	this.newsCrawlerService = newsCrawlerService;
 	this.ipoCrawlerService = ipoCrawlerService;
 	this.krxDataService = krxDataService;
+	this.krxDataMapper = krxDataMapper;
+	this.crawlerDataMapper = crawlerDataMapper;
     }
-    
-    
-    
+
+
+
     @GetMapping("/data")
     public ResponseEntity getData() {
-	List<NewsDTO> todayNews = newsCrawlerService.getTodayNews();
-	List<IpoDTO> todayIpoList = ipoCrawlerService.getTodayIpoList();
-	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataService.getGoldMarketDailyTradingInfo();
-	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataService.getOilMarketDailyTradingInfo();
-	List<KospiDailyTradingDTO> latestKospiMarket = krxDataService.getKospiDailyTradingInfo();
-	List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataService.getKosdaqDailyTradingInfo();
-	
+	List<NewsDTO> todayNews = crawlerDataMapper.selectLatestNews();
+	List<IpoDTO> todayIpoList = crawlerDataMapper.selectLatestIpo();
+	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataMapper.selectLatestGoldMarket();
+	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataMapper.selectLatestOilMarket();
+	List<KospiDailyTradingDTO> latestKospiMarket = krxDataMapper.selectLatestKospi();
+	List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataMapper.selectLatestKosdaq();
+
 	DashboardDTO dashboardDTO = new DashboardDTO();
 	dashboardDTO.setCrawledNewsList(todayNews);
 	dashboardDTO.setCrawledIpoList(todayIpoList);
