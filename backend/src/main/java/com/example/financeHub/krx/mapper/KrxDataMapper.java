@@ -42,4 +42,6 @@ public interface KrxDataMapper {
     Set<String> findExistingStockHashes(@Param("hashes") Set<String> hashes);
     List<StockDailyTradingDTO> selectTopGainers(@Param("limit") int limit);
     List<StockDailyTradingDTO> selectTopVolume(@Param("limit") int limit);
+    List<StockDailyTradingDTO> searchStocks(@Param("keyword") String keyword, @Param("limit") int limit);
+    List<StockDailyTradingDTO> selectStockHistory(@Param("isuCd") String isuCd, @Param("limit") int limit);
 }
