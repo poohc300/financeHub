@@ -31,6 +31,17 @@
         ORDER BY idx_nm
     </select>
 
+    <select id="selectKospiHistory" resultType="com.example.financeHub.krx.model.KospiDailyTradingDTO">
+        SELECT bas_dd AS basDd, idx_clss AS idxClss, idx_nm AS idxNm, clsprc_idx AS clsprcIdx,
+               cmpprevdd_idx AS cmpprevddIdx, fluc_rt AS flucRt, opnprc_idx AS opnprcIdx,
+               hgprc_idx AS hgprcIdx, lwprc_idx AS lwprcIdx, acc_trdvol AS accTrdvol,
+               acc_trdval AS accTrdval, mktcap, data_hash AS dataHash
+        FROM financeHub.kospi_daily_trading
+        WHERE idx_nm = #{indexName}
+        ORDER BY bas_dd DESC
+        LIMIT #{limit}
+    </select>
+
     <!-- KOSDAQ -->
     <insert id="batchInsertKosdaq" parameterType="list">
         INSERT INTO financeHub.kosdaq_daily_trading
@@ -58,6 +69,17 @@
         FROM financeHub.kosdaq_daily_trading
         WHERE bas_dd = (SELECT MAX(bas_dd) FROM financeHub.kosdaq_daily_trading)
         ORDER BY idx_nm
+    </select>
+
+    <select id="selectKosdaqHistory" resultType="com.example.financeHub.krx.model.KosdaqDailyTradingDTO">
+        SELECT bas_dd AS basDd, idx_clss AS idxClss, idx_nm AS idxNm, clsprc_idx AS clsprcIdx,
+               cmpprevdd_idx AS cmpprevddIdx, fluc_rt AS flucRt, opnprc_idx AS opnprcIdx,
+               hgprc_idx AS hgprcIdx, lwprc_idx AS lwprcIdx, acc_trdvol AS accTrdvol,
+               acc_trdval AS accTrdval, mktcap, data_hash AS dataHash
+        FROM financeHub.kosdaq_daily_trading
+        WHERE idx_nm = #{indexName}
+        ORDER BY bas_dd DESC
+        LIMIT #{limit}
     </select>
 
     <!-- Gold Market -->
