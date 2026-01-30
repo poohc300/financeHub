@@ -95,6 +95,7 @@ public class DashboardController {
     public ResponseEntity<ChartDataDTO> getChartData(
             @RequestParam(defaultValue = "KOSPI") String market,
             @RequestParam(defaultValue = "코스피") String indexName,
+            @RequestParam(required = false) String isuCd,
             @RequestParam(defaultValue = "30") int limit) {
 
         ChartDataDTO chartData = new ChartDataDTO();
@@ -110,9 +111,25 @@ public class DashboardController {
             Collections.reverse(history);
             chartData.setLabels(history.stream().map(KosdaqDailyTradingDTO::getBasDd).collect(Collectors.toList()));
             chartData.setValues(history.stream().map(KosdaqDailyTradingDTO::getClsprcIdx).collect(Collectors.toList()));
+        } else if ("STOCK".equalsIgnoreCase(market) && isuCd != null) {
+            List<StockDailyTradingDTO> history = krxDataMapper.selectStockHistory(isuCd, limit);
+            Collections.reverse(history);
+            chartData.setLabels(history.stream().map(StockDailyTradingDTO::getBasDd).collect(Collectors.toList()));
+            chartData.setValues(history.stream().map(StockDailyTradingDTO::getTddClsprc).collect(Collectors.toList()));
+            if (!history.isEmpty()) {
+                chartData.setIndexName(history.get(0).getIsuNm());
+            }
         }
 
         return ResponseEntity.ok(chartData);
+    }
+
+    @GetMapping("/stocks/search")
+    public ResponseEntity<List<StockDailyTradingDTO>> searchStocks(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "10") int limit) {
+        List<StockDailyTradingDTO> stocks = krxDataMapper.searchStocks(keyword, limit);
+        return ResponseEntity.ok(stocks);
     }
 
 }
