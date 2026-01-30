@@ -17,16 +17,20 @@ public interface KrxDataMapper {
     // KOSPI
     void batchInsertKospi(@Param("list") List<KospiDailyTradingDTO> list);
     Set<String> findExistingKospiHashes(@Param("hashes") Set<String> hashes);
+    List<KospiDailyTradingDTO> selectLatestKospi();
 
     // KOSDAQ
     void batchInsertKosdaq(@Param("list") List<KosdaqDailyTradingDTO> list);
     Set<String> findExistingKosdaqHashes(@Param("hashes") Set<String> hashes);
+    List<KosdaqDailyTradingDTO> selectLatestKosdaq();
 
     // Gold Market
     void batchInsertGoldMarket(@Param("list") List<GoldMarketDailyTradingDTO> list);
     Set<String> findExistingGoldMarketHashes(@Param("hashes") Set<String> hashes);
+    List<GoldMarketDailyTradingDTO> selectLatestGoldMarket();
 
     // Oil Market
     void batchInsertOilMarket(@Param("list") List<OilMarketDailyTradingDTO> list);
     Set<String> findExistingOilMarketHashes(@Param("hashes") Set<String> hashes);
+    List<OilMarketDailyTradingDTO> selectLatestOilMarket();
 }

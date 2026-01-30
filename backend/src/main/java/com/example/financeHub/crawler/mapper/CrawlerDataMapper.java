@@ -16,10 +16,12 @@ public interface CrawlerDataMapper {
     // News
     void batchInsertNews(@Param("list") List<NewsDTO> list);
     Set<String> findExistingNewsHashes(@Param("hashes") Set<String> hashes);
+    List<NewsDTO> selectLatestNews();
 
     // IPO
     void batchInsertIpo(@Param("list") List<IpoDTO> list);
     Set<String> findExistingIpoHashes(@Param("hashes") Set<String> hashes);
+    List<IpoDTO> selectLatestIpo();
 
     // Scheduler Execution Log
     void insertExecutionLog(SchedulerExecutionLogDTO log);
