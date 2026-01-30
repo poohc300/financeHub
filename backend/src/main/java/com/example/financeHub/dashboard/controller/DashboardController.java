@@ -1,10 +1,13 @@
 package com.example.financeHub.dashboard.controller;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.financeHub.crawler.ipo.IpoDTO;
@@ -12,6 +15,7 @@ import com.example.financeHub.crawler.ipo.IpoCrawler;
 import com.example.financeHub.crawler.mapper.CrawlerDataMapper;
 import com.example.financeHub.crawler.news.NewsDTO;
 import com.example.financeHub.crawler.news.NewsCrawler;
+import com.example.financeHub.dashboard.model.ChartDataDTO;
 import com.example.financeHub.dashboard.model.DashboardDTO;
 import com.example.financeHub.krx.mapper.KrxDataMapper;
 import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
@@ -85,8 +89,30 @@ public class DashboardController {
 	dashboardDTO.setKosdaqDailyTradingList(latestKosdaqMarket);
 
 	return ResponseEntity.ok(dashboardDTO);
+    }
 
+    @GetMapping("/chart-data")
+    public ResponseEntity<ChartDataDTO> getChartData(
+            @RequestParam(defaultValue = "KOSPI") String market,
+            @RequestParam(defaultValue = "코스피") String indexName,
+            @RequestParam(defaultValue = "30") int limit) {
 
+        ChartDataDTO chartData = new ChartDataDTO();
+        chartData.setIndexName(indexName);
+
+        if ("KOSPI".equalsIgnoreCase(market)) {
+            List<KospiDailyTradingDTO> history = krxDataMapper.selectKospiHistory(indexName, limit);
+            Collections.reverse(history);
+            chartData.setLabels(history.stream().map(KospiDailyTradingDTO::getBasDd).collect(Collectors.toList()));
+            chartData.setValues(history.stream().map(KospiDailyTradingDTO::getClsprcIdx).collect(Collectors.toList()));
+        } else if ("KOSDAQ".equalsIgnoreCase(market)) {
+            List<KosdaqDailyTradingDTO> history = krxDataMapper.selectKosdaqHistory(indexName, limit);
+            Collections.reverse(history);
+            chartData.setLabels(history.stream().map(KosdaqDailyTradingDTO::getBasDd).collect(Collectors.toList()));
+            chartData.setValues(history.stream().map(KosdaqDailyTradingDTO::getClsprcIdx).collect(Collectors.toList()));
+        }
+
+        return ResponseEntity.ok(chartData);
     }
 
 }
