@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.financeHub.crawler.mapper.CrawlerDataMapper">
+
+    <!-- News -->
+    <insert id="batchInsertNews" parameterType="list">
+        INSERT INTO financeHub.news
+        (data_hash, title, link, published_at)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.dataHash}, #{item.title}, #{item.link}, #{item.publishedAt}::date)
+        </foreach>
+        ON CONFLICT (data_hash) DO NOTHING
+    </insert>
+
+    <select id="findExistingNewsHashes" resultType="string">
+        SELECT data_hash FROM financeHub.news
+        WHERE data_hash IN
+        <foreach collection="hashes" item="hash" open="(" separator="," close=")">
+            #{hash}
+        </foreach>
+    </select>
+
+    <!-- IPO -->
+    <insert id="batchInsertIpo" parameterType="list">
+        INSERT INTO financeHub.ipo
+        (data_hash, company_name, link, period, fixed_offering_price, expected_offering_price, subscription_rate, under_writer)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.dataHash}, #{item.companyName}, #{item.link}, #{item.period}, #{item.fixedOfferingPrice}, #{item.expectedOfferingPrice}, #{item.subscriptionRate}, #{item.underWriter})
+        </foreach>
+        ON CONFLICT (data_hash) DO NOTHING
+    </insert>
+
+    <select id="findExistingIpoHashes" resultType="string">
+        SELECT data_hash FROM financeHub.ipo
+        WHERE data_hash IN
+        <foreach collection="hashes" item="hash" open="(" separator="," close=")">
+            #{hash}
+        </foreach>
+    </select>
+
+    <!-- Scheduler Execution Log -->
+    <insert id="insertExecutionLog" parameterType="com.example.financeHub.scheduler.model.SchedulerExecutionLogDTO">
+        INSERT INTO financeHub.scheduler_execution_log
+        (job_name, execution_time, status, records_processed, records_inserted, records_skipped, error_message, execution_duration_ms)
+        VALUES
+        (#{jobName}, #{executionTime}, #{status}, #{recordsProcessed}, #{recordsInserted}, #{recordsSkipped}, #{errorMessage}, #{executionDurationMs})
+    </insert>
+
+</mapper>

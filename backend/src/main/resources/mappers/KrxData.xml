@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.financeHub.krx.mapper.KrxDataMapper">
+
+    <!-- KOSPI -->
+    <insert id="batchInsertKospi" parameterType="list">
+        INSERT INTO financeHub.kospi_daily_trading
+        (data_hash, bas_dd, idx_clss, idx_nm, clsprc_idx, cmpprevdd_idx, fluc_rt, opnprc_idx, hgprc_idx, lwprc_idx, acc_trdvol, acc_trdval, mktcap)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.dataHash}, #{item.basDd}, #{item.idxClss}, #{item.idxNm}, #{item.clsprcIdx}, #{item.cmpprevddIdx}, #{item.flucRt}, #{item.opnprcIdx}, #{item.hgprcIdx}, #{item.lwprcIdx}, #{item.accTrdvol}, #{item.accTrdval}, #{item.mktcap})
+        </foreach>
+        ON CONFLICT (data_hash) DO NOTHING
+    </insert>
+
+    <select id="findExistingKospiHashes" resultType="string">
+        SELECT data_hash FROM financeHub.kospi_daily_trading
+        WHERE data_hash IN
+        <foreach collection="hashes" item="hash" open="(" separator="," close=")">
+            #{hash}
+        </foreach>
+    </select>
+
+    <!-- KOSDAQ -->
+    <insert id="batchInsertKosdaq" parameterType="list">
+        INSERT INTO financeHub.kosdaq_daily_trading
+        (data_hash, bas_dd, idx_clss, idx_nm, clsprc_idx, cmpprevdd_idx, fluc_rt, opnprc_idx, hgprc_idx, lwprc_idx, acc_trdvol, acc_trdval, mktcap)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.dataHash}, #{item.basDd}, #{item.idxClss}, #{item.idxNm}, #{item.clsprcIdx}, #{item.cmpprevddIdx}, #{item.flucRt}, #{item.opnprcIdx}, #{item.hgprcIdx}, #{item.lwprcIdx}, #{item.accTrdvol}, #{item.accTrdval}, #{item.mktcap})
+        </foreach>
+        ON CONFLICT (data_hash) DO NOTHING
+    </insert>
+
+    <select id="findExistingKosdaqHashes" resultType="string">
+        SELECT data_hash FROM financeHub.kosdaq_daily_trading
+        WHERE data_hash IN
+        <foreach collection="hashes" item="hash" open="(" separator="," close=")">
+            #{hash}
+        </foreach>
+    </select>
+
+    <!-- Gold Market -->
+    <insert id="batchInsertGoldMarket" parameterType="list">
+        INSERT INTO financeHub.gold_market_daily_trading
+        (data_hash, bas_dd, isu_cd, isu_nm, tdd_clsprc, cmpprevdd_prc, fluc_rt, tdd_opnprc, tdd_hgprc, tdd_lwprc, acc_trdvol, acc_trdval)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.dataHash}, #{item.basDd}, #{item.isuCd}, #{item.isuNm}, #{item.tddClsprc}, #{item.cmpprevddPrc}, #{item.flucRt}, #{item.tddOpnprc}, #{item.tddHgprc}, #{item.tddLwprc}, #{item.accTrdvol}, #{item.accTrdval})
+        </foreach>
+        ON CONFLICT (data_hash) DO NOTHING
+    </insert>
+
+    <select id="findExistingGoldMarketHashes" resultType="string">
+        SELECT data_hash FROM financeHub.gold_market_daily_trading
+        WHERE data_hash IN
+        <foreach collection="hashes" item="hash" open="(" separator="," close=")">
+            #{hash}
+        </foreach>
+    </select>
+
+    <!-- Oil Market -->
+    <insert id="batchInsertOilMarket" parameterType="list">
+        INSERT INTO financeHub.oil_market_daily_trading
+        (data_hash, bas_dd, oil_nm, wt_avg_prc, wt_dis_avg_prc, acc_trdvol, acc_trd_val)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.dataHash}, #{item.basDd}, #{item.oilNm}, #{item.wtAvgPrc}, #{item.wtDisAvgPrc}, #{item.accTrdvol}, #{item.accTrdVal})
+        </foreach>
+        ON CONFLICT (data_hash) DO NOTHING
+    </insert>
+
+    <select id="findExistingOilMarketHashes" resultType="string">
+        SELECT data_hash FROM financeHub.oil_market_daily_trading
+        WHERE data_hash IN
+        <foreach collection="hashes" item="hash" open="(" separator="," close=")">
+            #{hash}
+        </foreach>
+    </select>
+
+</mapper>

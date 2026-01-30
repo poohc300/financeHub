@@ -64,7 +64,12 @@ public class GoldMarketDailyTradingDTO {
      * 거래대금
      */
     private String accTrdval;
-    
+
+    /**
+     * 데이터 해시
+     */
+    private String dataHash;
+
     // 해시 생성 
     public String generateHash() {
 	String key = basDd + "|" + isuNm + "|" + tddClsprc;
