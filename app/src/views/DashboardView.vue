@@ -1,32 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watchEffect } from 'vue';
-import { CrawledIpoDTO, CrawledNewsDTO, GoldMarketTradingDTO, DashboardDataDTO, EconomicIndicatorsDTO, OilMarketDailtyTradingDTO, KospiDailyTradingDTO } from '../model/DashboardDataDTO';
+import { CrawledIpoDTO, CrawledNewsDTO, GoldMarketTradingDTO, DashboardDataDTO, EconomicIndicatorsDTO, OilMarketDailtyTradingDTO, KospiDailyTradingDTO, StockDailyTradingDTO } from '../model/DashboardDataDTO';
 import { fetchRequest } from '../util/fetchRequest';
 import Calendar from '../components/Calendar.vue';
 import { CalendarEventDTO } from '../model/CalendarEventDTO';
 
-const economicIndicators = ref([
-  { label: '코스피', value: '2,650.23', change: '+1.2%', isPositive: true },
-  { label: '코스닥', value: '850.45', change: '-0.8%', isPositive: false },
-  { label: 'USD/KRW', value: '1,320.50', change: '+0.3%', isPositive: true },
-  { label: '금값', value: '2,156.80', change: '+0.5%', isPositive: true },
-  { label: 'WTI 원유', value: '78.25', change: '-1.2%', isPositive: false },
-  { label: '비트코인', value: '65,432', change: '+2.1%', isPositive: true }
-])
-
-const topGainers = ref([
-  { rank: 1, name: '테슬라', price: '890,000', change: '+8.5%', volume: '1,234,567' },
-  { rank: 2, name: '삼성전자', price: '75,800', change: '+6.2%', volume: '12,345,678' },
-  { rank: 3, name: 'LG에너지솔루션', price: '456,000', change: '+5.8%', volume: '789,012' },
-  { rank: 4, name: 'SK하이닉스', price: '156,000', change: '+5.1%', volume: '5,678,901' },
-  { rank: 5, name: '현대차', price: '234,500', change: '+4.7%', volume: '3,456,789' }
-])
+const economicIndicators = ref<EconomicIndicatorsDTO[]>([]);
 
 const ipoList = ref<CrawledIpoDTO[]>([]);
 const newsList = ref<CrawledNewsDTO[]>([]);
 const goldMarketInfo = ref<GoldMarketTradingDTO[]>([]);
 const oilMarketInfo = ref<OilMarketDailtyTradingDTO[]>([]);
 const kospiInfo = ref<KospiDailyTradingDTO[]>([]);
+const topGainersList = ref<StockDailyTradingDTO[]>([]);
+const topVolumeList = ref<StockDailyTradingDTO[]>([]);
 
 const calendarEvents = computed<CalendarEventDTO[]>(() => {
   if (ipoList.value && ipoList.value.length > 0) {
@@ -93,21 +80,17 @@ const mapKospi = (data: KospiDailyTradingDTO):EconomicIndicatorsDTO => {
 // fetch
 const fetchDashboardData = async() => {
   try {
-    const {
-      crawledNewsList, 
-      crawledIpoList, 
-      goldMarketDailyTradingList,
-      oilMarketDailyTradingList,
-      kospiDailyTradingList,
-    } = await fetchRequest<DashboardDataDTO>("/dashboard/data", "GET");
-    newsList.value = crawledNewsList;
-    ipoList.value = crawledIpoList;
-    goldMarketInfo.value = goldMarketDailyTradingList;
-    oilMarketInfo.value = oilMarketDailyTradingList;
-    kospiInfo.value = kospiDailyTradingList;
+    const data = await fetchRequest<DashboardDataDTO>("/dashboard/data", "GET");
+    newsList.value = data.crawledNewsList || [];
+    ipoList.value = data.crawledIpoList || [];
+    goldMarketInfo.value = data.goldMarketDailyTradingList || [];
+    oilMarketInfo.value = data.oilMarketDailyTradingList || [];
+    kospiInfo.value = data.kospiDailyTradingList || [];
+    topGainersList.value = data.topGainersList || [];
+    topVolumeList.value = data.topVolumeList || [];
 
   } catch (error) {
-    console.error("Error fetching dashboard data:", error); 
+    console.error("Error fetching dashboard data:", error);
     throw error;
   }
 }
@@ -147,34 +130,70 @@ watchEffect(() => {
       </div>
     </div>
 
-    <!-- 상승률 TOP 5 -->
-    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-8">
-      <h2 class="text-xl font-bold text-gray-800 mb-4">오늘의 상승률 TOP 5</h2>
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-gray-200">
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">순위</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">종목명</th>
-              <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">현재가</th>
-              <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">등락률</th>
-              <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">거래량</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr 
-              v-for="stock in topGainers" 
-              :key="stock.rank"
-              class="border-b border-gray-100 hover:bg-gray-50"
-            >
-              <td class="py-3 px-4 text-sm">{{ stock.rank }}</td>
-              <td class="py-3 px-4 font-medium">{{ stock.name }}</td>
-              <td class="py-3 px-4 text-right">{{ stock.price }}</td>
-              <td class="py-3 px-4 text-right text-green-600">{{ stock.change }}</td>
-              <td class="py-3 px-4 text-right text-gray-600">{{ stock.volume }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- 상승률 TOP 5 & 거래량 TOP 5 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <!-- 상승률 TOP 5 -->
+      <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">오늘의 상승률 TOP 5</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-200">
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">순위</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">종목명</th>
+                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">현재가</th>
+                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">등락률</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(stock, index) in topGainersList"
+                :key="stock.isuCd"
+                class="border-b border-gray-100 hover:bg-gray-50"
+              >
+                <td class="py-3 px-4 text-sm">{{ index + 1 }}</td>
+                <td class="py-3 px-4 font-medium">{{ stock.isuNm }}</td>
+                <td class="py-3 px-4 text-right">{{ stock.tddClsprc }}</td>
+                <td class="py-3 px-4 text-right text-green-600">{{ stock.flucRt }}%</td>
+              </tr>
+              <tr v-if="topGainersList.length === 0">
+                <td colspan="4" class="py-3 px-4 text-center text-gray-500">데이터가 없습니다</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 거래량 TOP 5 -->
+      <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">오늘의 거래량 TOP 5</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-200">
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">순위</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">종목명</th>
+                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">현재가</th>
+                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">거래량</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(stock, index) in topVolumeList"
+                :key="stock.isuCd"
+                class="border-b border-gray-100 hover:bg-gray-50"
+              >
+                <td class="py-3 px-4 text-sm">{{ index + 1 }}</td>
+                <td class="py-3 px-4 font-medium">{{ stock.isuNm }}</td>
+                <td class="py-3 px-4 text-right">{{ stock.tddClsprc }}</td>
+                <td class="py-3 px-4 text-right text-gray-600">{{ stock.accTrdvol }}</td>
+              </tr>
+              <tr v-if="topVolumeList.length === 0">
+                <td colspan="4" class="py-3 px-4 text-center text-gray-500">데이터가 없습니다</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
