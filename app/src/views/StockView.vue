@@ -15,9 +15,17 @@ interface ChartDataDTO {
 
 const selectedMarket = ref('KOSPI')
 const selectedIndex = ref('코스피')
+const selectedPeriod = ref(30)
 const chartLabels = ref<string[]>([])
 const chartValues = ref<string[]>([])
 const topVolumeList = ref<StockDailyTradingDTO[]>([])
+
+const periodOptions = [
+  { label: '1주', value: 7 },
+  { label: '1개월', value: 30 },
+  { label: '3개월', value: 90 },
+  { label: '1년', value: 365 }
+]
 
 const chartData = computed(() => ({
   labels: chartLabels.value.map(label => {
@@ -78,7 +86,7 @@ const chartOptions = computed(() => ({
 const fetchChartData = async () => {
   try {
     const data = await fetchRequest<ChartDataDTO>(
-      `/dashboard/chart-data?market=${selectedMarket.value}&indexName=${selectedIndex.value}&limit=30`,
+      `/dashboard/chart-data?market=${selectedMarket.value}&indexName=${selectedIndex.value}&limit=${selectedPeriod.value}`,
       'GET'
     )
     chartLabels.value = data.labels || []
@@ -100,6 +108,11 @@ const fetchTopVolume = async () => {
 const changeMarket = (market: string, indexName: string) => {
   selectedMarket.value = market
   selectedIndex.value = indexName
+  fetchChartData()
+}
+
+const changePeriod = (period: number) => {
+  selectedPeriod.value = period
   fetchChartData()
 }
 
@@ -172,6 +185,22 @@ onMounted(() => {
           </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <!-- 기간 선택 -->
+          <div class="flex justify-end gap-1 mb-4">
+            <button
+              v-for="option in periodOptions"
+              :key="option.value"
+              @click="changePeriod(option.value)"
+              :class="[
+                'px-3 py-1 text-sm rounded-md font-medium transition-colors',
+                selectedPeriod === option.value
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ]"
+            >
+              {{ option.label }}
+            </button>
+          </div>
           <div class="h-[500px]">
             <Line v-if="chartLabels.length > 0" :data="chartData" :options="chartOptions" />
             <div v-else class="h-full flex items-center justify-center text-gray-500">
