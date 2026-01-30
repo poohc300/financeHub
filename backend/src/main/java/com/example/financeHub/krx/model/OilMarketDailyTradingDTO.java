@@ -39,7 +39,12 @@ public class OilMarketDailyTradingDTO {
      * 거래대금
      */
     private String accTrdVal;
-    
+
+    /**
+     * 데이터 해시
+     */
+    private String dataHash;
+
     // 해시 생성 
     public String generateHash() {
 	String key = basDd + "|" + oilNm + "|" + wtAvgPrc;

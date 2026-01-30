@@ -68,7 +68,12 @@ public class KosdaqDailyTradingDTO {
      * 상장시가총액
      */
     private String mktcap;
-    
+
+    /**
+     * 데이터 해시
+     */
+    private String dataHash;
+
     // 해시 생성 
     public String generateHash() {
 	String key = basDd + "|" + idxNm + "|" + clsprcIdx;

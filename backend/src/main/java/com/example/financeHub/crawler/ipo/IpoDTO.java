@@ -12,8 +12,9 @@ public class IpoDTO {
     private String fixedOfferingPrice; // 확정공모가 
     private String expectedOfferingPrice; // 희암공모가
     private String subscriptionRate; // 청약경쟁률
-    private String underWriter; // 주간사 
-    
+    private String underWriter; // 주간사
+    private String dataHash; // 데이터 해시
+
     public String generateHash() {
 	String key = companyName + "|" + link + "|" + period;
 	return HashUtil.generateHash(key);
