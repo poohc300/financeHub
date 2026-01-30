@@ -18,6 +18,7 @@ import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
 import com.example.financeHub.krx.model.KospiDailyTradingDTO;
 import com.example.financeHub.krx.model.OilMarketDailyTradingDTO;
+import com.example.financeHub.krx.model.StockDailyTradingDTO;
 import com.example.financeHub.krx.service.KrxDataService;
 
 @RestController
@@ -49,21 +50,25 @@ public class DashboardController {
 
     @GetMapping("/data")
     public ResponseEntity getData() {
-	List<NewsDTO> todayNews = crawlerDataMapper.selectLatestNews();
-	List<IpoDTO> todayIpoList = crawlerDataMapper.selectLatestIpo();
-	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataMapper.selectLatestGoldMarket();
-	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataMapper.selectLatestOilMarket();
-	List<KospiDailyTradingDTO> latestKospiMarket = krxDataMapper.selectLatestKospi();
-	List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataMapper.selectLatestKosdaq();
+        List<NewsDTO> todayNews = crawlerDataMapper.selectLatestNews();
+        List<IpoDTO> todayIpoList = crawlerDataMapper.selectLatestIpo();
+        List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataMapper.selectLatestGoldMarket();
+        List<OilMarketDailyTradingDTO> latestOilMarket = krxDataMapper.selectLatestOilMarket();
+        List<KospiDailyTradingDTO> latestKospiMarket = krxDataMapper.selectLatestKospi();
+        List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataMapper.selectLatestKosdaq();
+        List<StockDailyTradingDTO> topGainers = krxDataMapper.selectTopGainers(5);
+        List<StockDailyTradingDTO> topVolume = krxDataMapper.selectTopVolume(5);
 
-	DashboardDTO dashboardDTO = new DashboardDTO();
-	dashboardDTO.setCrawledNewsList(todayNews);
-	dashboardDTO.setCrawledIpoList(todayIpoList);
-	dashboardDTO.setGoldMarketDailyTradingList(latestGoldMarket);
-	dashboardDTO.setOilMarketDailyTradingList(latestOilMarket);
-	dashboardDTO.setKospiDailyTradingList(latestKospiMarket);
-	dashboardDTO.setKosdaqDailyTradingList(latestKosdaqMarket);
-	return ResponseEntity.ok(dashboardDTO);
+        DashboardDTO dashboardDTO = new DashboardDTO();
+        dashboardDTO.setCrawledNewsList(todayNews);
+        dashboardDTO.setCrawledIpoList(todayIpoList);
+        dashboardDTO.setGoldMarketDailyTradingList(latestGoldMarket);
+        dashboardDTO.setOilMarketDailyTradingList(latestOilMarket);
+        dashboardDTO.setKospiDailyTradingList(latestKospiMarket);
+        dashboardDTO.setKosdaqDailyTradingList(latestKosdaqMarket);
+        dashboardDTO.setTopGainersList(topGainers);
+        dashboardDTO.setTopVolumeList(topVolume);
+        return ResponseEntity.ok(dashboardDTO);
     }
     
     @GetMapping("/test")

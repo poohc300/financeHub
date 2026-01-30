@@ -7,6 +7,7 @@ import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
 import com.example.financeHub.krx.model.KospiDailyTradingDTO;
 import com.example.financeHub.krx.model.OilMarketDailyTradingDTO;
+import com.example.financeHub.krx.model.StockDailyTradingDTO;
 
 import lombok.Data;
 
@@ -19,4 +20,6 @@ public class DashboardDTO {
     private List<OilMarketDailyTradingDTO> oilMarketDailyTradingList;
     private List<KospiDailyTradingDTO> kospiDailyTradingList;
     private List<KosdaqDailyTradingDTO> kosdaqDailyTradingList;
+    private List<StockDailyTradingDTO> topGainersList;
+    private List<StockDailyTradingDTO> topVolumeList;
 }

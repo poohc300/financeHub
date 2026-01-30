@@ -22,6 +22,7 @@ import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
 import com.example.financeHub.krx.model.KospiDailyTradingDTO;
 import com.example.financeHub.krx.model.OilMarketDailyTradingDTO;
+import com.example.financeHub.krx.model.StockDailyTradingDTO;
 import com.example.financeHub.krx.service.KrxDataService;
 import com.example.financeHub.scheduler.model.SchedulerExecutionLogDTO;
 
@@ -57,6 +58,7 @@ public class DataFetchScheduler {
         fetchKosdaqData();
         fetchGoldMarketData();
         fetchOilMarketData();
+        fetchStockData();
         fetchNewsData();
         fetchIpoData();
 
@@ -225,6 +227,49 @@ public class DataFetchScheduler {
 
                 if (!newData.isEmpty()) {
                     krxDataMapper.batchInsertOilMarket(newData);
+                }
+            }
+
+            log.info("{}: processed={}, inserted={}, skipped={}", jobName, processed, inserted, skipped);
+        } catch (Exception e) {
+            status = "FAILED";
+            errorMessage = e.getMessage();
+            log.error("{} failed: {}", jobName, e.getMessage(), e);
+        } finally {
+            saveExecutionLog(jobName, startTime, status, processed, inserted, skipped, errorMessage);
+        }
+    }
+
+    public void fetchStockData() {
+        String jobName = "STOCK_DAILY_TRADING";
+        long startTime = System.currentTimeMillis();
+        int processed = 0;
+        int inserted = 0;
+        int skipped = 0;
+        String status = "SUCCESS";
+        String errorMessage = null;
+
+        try {
+            List<StockDailyTradingDTO> dataList = krxDataService.getStockDailyTradingInfo();
+            processed = dataList.size();
+
+            if (!dataList.isEmpty()) {
+                dataList.forEach(dto -> dto.setDataHash(dto.generateHash()));
+
+                Set<String> allHashes = dataList.stream()
+                        .map(StockDailyTradingDTO::getDataHash)
+                        .collect(Collectors.toSet());
+                Set<String> existingHashes = krxDataMapper.findExistingStockHashes(allHashes);
+
+                List<StockDailyTradingDTO> newData = dataList.stream()
+                        .filter(dto -> !existingHashes.contains(dto.getDataHash()))
+                        .collect(Collectors.toList());
+
+                inserted = newData.size();
+                skipped = processed - inserted;
+
+                if (!newData.isEmpty()) {
+                    krxDataMapper.batchInsertStock(newData);
                 }
             }
 

@@ -68,6 +68,25 @@ export interface KospiDailyTradingDTO {
     mktcap: string;  // 상장시가총액
 }
 
+export interface StockDailyTradingDTO {
+    basDd: string;  // 기준일자
+    isuCd: string;  // 종목코드
+    isuSrtCd: string;  // 종목 단축코드
+    isuNm: string;  // 종목명
+    mktNm: string;  // 시장구분
+    sectTpNm: string;  // 소속부
+    tddClsprc: string;  // 종가
+    cmpprevddPrc: string;  // 전일대비
+    flucRt: string;  // 등락률
+    tddOpnprc: string;  // 시가
+    tddHgprc: string;  // 고가
+    tddLwprc: string;  // 저가
+    accTrdvol: string;  // 거래량
+    accTrdval: string;  // 거래대금
+    mktcap: string;  // 시가총액
+    listShrs: string;  // 상장주수
+}
+
 export interface DashboardDataDTO {
     economicIndicators: EconomicIndicatorsDTO[];
     topGainers: TopGainersDTO[];
@@ -76,6 +95,8 @@ export interface DashboardDataDTO {
     goldMarketDailyTradingList: GoldMarketTradingDTO[];
     oilMarketDailyTradingList: OilMarketDailtyTradingDTO[];
     kospiDailyTradingList: KospiDailyTradingDTO[];
+    topGainersList: StockDailyTradingDTO[];
+    topVolumeList: StockDailyTradingDTO[];
 }
 
 

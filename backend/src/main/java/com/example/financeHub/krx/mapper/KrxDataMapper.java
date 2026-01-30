@@ -10,6 +10,7 @@ import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
 import com.example.financeHub.krx.model.KospiDailyTradingDTO;
 import com.example.financeHub.krx.model.OilMarketDailyTradingDTO;
+import com.example.financeHub.krx.model.StockDailyTradingDTO;
 
 @Mapper
 public interface KrxDataMapper {
@@ -33,4 +34,10 @@ public interface KrxDataMapper {
     void batchInsertOilMarket(@Param("list") List<OilMarketDailyTradingDTO> list);
     Set<String> findExistingOilMarketHashes(@Param("hashes") Set<String> hashes);
     List<OilMarketDailyTradingDTO> selectLatestOilMarket();
+
+    // Stock (개별 종목)
+    void batchInsertStock(@Param("list") List<StockDailyTradingDTO> list);
+    Set<String> findExistingStockHashes(@Param("hashes") Set<String> hashes);
+    List<StockDailyTradingDTO> selectTopGainers(@Param("limit") int limit);
+    List<StockDailyTradingDTO> selectTopVolume(@Param("limit") int limit);
 }
