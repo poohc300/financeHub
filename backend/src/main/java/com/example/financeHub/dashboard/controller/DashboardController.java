@@ -74,22 +74,7 @@ public class DashboardController {
         dashboardDTO.setTopVolumeList(topVolume);
         return ResponseEntity.ok(dashboardDTO);
     }
-    
-    @GetMapping("/test")
-    public ResponseEntity test() {
-	List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataService.getDailyGoldMarketTradingInfo();
-	List<OilMarketDailyTradingDTO> latestOilMarket = krxDataService.getDailtyOilMarketTradingInfo();
-	List<KospiDailyTradingDTO> latestKospiMarket = krxDataService.getDailyKospiInfo();
-	List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataService.getDailyKosdaqInfo();
 
-	DashboardDTO dashboardDTO = new DashboardDTO();
-	dashboardDTO.setGoldMarketDailyTradingList(latestGoldMarket);
-	dashboardDTO.setOilMarketDailyTradingList(latestOilMarket);
-	dashboardDTO.setKospiDailyTradingList(latestKospiMarket);
-	dashboardDTO.setKosdaqDailyTradingList(latestKosdaqMarket);
-
-	return ResponseEntity.ok(dashboardDTO);
-    }
 
     @GetMapping("/chart-data")
     public ResponseEntity<ChartDataDTO> getChartData(
