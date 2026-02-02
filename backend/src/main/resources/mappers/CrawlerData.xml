@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.financehub.crawler.mapper.CrawlerDataMapper">
+<mapper namespace="com.example.financeHub.crawler.mapper.CrawlerDataMapper">
 
     <!-- News -->
     <insert id="batchInsertNews" parameterType="list">
@@ -21,7 +21,7 @@
         </foreach>
     </select>
 
-    <select id="selectLatestNews" resultType="com.example.financehub.crawler.news.NewsDTO">
+    <select id="selectLatestNews" resultType="com.example.financeHub.crawler.news.NewsDTO">
         SELECT title, link, published_at AS publishedAt, data_hash AS dataHash
         FROM financehub.news
         WHERE published_at = (SELECT MAX(published_at) FROM financehub.news)
@@ -48,7 +48,7 @@
         </foreach>
     </select>
 
-    <select id="selectLatestIpo" resultType="com.example.financehub.crawler.ipo.IpoDTO">
+    <select id="selectLatestIpo" resultType="com.example.financeHub.crawler.ipo.IpoDTO">
         SELECT company_name AS companyName, link, period, fixed_offering_price AS fixedOfferingPrice,
                expected_offering_price AS expectedOfferingPrice, subscription_rate AS subscriptionRate,
                under_writer AS underWriter, data_hash AS dataHash
@@ -58,7 +58,7 @@
     </select>
 
     <!-- Scheduler Execution Log -->
-    <insert id="insertExecutionLog" parameterType="com.example.financehub.scheduler.model.SchedulerExecutionLogDTO">
+    <insert id="insertExecutionLog" parameterType="com.example.financeHub.scheduler.model.SchedulerExecutionLogDTO">
         INSERT INTO financehub.scheduler_execution_log
         (job_name, execution_time, status, records_processed, records_inserted, records_skipped, error_message, execution_duration_ms)
         VALUES
