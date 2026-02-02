@@ -11,7 +11,7 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
-      schema: financeHub
+      schema: financehub
       maximum-pool-size: 10
       minimum-idle: 5
       idle-timeout: 30000
