@@ -50,8 +50,8 @@ public class DataFetchScheduler {
         this.crawlerDataMapper = crawlerDataMapper;
     }
 
-    //@Scheduled(cron = "0 0 18 * * MON-FRI", zone = "Asia/Seoul")
-    @Scheduled(initialDelay = 10000, fixedDelay = Long.MAX_VALUE)  // 시작 10초 후 1회 실행
+    @Scheduled(cron = "0 0 18 * * MON-FRI", zone = "Asia/Seoul")
+    //@Scheduled(initialDelay = 10000, fixedDelay = Long.MAX_VALUE)  // 시작 10초 후 1회 실행
     public void fetchAllData() {
         log.info("Starting scheduled data fetch at {}", LocalDateTime.now());
 
