@@ -1,7 +1,7 @@
 -- KRX 데이터 테이블
 
 -- KOSPI 일별 시세
-CREATE TABLE IF NOT EXISTS financeHub.kospi_daily_trading (
+CREATE TABLE IF NOT EXISTS financehub.kospi_daily_trading (
     id BIGSERIAL PRIMARY KEY,
     data_hash VARCHAR(64) NOT NULL UNIQUE,
     bas_dd VARCHAR(8) NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS financeHub.kospi_daily_trading (
 );
 
 -- KOSDAQ 일별 시세
-CREATE TABLE IF NOT EXISTS financeHub.kosdaq_daily_trading (
+CREATE TABLE IF NOT EXISTS financehub.kosdaq_daily_trading (
     id BIGSERIAL PRIMARY KEY,
     data_hash VARCHAR(64) NOT NULL UNIQUE,
     bas_dd VARCHAR(8) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS financeHub.kosdaq_daily_trading (
 );
 
 -- 금시장 일별 시세
-CREATE TABLE IF NOT EXISTS financeHub.gold_market_daily_trading (
+CREATE TABLE IF NOT EXISTS financehub.gold_market_daily_trading (
     id BIGSERIAL PRIMARY KEY,
     data_hash VARCHAR(64) NOT NULL UNIQUE,
     bas_dd VARCHAR(8) NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS financeHub.gold_market_daily_trading (
 );
 
 -- 석유시장 일별 시세
-CREATE TABLE IF NOT EXISTS financeHub.oil_market_daily_trading (
+CREATE TABLE IF NOT EXISTS financehub.oil_market_daily_trading (
     id BIGSERIAL PRIMARY KEY,
     data_hash VARCHAR(64) NOT NULL UNIQUE,
     bas_dd VARCHAR(8) NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS financeHub.oil_market_daily_trading (
 );
 
 -- 개별 주식 종목 일별 시세
-CREATE TABLE IF NOT EXISTS financeHub.stock_daily_trading (
+CREATE TABLE IF NOT EXISTS financehub.stock_daily_trading (
     id BIGSERIAL PRIMARY KEY,
     data_hash VARCHAR(64) NOT NULL UNIQUE,
     bas_dd VARCHAR(8) NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS financeHub.stock_daily_trading (
 -- 크롤러 데이터 테이블
 
 -- 뉴스
-CREATE TABLE IF NOT EXISTS financeHub.news (
+CREATE TABLE IF NOT EXISTS financehub.news (
     id BIGSERIAL PRIMARY KEY,
     data_hash VARCHAR(64) NOT NULL UNIQUE,
     title VARCHAR(500) NOT NULL,
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS financeHub.news (
 );
 
 -- 공모주
-CREATE TABLE IF NOT EXISTS financeHub.ipo (
+CREATE TABLE IF NOT EXISTS financehub.ipo (
     id BIGSERIAL PRIMARY KEY,
     data_hash VARCHAR(64) NOT NULL UNIQUE,
     company_name VARCHAR(200) NOT NULL,
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS financeHub.ipo (
 );
 
 -- 스케줄러 실행 이력
-CREATE TABLE IF NOT EXISTS financeHub.scheduler_execution_log (
+CREATE TABLE IF NOT EXISTS financehub.scheduler_execution_log (
     id BIGSERIAL PRIMARY KEY,
     job_name VARCHAR(100) NOT NULL,
     execution_time TIMESTAMP NOT NULL,
@@ -133,13 +133,13 @@ CREATE TABLE IF NOT EXISTS financeHub.scheduler_execution_log (
 );
 
 -- 인덱스 생성
-CREATE INDEX IF NOT EXISTS idx_kospi_bas_dd ON financeHub.kospi_daily_trading(bas_dd);
-CREATE INDEX IF NOT EXISTS idx_kosdaq_bas_dd ON financeHub.kosdaq_daily_trading(bas_dd);
-CREATE INDEX IF NOT EXISTS idx_gold_bas_dd ON financeHub.gold_market_daily_trading(bas_dd);
-CREATE INDEX IF NOT EXISTS idx_oil_bas_dd ON financeHub.oil_market_daily_trading(bas_dd);
-CREATE INDEX IF NOT EXISTS idx_stock_bas_dd ON financeHub.stock_daily_trading(bas_dd);
-CREATE INDEX IF NOT EXISTS idx_stock_fluc_rt ON financeHub.stock_daily_trading(bas_dd, fluc_rt);
-CREATE INDEX IF NOT EXISTS idx_stock_acc_trdvol ON financeHub.stock_daily_trading(bas_dd, acc_trdvol);
-CREATE INDEX IF NOT EXISTS idx_news_published_at ON financeHub.news(published_at);
-CREATE INDEX IF NOT EXISTS idx_scheduler_log_job_name ON financeHub.scheduler_execution_log(job_name);
-CREATE INDEX IF NOT EXISTS idx_scheduler_log_execution_time ON financeHub.scheduler_execution_log(execution_time);
+CREATE INDEX IF NOT EXISTS idx_kospi_bas_dd ON financehub.kospi_daily_trading(bas_dd);
+CREATE INDEX IF NOT EXISTS idx_kosdaq_bas_dd ON financehub.kosdaq_daily_trading(bas_dd);
+CREATE INDEX IF NOT EXISTS idx_gold_bas_dd ON financehub.gold_market_daily_trading(bas_dd);
+CREATE INDEX IF NOT EXISTS idx_oil_bas_dd ON financehub.oil_market_daily_trading(bas_dd);
+CREATE INDEX IF NOT EXISTS idx_stock_bas_dd ON financehub.stock_daily_trading(bas_dd);
+CREATE INDEX IF NOT EXISTS idx_stock_fluc_rt ON financehub.stock_daily_trading(bas_dd, fluc_rt);
+CREATE INDEX IF NOT EXISTS idx_stock_acc_trdvol ON financehub.stock_daily_trading(bas_dd, acc_trdvol);
+CREATE INDEX IF NOT EXISTS idx_news_published_at ON financehub.news(published_at);
+CREATE INDEX IF NOT EXISTS idx_scheduler_log_job_name ON financehub.scheduler_execution_log(job_name);
+CREATE INDEX IF NOT EXISTS idx_scheduler_log_execution_time ON financehub.scheduler_execution_log(execution_time);
