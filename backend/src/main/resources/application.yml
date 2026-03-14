@@ -38,7 +38,7 @@ server:
 logging:
   level:
     org:
-      springframework: DEBUG
+      springframework: INFO
     com:
       example: DEBUG\
     root: DEBUG
