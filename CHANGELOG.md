@@ -2,6 +2,9 @@
 
 ## 2026-03-14
 
+### DashboardView 뉴스 표시 버그 수정
+- `DashboardView.vue` - `{{ event }}` 객체 출력 버그 수정 → `news.title` + 링크 클릭 가능하도록 변경
+
 ### NewsView DB 연동
 - `NewsView.vue` - 하드코딩 더미 데이터 제거, `/dashboard/data` API 실제 뉴스로 교체
 - `DashboardDataDTO.ts` - `CrawledNewsDTO`에 `publishedAt` 필드 추가
