@@ -210,13 +210,18 @@ watchEffect(() => {
             <span class="inline-block w-2 h-2 mt-2 mr-3 bg-blue-500 rounded-full"></span>
             <span class="text-gray-600">{{ event }}</span>
           </li> -->
-          <li 
-            v-for="(event, index) in newsList" 
+          <li
+            v-for="(news, index) in newsList"
             :key="index"
             class="flex items-start"
           >
-            <span class="inline-block w-2 h-2 mt-2 mr-3 bg-blue-500 rounded-full"></span>
-            <span class="text-gray-600">{{ event }}</span>
+            <span class="inline-block w-2 h-2 mt-2 mr-3 flex-shrink-0 bg-blue-500 rounded-full"></span>
+            <a
+              :href="news.link"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-gray-600 hover:text-blue-600 hover:underline text-sm leading-snug"
+            >{{ news.title }}</a>
           </li>
         </ul>
       </div>
