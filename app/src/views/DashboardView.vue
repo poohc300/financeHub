@@ -17,28 +17,23 @@ const topVolumeList = ref<StockDailyTradingDTO[]>([]);
 
 const calendarEvents = computed<CalendarEventDTO[]>(() => {
   if (ipoList.value && ipoList.value.length > 0) {
-    return ipoList.value.map(ipo => {
-      // period 값을 '~'로 분리하여 시작일과 종료일로 분리
-      const startDate = ipo.period.split('~')[0];
-      const endDate = ipo.period.split('~')[1];
-      const year = startDate.split('.')[0];
+    return ipoList.value
+      .filter(ipo => ipo.period && ipo.period.includes('~'))
+      .map(ipo => {
+        const parts = ipo.period.split('~');
+        const startDate = parts[0].trim();
+        const endDate = parts[1].trim();
+        const year = startDate.split('.')[0];
 
-      // const startFormatted = startDate.replace(/\./g, '-');
-      // const endFormatted = `${year}-${endDate.replace(/\./g, '-')}`; // '-' 로 변환환
-      const startFormatted = `${startDate.replace(/\./g, '-')}T00:00:00`;
-      const endFormatted = `${year}-${endDate.replace(/\./g, '-')}T23:59:59`;
+        const startFormatted = `${startDate.replace(/\./g, '-')}T00:00:00`;
+        const endFormatted = `${year}-${endDate.replace(/\./g, '-')}T23:59:59`;
 
-      console.log(startFormatted);
-      console.log(endFormatted);
-      console.log(ipo.companyName);
-      
-
-      return {
-        title: ipo.companyName,
-        start: startFormatted,  // 변환된 시작일
-        end: endFormatted,      // 변환된 종료일
-      };
-    }) || [];
+        return {
+          title: ipo.companyName,
+          start: startFormatted,
+          end: endFormatted,
+        };
+      });
   }
   return [];
 });

@@ -71,10 +71,33 @@
     <select id="selectLatestIpo" resultType="com.example.financeHub.crawler.ipo.IpoDTO">
         SELECT company_name AS companyName, link, period, fixed_offering_price AS fixedOfferingPrice,
                expected_offering_price AS expectedOfferingPrice, subscription_rate AS subscriptionRate,
-               under_writer AS underWriter, data_hash AS dataHash
+               under_writer AS underWriter, data_hash AS dataHash,
+               TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS createdAt
         FROM financehub.ipo
+        WHERE period LIKE '%~%'
         ORDER BY created_at DESC
         LIMIT 50
+    </select>
+
+    <select id="selectFilteredIpo" resultType="com.example.financeHub.crawler.ipo.IpoDTO">
+        SELECT company_name AS companyName, link, period, fixed_offering_price AS fixedOfferingPrice,
+               expected_offering_price AS expectedOfferingPrice, subscription_rate AS subscriptionRate,
+               under_writer AS underWriter, data_hash AS dataHash,
+               TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS createdAt
+        FROM financehub.ipo
+        <where>
+            <if test="startDate != null and startDate != ''">
+                AND DATE(created_at) &gt;= #{startDate}::date
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND DATE(created_at) &lt;= #{endDate}::date
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND LOWER(company_name) LIKE LOWER(CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <!-- Scheduler Execution Log -->

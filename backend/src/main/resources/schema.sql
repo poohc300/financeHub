@@ -108,13 +108,13 @@ CREATE TABLE IF NOT EXISTS financehub.news (
 CREATE TABLE IF NOT EXISTS financehub.ipo (
     id BIGSERIAL PRIMARY KEY,
     data_hash VARCHAR(64) NOT NULL UNIQUE,
-    company_name VARCHAR(200) NOT NULL,
-    link VARCHAR(1000),
-    period VARCHAR(200),
-    fixed_offering_price VARCHAR(200),
-    expected_offering_price VARCHAR(200),
-    subscription_rate VARCHAR(200),
-    under_writer VARCHAR(200),
+    company_name TEXT NOT NULL,
+    link TEXT,
+    period TEXT,
+    fixed_offering_price TEXT,
+    expected_offering_price TEXT,
+    subscription_rate TEXT,
+    under_writer TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

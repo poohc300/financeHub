@@ -14,6 +14,7 @@ public class IpoDTO {
     private String subscriptionRate; // 청약경쟁률
     private String underWriter; // 주간사
     private String dataHash; // 데이터 해시
+    private String createdAt; // 수집일시
 
     public String generateHash() {
 	String key = companyName + "|" + link + "|" + period;
