@@ -28,6 +28,7 @@ export interface CrawledIpoDTO {
     expectedOfferingPrice: string; // 희망공모가
     subscriptionRate: string; // 청약경쟁률
     underWriter: string; // 주간사
+    createdAt: string; // 수집일시
 }
 
 /** ✅ 금시장 일별 매매 정보 DTO */
