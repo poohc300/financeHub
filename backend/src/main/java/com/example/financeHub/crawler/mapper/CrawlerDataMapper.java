@@ -29,6 +29,13 @@ public interface CrawlerDataMapper {
     void batchInsertIpo(@Param("list") List<IpoDTO> list);
     Set<String> findExistingIpoHashes(@Param("hashes") Set<String> hashes);
     List<IpoDTO> selectLatestIpo();
+    List<IpoDTO> selectFilteredIpo(
+        @Param("startDate") String startDate,
+        @Param("endDate") String endDate,
+        @Param("keyword") String keyword,
+        @Param("limit") int limit,
+        @Param("offset") int offset
+    );
 
     // Scheduler Execution Log
     void insertExecutionLog(SchedulerExecutionLogDTO log);
