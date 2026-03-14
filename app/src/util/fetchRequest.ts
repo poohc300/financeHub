@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080"; // API 기본 URL
+const BASE_URL = "/api"; // API 기본 URL (nginx /api/ → http://172.17.0.1:8080 프록시)
 
 /**
  * 공통 fetch 유틸리티 함수
