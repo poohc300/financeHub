@@ -1,0 +1,39 @@
+name: Deploy financeHub
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 백엔드 빌드
+      - name: Build Backend
+        working-directory: backend
+        run: ./gradlew build -x test
+
+      # 백엔드 배포 (systemd 재시작)
+      - name: Deploy Backend
+        run: |
+          sudo cp backend/build/libs/*.jar /home/jeremy/dev/financeHub/backend/app.jar
+          sudo systemctl restart financehub-backend
+          sudo systemctl status financehub-backend --no-pager
+
+      # 프론트엔드 빌드
+      - name: Build Frontend
+        working-directory: app
+        run: |
+          npm install
+          npm run build
+
+      # 프론트엔드 배포 (nginx가 마운트한 dist 폴더에 복사)
+      - name: Deploy Frontend
+        run: |
+          rm -rf /home/jeremy/dev/financeHub/app/dist/*
+          cp -r app/dist/* /home/jeremy/dev/financeHub/app/dist/
