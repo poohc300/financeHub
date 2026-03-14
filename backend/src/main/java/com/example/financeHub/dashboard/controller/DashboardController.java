@@ -81,29 +81,70 @@ public class DashboardController {
             @RequestParam(defaultValue = "KOSPI") String market,
             @RequestParam(defaultValue = "코스피") String indexName,
             @RequestParam(required = false) String isuCd,
-            @RequestParam(defaultValue = "30") int limit) {
+            @RequestParam(defaultValue = "30") int limit,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
 
         ChartDataDTO chartData = new ChartDataDTO();
         chartData.setIndexName(indexName);
 
+        boolean useDateRange = startDate != null && endDate != null;
+
         if ("KOSPI".equalsIgnoreCase(market)) {
-            List<KospiDailyTradingDTO> history = krxDataMapper.selectKospiHistory(indexName, limit);
+            List<KospiDailyTradingDTO> history = useDateRange
+                    ? krxDataMapper.selectKospiHistoryByDateRange(indexName, startDate, endDate)
+                    : krxDataMapper.selectKospiHistory(indexName, limit);
             Collections.reverse(history);
             chartData.setLabels(history.stream().map(KospiDailyTradingDTO::getBasDd).collect(Collectors.toList()));
             chartData.setValues(history.stream().map(KospiDailyTradingDTO::getClsprcIdx).collect(Collectors.toList()));
+            chartData.setVolumes(history.stream().map(KospiDailyTradingDTO::getAccTrdvol).collect(Collectors.toList()));
+            chartData.setOpens(history.stream().map(KospiDailyTradingDTO::getOpnprcIdx).collect(Collectors.toList()));
+            chartData.setHighs(history.stream().map(KospiDailyTradingDTO::getHgprcIdx).collect(Collectors.toList()));
+            chartData.setLows(history.stream().map(KospiDailyTradingDTO::getLwprcIdx).collect(Collectors.toList()));
         } else if ("KOSDAQ".equalsIgnoreCase(market)) {
-            List<KosdaqDailyTradingDTO> history = krxDataMapper.selectKosdaqHistory(indexName, limit);
+            List<KosdaqDailyTradingDTO> history = useDateRange
+                    ? krxDataMapper.selectKosdaqHistoryByDateRange(indexName, startDate, endDate)
+                    : krxDataMapper.selectKosdaqHistory(indexName, limit);
             Collections.reverse(history);
             chartData.setLabels(history.stream().map(KosdaqDailyTradingDTO::getBasDd).collect(Collectors.toList()));
             chartData.setValues(history.stream().map(KosdaqDailyTradingDTO::getClsprcIdx).collect(Collectors.toList()));
+            chartData.setVolumes(history.stream().map(KosdaqDailyTradingDTO::getAccTrdvol).collect(Collectors.toList()));
+            chartData.setOpens(history.stream().map(KosdaqDailyTradingDTO::getOpnprcIdx).collect(Collectors.toList()));
+            chartData.setHighs(history.stream().map(KosdaqDailyTradingDTO::getHgprcIdx).collect(Collectors.toList()));
+            chartData.setLows(history.stream().map(KosdaqDailyTradingDTO::getLwprcIdx).collect(Collectors.toList()));
         } else if ("STOCK".equalsIgnoreCase(market) && isuCd != null) {
-            List<StockDailyTradingDTO> history = krxDataMapper.selectStockHistory(isuCd, limit);
+            List<StockDailyTradingDTO> history = useDateRange
+                    ? krxDataMapper.selectStockHistoryByDateRange(isuCd, startDate, endDate)
+                    : krxDataMapper.selectStockHistory(isuCd, limit);
             Collections.reverse(history);
             chartData.setLabels(history.stream().map(StockDailyTradingDTO::getBasDd).collect(Collectors.toList()));
             chartData.setValues(history.stream().map(StockDailyTradingDTO::getTddClsprc).collect(Collectors.toList()));
+            chartData.setVolumes(history.stream().map(StockDailyTradingDTO::getAccTrdvol).collect(Collectors.toList()));
+            chartData.setOpens(history.stream().map(StockDailyTradingDTO::getTddOpnprc).collect(Collectors.toList()));
+            chartData.setHighs(history.stream().map(StockDailyTradingDTO::getTddHgprc).collect(Collectors.toList()));
+            chartData.setLows(history.stream().map(StockDailyTradingDTO::getTddLwprc).collect(Collectors.toList()));
             if (!history.isEmpty()) {
                 chartData.setIndexName(history.get(0).getIsuNm());
             }
+        } else if ("GOLD".equalsIgnoreCase(market)) {
+            List<GoldMarketDailyTradingDTO> history = useDateRange
+                    ? krxDataMapper.selectGoldHistoryByDateRange(indexName, startDate, endDate)
+                    : krxDataMapper.selectGoldHistory(indexName, limit);
+            Collections.reverse(history);
+            chartData.setLabels(history.stream().map(GoldMarketDailyTradingDTO::getBasDd).collect(Collectors.toList()));
+            chartData.setValues(history.stream().map(GoldMarketDailyTradingDTO::getTddClsprc).collect(Collectors.toList()));
+            chartData.setVolumes(history.stream().map(GoldMarketDailyTradingDTO::getAccTrdvol).collect(Collectors.toList()));
+            chartData.setOpens(history.stream().map(GoldMarketDailyTradingDTO::getTddOpnprc).collect(Collectors.toList()));
+            chartData.setHighs(history.stream().map(GoldMarketDailyTradingDTO::getTddHgprc).collect(Collectors.toList()));
+            chartData.setLows(history.stream().map(GoldMarketDailyTradingDTO::getTddLwprc).collect(Collectors.toList()));
+        } else if ("OIL".equalsIgnoreCase(market)) {
+            List<OilMarketDailyTradingDTO> history = useDateRange
+                    ? krxDataMapper.selectOilHistoryByDateRange(indexName, startDate, endDate)
+                    : krxDataMapper.selectOilHistory(indexName, limit);
+            Collections.reverse(history);
+            chartData.setLabels(history.stream().map(OilMarketDailyTradingDTO::getBasDd).collect(Collectors.toList()));
+            chartData.setValues(history.stream().map(OilMarketDailyTradingDTO::getWtAvgPrc).collect(Collectors.toList()));
+            chartData.setVolumes(history.stream().map(OilMarketDailyTradingDTO::getAccTrdvol).collect(Collectors.toList()));
         }
 
         return ResponseEntity.ok(chartData);

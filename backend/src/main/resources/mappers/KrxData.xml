@@ -42,6 +42,18 @@
         LIMIT #{limit}
     </select>
 
+    <select id="selectKospiHistoryByDateRange" resultType="com.example.financeHub.krx.model.KospiDailyTradingDTO">
+        SELECT bas_dd AS basDd, idx_clss AS idxClss, idx_nm AS idxNm, clsprc_idx AS clsprcIdx,
+               cmpprevdd_idx AS cmpprevddIdx, fluc_rt AS flucRt, opnprc_idx AS opnprcIdx,
+               hgprc_idx AS hgprcIdx, lwprc_idx AS lwprcIdx, acc_trdvol AS accTrdvol,
+               acc_trdval AS accTrdval, mktcap, data_hash AS dataHash
+        FROM financehub.kospi_daily_trading
+        WHERE idx_nm = #{indexName}
+          AND bas_dd &gt;= #{startDate}
+          AND bas_dd &lt;= #{endDate}
+        ORDER BY bas_dd DESC
+    </select>
+
     <!-- KOSDAQ -->
     <insert id="batchInsertKosdaq" parameterType="list">
         INSERT INTO financehub.kosdaq_daily_trading
@@ -82,6 +94,18 @@
         LIMIT #{limit}
     </select>
 
+    <select id="selectKosdaqHistoryByDateRange" resultType="com.example.financeHub.krx.model.KosdaqDailyTradingDTO">
+        SELECT bas_dd AS basDd, idx_clss AS idxClss, idx_nm AS idxNm, clsprc_idx AS clsprcIdx,
+               cmpprevdd_idx AS cmpprevddIdx, fluc_rt AS flucRt, opnprc_idx AS opnprcIdx,
+               hgprc_idx AS hgprcIdx, lwprc_idx AS lwprcIdx, acc_trdvol AS accTrdvol,
+               acc_trdval AS accTrdval, mktcap, data_hash AS dataHash
+        FROM financehub.kosdaq_daily_trading
+        WHERE idx_nm = #{indexName}
+          AND bas_dd &gt;= #{startDate}
+          AND bas_dd &lt;= #{endDate}
+        ORDER BY bas_dd DESC
+    </select>
+
     <!-- Gold Market -->
     <insert id="batchInsertGoldMarket" parameterType="list">
         INSERT INTO financehub.gold_market_daily_trading
@@ -111,6 +135,29 @@
         ORDER BY isu_nm
     </select>
 
+    <select id="selectGoldHistory" resultType="com.example.financeHub.krx.model.GoldMarketDailyTradingDTO">
+        SELECT bas_dd AS basDd, isu_cd AS isuCd, isu_nm AS isuNm, tdd_clsprc AS tddClsprc,
+               cmpprevdd_prc AS cmpprevddPrc, fluc_rt AS flucRt, tdd_opnprc AS tddOpnprc,
+               tdd_hgprc AS tddHgprc, tdd_lwprc AS tddLwprc, acc_trdvol AS accTrdvol,
+               acc_trdval AS accTrdval, data_hash AS dataHash
+        FROM financehub.gold_market_daily_trading
+        WHERE isu_nm = #{isuNm}
+        ORDER BY bas_dd DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectGoldHistoryByDateRange" resultType="com.example.financeHub.krx.model.GoldMarketDailyTradingDTO">
+        SELECT bas_dd AS basDd, isu_cd AS isuCd, isu_nm AS isuNm, tdd_clsprc AS tddClsprc,
+               cmpprevdd_prc AS cmpprevddPrc, fluc_rt AS flucRt, tdd_opnprc AS tddOpnprc,
+               tdd_hgprc AS tddHgprc, tdd_lwprc AS tddLwprc, acc_trdvol AS accTrdvol,
+               acc_trdval AS accTrdval, data_hash AS dataHash
+        FROM financehub.gold_market_daily_trading
+        WHERE isu_nm = #{isuNm}
+          AND bas_dd &gt;= #{startDate}
+          AND bas_dd &lt;= #{endDate}
+        ORDER BY bas_dd DESC
+    </select>
+
     <!-- Oil Market -->
     <insert id="batchInsertOilMarket" parameterType="list">
         INSERT INTO financehub.oil_market_daily_trading
@@ -137,6 +184,27 @@
         FROM financehub.oil_market_daily_trading
         WHERE bas_dd = (SELECT MAX(bas_dd) FROM financehub.oil_market_daily_trading)
         ORDER BY oil_nm
+    </select>
+
+    <select id="selectOilHistory" resultType="com.example.financeHub.krx.model.OilMarketDailyTradingDTO">
+        SELECT bas_dd AS basDd, oil_nm AS oilNm, wt_avg_prc AS wtAvgPrc,
+               wt_dis_avg_prc AS wtDisAvgPrc, acc_trdvol AS accTrdvol,
+               acc_trd_val AS accTrdVal, data_hash AS dataHash
+        FROM financehub.oil_market_daily_trading
+        WHERE oil_nm = #{oilNm}
+        ORDER BY bas_dd DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectOilHistoryByDateRange" resultType="com.example.financeHub.krx.model.OilMarketDailyTradingDTO">
+        SELECT bas_dd AS basDd, oil_nm AS oilNm, wt_avg_prc AS wtAvgPrc,
+               wt_dis_avg_prc AS wtDisAvgPrc, acc_trdvol AS accTrdvol,
+               acc_trd_val AS accTrdVal, data_hash AS dataHash
+        FROM financehub.oil_market_daily_trading
+        WHERE oil_nm = #{oilNm}
+          AND bas_dd &gt;= #{startDate}
+          AND bas_dd &lt;= #{endDate}
+        ORDER BY bas_dd DESC
     </select>
 
     <!-- Stock (개별 종목) -->
@@ -205,6 +273,19 @@
         WHERE isu_cd = #{isuCd}
         ORDER BY bas_dd DESC
         LIMIT #{limit}
+    </select>
+
+    <select id="selectStockHistoryByDateRange" resultType="com.example.financeHub.krx.model.StockDailyTradingDTO">
+        SELECT bas_dd AS basDd, isu_cd AS isuCd, isu_srt_cd AS isuSrtCd, isu_nm AS isuNm,
+               mkt_nm AS mktNm, sect_tp_nm AS sectTpNm, tdd_clsprc AS tddClsprc,
+               cmpprevdd_prc AS cmpprevddPrc, fluc_rt AS flucRt, tdd_opnprc AS tddOpnprc,
+               tdd_hgprc AS tddHgprc, tdd_lwprc AS tddLwprc, acc_trdvol AS accTrdvol,
+               acc_trdval AS accTrdval, mktcap, list_shrs AS listShrs, data_hash AS dataHash
+        FROM financehub.stock_daily_trading
+        WHERE isu_cd = #{isuCd}
+          AND bas_dd &gt;= #{startDate}
+          AND bas_dd &lt;= #{endDate}
+        ORDER BY bas_dd DESC
     </select>
 
 </mapper>

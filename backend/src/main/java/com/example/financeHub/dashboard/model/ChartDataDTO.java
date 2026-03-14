@@ -8,5 +8,9 @@ import lombok.Data;
 public class ChartDataDTO {
     private List<String> labels;
     private List<String> values;
+    private List<String> volumes;
+    private List<String> opens;
+    private List<String> highs;
+    private List<String> lows;
     private String indexName;
 }
