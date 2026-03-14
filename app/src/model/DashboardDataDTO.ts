@@ -52,6 +52,7 @@ export interface OilMarketDailtyTradingDTO {
     wtDisAvgPrc: string;  // 가중평균가격_협의
     accTrdvol: string;  // 거래량
     accTrdVal: string;  // 거래대금
+    flucRt: string;  // 등락률 (컨트롤러 계산)
 }
 
 export interface KospiDailyTradingDTO {

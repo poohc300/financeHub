@@ -40,6 +40,7 @@ public interface KrxDataMapper {
     void batchInsertOilMarket(@Param("list") List<OilMarketDailyTradingDTO> list);
     Set<String> findExistingOilMarketHashes(@Param("hashes") Set<String> hashes);
     List<OilMarketDailyTradingDTO> selectLatestOilMarket();
+    List<OilMarketDailyTradingDTO> selectPrevOilMarket();
     List<OilMarketDailyTradingDTO> selectOilHistory(@Param("oilNm") String oilNm, @Param("limit") int limit);
     List<OilMarketDailyTradingDTO> selectOilHistoryByDateRange(@Param("oilNm") String oilNm, @Param("startDate") String startDate, @Param("endDate") String endDate);
 

@@ -1,5 +1,20 @@
 # financeHub 수정 내역
 
+## 2026-03-14 (2차)
+
+### StockView 종목 검색 UI
+- `StockView.vue` - 종목명 검색 입력창 + 자동완성 드롭다운 추가 (debounce 300ms)
+- `StockView.vue` - `selectStock` 함수: 종목 선택 시 isuCd 저장 후 차트 전환
+- `StockView.vue` - `buildUrl` 수정: STOCK 마켓일 때 isuCd 파라미터로 URL 구성
+
+### 오일 전일 대비 등락률 계산
+- `OilMarketDailyTradingDTO.java` - `flucRt` 필드 추가 (DB 미저장, 컨트롤러 계산값)
+- `KrxData.xml` - `selectPrevOilMarket` SQL 추가 (직전 영업일 오일 데이터 조회)
+- `KrxDataMapper.java` - `selectPrevOilMarket()` 인터페이스 추가
+- `DashboardController.java` - 전일 오일 가격 조회 후 등락률 계산하여 `flucRt` 세팅
+- `DashboardDataDTO.ts` - `OilMarketDailtyTradingDTO`에 `flucRt` 필드 추가
+- `DashboardView.vue` - `mapOil` 함수에서 `flucRt` 사용하여 등락률 표시
+
 ## 2026-03-14
 
 ### DashboardView 뉴스 표시 버그 수정

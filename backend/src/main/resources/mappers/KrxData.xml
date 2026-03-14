@@ -186,6 +186,18 @@
         ORDER BY oil_nm
     </select>
 
+    <select id="selectPrevOilMarket" resultType="com.example.financeHub.krx.model.OilMarketDailyTradingDTO">
+        SELECT bas_dd AS basDd, oil_nm AS oilNm, wt_avg_prc AS wtAvgPrc,
+               wt_dis_avg_prc AS wtDisAvgPrc, acc_trdvol AS accTrdvol,
+               acc_trd_val AS accTrdVal, data_hash AS dataHash
+        FROM financehub.oil_market_daily_trading
+        WHERE bas_dd = (
+            SELECT MAX(bas_dd) FROM financehub.oil_market_daily_trading
+            WHERE bas_dd &lt; (SELECT MAX(bas_dd) FROM financehub.oil_market_daily_trading)
+        )
+        ORDER BY oil_nm
+    </select>
+
     <select id="selectOilHistory" resultType="com.example.financeHub.krx.model.OilMarketDailyTradingDTO">
         SELECT bas_dd AS basDd, oil_nm AS oilNm, wt_avg_prc AS wtAvgPrc,
                wt_dis_avg_prc AS wtDisAvgPrc, acc_trdvol AS accTrdvol,
