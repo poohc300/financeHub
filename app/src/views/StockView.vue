@@ -36,6 +36,12 @@ const endDate = ref('')
 const chartType = ref<'line' | 'candle'>('line')
 const compareMode = ref(false)
 
+const searchQuery = ref('')
+const searchResults = ref<StockDailyTradingDTO[]>([])
+const showDropdown = ref(false)
+const selectedIsuCd = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
 const chartLabels = ref<string[]>([])
 const chartValues = ref<string[]>([])
 const chartVolumes = ref<string[]>([])
@@ -199,13 +205,49 @@ onBeforeUnmount(() => {
 })
 
 const buildUrl = (market: string, index: string) => {
-  let url = `/dashboard/chart-data?market=${market}&indexName=${encodeURIComponent(index)}`
+  let url: string
+  if (market === 'STOCK') {
+    url = `/dashboard/chart-data?market=STOCK&isuCd=${encodeURIComponent(selectedIsuCd.value)}`
+  } else {
+    url = `/dashboard/chart-data?market=${market}&indexName=${encodeURIComponent(index)}`
+  }
   if (startDate.value && endDate.value) {
     url += `&startDate=${startDate.value.replace(/-/g, '')}&endDate=${endDate.value.replace(/-/g, '')}`
   } else {
     url += `&limit=${selectedPeriod.value}`
   }
   return url
+}
+
+const onSearchInput = () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  if (!searchQuery.value.trim()) {
+    searchResults.value = []
+    showDropdown.value = false
+    return
+  }
+  searchTimer = setTimeout(async () => {
+    try {
+      const results = await fetchRequest<StockDailyTradingDTO[]>(
+        `/dashboard/stocks/search?keyword=${encodeURIComponent(searchQuery.value)}&limit=10`, 'GET'
+      )
+      searchResults.value = results || []
+      showDropdown.value = searchResults.value.length > 0
+    } catch (e) {
+      console.error('종목 검색 오류:', e)
+    }
+  }, 300)
+}
+
+const selectStock = (stock: StockDailyTradingDTO) => {
+  selectedIsuCd.value = stock.isuCd
+  searchQuery.value = stock.isuNm
+  showDropdown.value = false
+  changeMarket('STOCK', stock.isuNm)
+}
+
+const closeDropdown = () => {
+  setTimeout(() => { showDropdown.value = false }, 150)
 }
 
 const fetchChartData = async () => {
@@ -289,8 +331,35 @@ onMounted(() => {
 <template>
   <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- 거래량 TOP 종목 -->
+      <!-- 종목 검색 + 거래량 TOP -->
       <div class="lg:col-span-1">
+        <!-- 종목 검색 -->
+        <div class="mb-4 relative">
+          <h2 class="text-xl font-bold text-gray-800 mb-2">종목 검색</h2>
+          <input
+            v-model="searchQuery"
+            @input="onSearchInput"
+            @blur="closeDropdown"
+            type="text"
+            placeholder="종목명 검색..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <ul
+            v-if="showDropdown"
+            class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-52 overflow-y-auto"
+          >
+            <li
+              v-for="stock in searchResults"
+              :key="stock.isuCd"
+              @mousedown.prevent="selectStock(stock)"
+              class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+            >
+              <span class="font-medium text-gray-800">{{ stock.isuNm }}</span>
+              <span class="ml-2 text-gray-400 text-xs">{{ stock.isuSrtCd }}</span>
+            </li>
+          </ul>
+        </div>
+
         <h2 class="text-xl font-bold text-gray-800 mb-4">거래량 TOP</h2>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="divide-y divide-gray-200">

@@ -41,6 +41,11 @@ public class OilMarketDailyTradingDTO {
     private String accTrdVal;
 
     /**
+     * 등락률 (DB 미저장, 컨트롤러에서 계산)
+     */
+    private String flucRt;
+
+    /**
      * 데이터 해시
      */
     private String dataHash;

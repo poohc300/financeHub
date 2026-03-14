@@ -60,12 +60,12 @@ const mapGold = (data: GoldMarketTradingDTO):EconomicIndicatorsDTO => {
 }
 
 const mapOil = (data: OilMarketDailtyTradingDTO):EconomicIndicatorsDTO => {
-  // 오일은 등락률이 제공되지 않아서 전날 오일값의 값과 금일값 비교해야함함
+  const rate = parseFloat(data.flucRt || '0')
   return {
     label: data.oilNm,
     value: data.wtAvgPrc,
-    change: '',
-    isPositive: true
+    change: data.flucRt ? `${rate >= 0 ? '+' : ''}${data.flucRt}%` : '',
+    isPositive: rate >= 0
   }
 }
 const mapKospi = (data: KospiDailyTradingDTO):EconomicIndicatorsDTO => {

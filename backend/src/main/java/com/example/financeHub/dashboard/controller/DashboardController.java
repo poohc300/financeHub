@@ -2,6 +2,7 @@ package com.example.financeHub.dashboard.controller;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -58,6 +59,22 @@ public class DashboardController {
         List<IpoDTO> todayIpoList = crawlerDataMapper.selectLatestIpo();
         List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataMapper.selectLatestGoldMarket();
         List<OilMarketDailyTradingDTO> latestOilMarket = krxDataMapper.selectLatestOilMarket();
+        List<OilMarketDailyTradingDTO> prevOilMarket = krxDataMapper.selectPrevOilMarket();
+        Map<String, String> prevOilPriceMap = prevOilMarket.stream()
+                .collect(Collectors.toMap(OilMarketDailyTradingDTO::getOilNm, OilMarketDailyTradingDTO::getWtAvgPrc, (a, b) -> a));
+        latestOilMarket.forEach(oil -> {
+            String prevPrc = prevOilPriceMap.get(oil.getOilNm());
+            if (prevPrc != null && !prevPrc.isBlank()) {
+                try {
+                    double cur = Double.parseDouble(oil.getWtAvgPrc().replace(",", ""));
+                    double prev = Double.parseDouble(prevPrc.replace(",", ""));
+                    double rate = (cur - prev) / prev * 100;
+                    oil.setFlucRt(String.format("%.2f", rate));
+                } catch (NumberFormatException ignored) {
+                    oil.setFlucRt("0.00");
+                }
+            }
+        });
         List<KospiDailyTradingDTO> latestKospiMarket = krxDataMapper.selectLatestKospi();
         List<KosdaqDailyTradingDTO> latestKosdaqMarket = krxDataMapper.selectLatestKosdaq();
         List<StockDailyTradingDTO> topGainers = krxDataMapper.selectTopGainers(5);
