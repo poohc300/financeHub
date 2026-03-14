@@ -15,7 +15,8 @@ import { RouterView, RouterLink } from 'vue-router'
               v-for="(item, index) in [
                 { to: '/', label: '홈' },
                 { to: '/news', label: '뉴스' },
-                { to: '/stocks', label: '주식' }
+                { to: '/stocks', label: '주식' },
+                { to: '/ipo', label: '공모주' }
               ]"
               :key="index"
               :to="item.to"
