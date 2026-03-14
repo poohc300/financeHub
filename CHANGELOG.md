@@ -1,5 +1,32 @@
 # financeHub 수정 내역
 
+## 2026-03-14 (5차)
+
+### 뉴스 1시간 크롤링 + Vuetify 카드 리스트 + 필터
+- `DataFetchScheduler.java` - `fetchNewsHourly()` 추가 (`0 0 * * * *` 매 정시)
+- `NewsDTO.java` - `createdAt` 필드 추가 (크롤링 시각)
+- `CrawlerDataMapper.java` - `selectFilteredNews()` 추가 (기간/키워드 필터)
+- `CrawlerData.xml` - `selectFilteredNews` SQL 추가 (MyBatis 동적 WHERE)
+- `NewsController.java` (신규) - `GET /news/list` 필터 조회 API
+- `package.json` - vuetify, @mdi/font, vite-plugin-vuetify 추가
+- `vite.config.ts` - vite-plugin-vuetify 적용
+- `tailwind.config.js` - preflight 비활성화 (Vuetify CSS reset과 충돌 방지)
+- `main.ts` - Vuetify 전역 등록
+- `NewsView.vue` - Vuetify 카드 리스트로 전면 재작성
+  - 기간 버튼 (오늘/3일/1주일/1개월/전체)
+  - 주제 칩 (증시/코스피/환율/금리/부동산/암호화폐)
+  - 키워드 검색 (debounce 400ms)
+  - 더 보기 (offset 기반 페이지네이션)
+
+## 2026-03-14 (4차)
+
+### ARM64 크롤링 Selenium → Jsoup 전환
+- `build.gradle` - `selenium-java` 제거, `jsoup:1.18.3` 추가
+- `NewsCrawler.java` - Selenium/ChromeDriver 제거, Jsoup으로 재작성 (네이버 금융 뉴스)
+- `IpoCrawler.java` - Selenium/ChromeDriver 제거, Jsoup으로 재작성 (38.co.kr 공모주)
+- `WebDriverConfig.java` - Selenium Bean 제거 (빈 클래스로 교체)
+- 효과: 브라우저/Chromium 없이 ARM64 서버에서 크롤링 정상 동작
+
 ## 2026-03-14 (3차)
 
 ### 스케줄러 수동 트리거 및 로그 조회 API
