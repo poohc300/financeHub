@@ -44,3 +44,31 @@
 - [x] 뉴스 1시간 단위 자동 크롤링
 - [x] 뉴스 필터 API (기간/키워드)
 - [x] Vuetify 카드 리스트 UI (기간/주제/검색 필터)
+
+### 공모주 (IPO) 고도화
+- [ ] **DB 선행 작업** — 서버에서 ALTER TABLE 실행 (VARCHAR 50→200)
+      ```sql
+      ALTER TABLE financehub.ipo ALTER COLUMN period TYPE VARCHAR(200);
+      ALTER TABLE financehub.ipo ALTER COLUMN fixed_offering_price TYPE VARCHAR(200);
+      ALTER TABLE financehub.ipo ALTER COLUMN expected_offering_price TYPE VARCHAR(200);
+      ALTER TABLE financehub.ipo ALTER COLUMN subscription_rate TYPE VARCHAR(200);
+      ```
+- [ ] **DB 추가 컬럼** — `created_at` 조회 지원 (현재 INSERT에만 사용, SELECT에서 누락)
+      → `IpoDTO`에 `createdAt` 필드 추가
+      → `selectLatestIpo` SQL에 `TO_CHAR(created_at, 'YYYY-MM-DD') AS createdAt` 추가
+- [ ] **백엔드** — `selectFilteredIpo` SQL 추가 (CrawlerData.xml)
+      → 조건: 종목명 키워드(`company_name ILIKE`), 기간(`created_at` DATE 범위)
+      → 페이지네이션: `LIMIT #{limit} OFFSET #{offset}`, `ORDER BY created_at DESC`
+      → `period` 컬럼은 "26.03.14~26.03.15" 텍스트라 날짜 파싱 불가 → `created_at` 기준 필터
+- [ ] **백엔드** — `CrawlerDataMapper`에 `selectFilteredIpo` 메서드 추가
+- [ ] **백엔드** — `IpoController` 신규 생성 (`GET /ipo/list?keyword=&startDate=&endDate=&limit=20&offset=0`)
+- [ ] **프론트** — DashboardView 캘린더 섹션: compact 유지, 표시 건수 제한(월 기준 필터)
+- [ ] **프론트** — IpoView 신규 or DashboardView 내 리스트 섹션
+      → 최신순 내림차순, 페이지네이션(20건씩)
+      → 필터: 키워드 검색 + 기간 버튼(이번달/3개월/전체)
+      → Vuetify 카드 or 테이블 형태
+
+### 인프라 개선
+- [ ] deploy.yml — 배포 시 포트 8080 기존 프로세스 강제 종료 로직 추가 (nohup 잔존 프로세스 충돌 방지)
+- [ ] nginx 라우팅 추가 — `/admin/`, `/news/` 경로 백엔드 프록시 설정
+- [ ] KRX API 실제 수집 검증 — 평일 18:00 자동 수집 후 DB 데이터 확인
