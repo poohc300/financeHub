@@ -33,6 +33,7 @@ jobs:
       - name: Deploy Backend
         run: |
           cp backend/build/libs/*.jar /home/jeremy/dev/financeHub/backend/app.jar
+          sudo systemctl daemon-reload
           sudo systemctl restart financehub-backend
           sleep 5
           sudo systemctl is-active --quiet financehub-backend && echo "Backend started successfully" || (echo "Backend failed to start" && exit 1)
