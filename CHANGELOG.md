@@ -1,5 +1,15 @@
 # financeHub 수정 내역
 
+## 2026-03-14 (3차)
+
+### 스케줄러 수동 트리거 및 로그 조회 API
+- `SchedulerController.java` (신규) - 수동 실행 및 로그 조회 엔드포인트
+  - `POST /admin/run-krx` - KRX 데이터만 수동 수집 (Selenium 불필요)
+  - `POST /admin/run-all` - 전체 수집 (뉴스/IPO 포함, Chromium 필요)
+  - `GET /admin/scheduler-logs?limit=50` - 최근 실행 로그 조회
+- `CrawlerDataMapper.java` - `selectRecentLogs` 메서드 추가
+- `CrawlerData.xml` - `selectRecentLogs` SQL 추가
+
 ## 2026-03-14 (2차)
 
 ### StockView 종목 검색 UI
