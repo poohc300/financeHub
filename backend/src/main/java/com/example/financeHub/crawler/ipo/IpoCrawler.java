@@ -1,80 +1,69 @@
 package com.example.financeHub.crawler.ipo;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.example.financeHub.crawler.news.NewsDTO;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class IpoCrawler {
 
+    private static final Logger log = LoggerFactory.getLogger(IpoCrawler.class);
     private static final String BASE_URL = "https://www.38.co.kr/html/fund/?o=k";
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36";
 
-    private final ChromeOptions options;
-
-    public IpoCrawler(ChromeOptions options) {
-	this.options = options;
-    }
-
-    public List<IpoDTO> crawler() {
-	WebDriver driver = null; // WebDriver를 메서드 내에서 선언
-	List<IpoDTO> ipoList = new ArrayList<>();
-
-	try {
-	    driver = new ChromeDriver(options); // WebDriver 인스턴스 생성
-	    driver.get(BASE_URL); // 네이버 경제 뉴스 페이지 이동
-
-	    // 공모주 청약 일정 테이블 
-	    WebElement ulElement = driver
-		    .findElement(By.cssSelector("body > table:nth-child(9) > tbody > tr > td > table:nth-child(2) > tbody > tr > td:nth-child(1) > table:nth-child(11) > tbody > tr:nth-child(2) > td > table > tbody"));
-	    List<WebElement> rows = ulElement.findElements(By.tagName("tr"));
-
-	    // tr 별 추출 
-	    for (WebElement row : rows) {
-		List<WebElement> cells = row.findElements(By.tagName("td"));
-		// DTO로 저장
-		IpoDTO ipoDTO = new IpoDTO();
-		
-		WebElement linkElement = cells.get(0).findElement(By.tagName("a"));
-		String companyName = linkElement.getText().trim();
-		String link = linkElement.getAttribute("href");
-		
-		String period = cells.get(1).getText().trim();
-		String fixedOfferingPrice = cells.get(2).getText().trim();
-		String expectedOfferingPrice = cells.get(3).getText().trim();
-		String subscriptionRate = cells.get(4).getText().trim();
-		String underWriter = cells.get(5).getText().trim();
-		
-		ipoDTO.setCompanyName(companyName);
-		ipoDTO.setLink(link);
-		ipoDTO.setPeriod(period);
-		ipoDTO.setFixedOfferingPrice(fixedOfferingPrice);
-		ipoDTO.setExpectedOfferingPrice(expectedOfferingPrice);
-		ipoDTO.setSubscriptionRate(subscriptionRate);
-		ipoDTO.setUnderWriter(underWriter);
-		
-		ipoList.add(ipoDTO);
-	    }
-	} catch (Exception e) {
-	    e.printStackTrace(); // 오류 로그 출력
-	} finally {
-	    if (driver != null) {
-		driver.quit(); // WebDriver 리소스 해제
-	    }
-	}
-
-	return ipoList;
-    }
-    
     public List<IpoDTO> getTodayIpoList() {
-	List<IpoDTO> ipoList = crawler();
-	return ipoList;
+        List<IpoDTO> ipoList = new ArrayList<>();
+
+        try {
+            Document doc = Jsoup.connect(BASE_URL)
+                    .userAgent(USER_AGENT)
+                    .timeout(15000)
+                    .get();
+
+            // 공모주 청약 일정 테이블 행 파싱
+            // 38.co.kr은 table 기반 구조 - 헤더 포함 tr에서 셀이 6개 이상인 행만 처리
+            Elements rows = doc.select("table tbody tr");
+
+            for (Element row : rows) {
+                Elements cells = row.select("td");
+                if (cells.size() < 6) continue;
+
+                Element linkEl = cells.get(0).selectFirst("a");
+                if (linkEl == null) continue;
+
+                String companyName = linkEl.text().trim();
+                String link = linkEl.absUrl("href");
+                String period = cells.get(1).text().trim();
+                String fixedOfferingPrice = cells.get(2).text().trim();
+                String expectedOfferingPrice = cells.get(3).text().trim();
+                String subscriptionRate = cells.get(4).text().trim();
+                String underWriter = cells.get(5).text().trim();
+
+                if (companyName.isEmpty()) continue;
+
+                IpoDTO dto = new IpoDTO();
+                dto.setCompanyName(companyName);
+                dto.setLink(link);
+                dto.setPeriod(period);
+                dto.setFixedOfferingPrice(fixedOfferingPrice);
+                dto.setExpectedOfferingPrice(expectedOfferingPrice);
+                dto.setSubscriptionRate(subscriptionRate);
+                dto.setUnderWriter(underWriter);
+                ipoList.add(dto);
+            }
+
+            log.info("공모주 크롤링 완료: {}건", ipoList.size());
+        } catch (Exception e) {
+            log.error("공모주 크롤링 오류: {}", e.getMessage(), e);
+        }
+
+        return ipoList;
     }
 }

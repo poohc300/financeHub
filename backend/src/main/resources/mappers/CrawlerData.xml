@@ -21,6 +21,26 @@
         </foreach>
     </select>
 
+    <select id="selectFilteredNews" resultType="com.example.financeHub.crawler.news.NewsDTO">
+        SELECT title, link, published_at AS publishedAt,
+               TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS createdAt,
+               data_hash AS dataHash
+        FROM financehub.news
+        <where>
+            <if test="startDate != null and startDate != ''">
+                AND published_at &gt;= #{startDate}::date
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND published_at &lt;= #{endDate}::date
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND LOWER(title) LIKE LOWER(CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
     <select id="selectLatestNews" resultType="com.example.financeHub.crawler.news.NewsDTO">
         SELECT title, link, published_at AS publishedAt, data_hash AS dataHash
         FROM financehub.news

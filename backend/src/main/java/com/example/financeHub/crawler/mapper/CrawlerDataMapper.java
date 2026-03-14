@@ -17,6 +17,13 @@ public interface CrawlerDataMapper {
     void batchInsertNews(@Param("list") List<NewsDTO> list);
     Set<String> findExistingNewsHashes(@Param("hashes") Set<String> hashes);
     List<NewsDTO> selectLatestNews();
+    List<NewsDTO> selectFilteredNews(
+        @Param("startDate") String startDate,
+        @Param("endDate") String endDate,
+        @Param("keyword") String keyword,
+        @Param("limit") int limit,
+        @Param("offset") int offset
+    );
 
     // IPO
     void batchInsertIpo(@Param("list") List<IpoDTO> list);

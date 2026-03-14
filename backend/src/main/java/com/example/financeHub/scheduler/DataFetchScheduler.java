@@ -50,8 +50,8 @@ public class DataFetchScheduler {
         this.crawlerDataMapper = crawlerDataMapper;
     }
 
+    /** KRX + 크롤링 전체 (평일 18시) */
     @Scheduled(cron = "0 0 18 * * MON-FRI", zone = "Asia/Seoul")
-    //@Scheduled(initialDelay = 10000, fixedDelay = Long.MAX_VALUE)  // 시작 10초 후 1회 실행
     public void fetchAllData() {
         log.info("Starting scheduled data fetch at {}", LocalDateTime.now());
 
@@ -64,6 +64,13 @@ public class DataFetchScheduler {
         fetchIpoData();
 
         log.info("Completed scheduled data fetch at {}", LocalDateTime.now());
+    }
+
+    /** 뉴스 매 1시간마다 크롤링 */
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
+    public void fetchNewsHourly() {
+        log.info("Hourly news fetch at {}", LocalDateTime.now());
+        fetchNewsData();
     }
 
     public void fetchKospiData() {
