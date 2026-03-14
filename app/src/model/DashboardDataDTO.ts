@@ -15,8 +15,9 @@ export interface TopGainersDTO {
 }
 
 export interface CrawledNewsDTO {
-    title: string; // 제목
-    link: string; // 링크
+    title: string;
+    link: string;
+    publishedAt: string;
 }
 
 export interface CrawledIpoDTO {

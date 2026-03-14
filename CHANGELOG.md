@@ -2,6 +2,20 @@
 
 ## 2026-03-14
 
+### NewsView DB 연동
+- `NewsView.vue` - 하드코딩 더미 데이터 제거, `/dashboard/data` API 실제 뉴스로 교체
+- `DashboardDataDTO.ts` - `CrawledNewsDTO`에 `publishedAt` 필드 추가
+
+### CI/CD 구축 (배포 서버)
+- `.github/workflows/deploy.yml` - GitHub Actions self-hosted runner 워크플로우 추가
+  - Frontend: `npm ci` → `npm run build` → dist 복사
+  - Backend: `./gradlew bootJar` → jar 복사 → `systemctl restart financehub-backend`
+  - 배포 후 서비스 상태 확인 로직 포함
+- `.gitignore` - `actions-runner/` 추가
+
+### 캔들차트 x축 타입 수정 (배포 서버 fix)
+- `StockView.vue` - 캔들차트 x값을 문자열 대신 timestamp(ms)로 변환하여 정상 렌더링
+
 ### 캔들 차트 / 복수 지수 비교 / 금·오일 차트
 - `ChartDataDTO` - OHLC 필드 추가 (`opens`, `highs`, `lows`)
 - `KrxDataMapper` - Gold/Oil 히스토리 + 날짜범위 메서드 4개 추가
