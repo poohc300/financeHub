@@ -159,8 +159,10 @@ const renderCandleChart = () => {
     data: {
       datasets: [{
         label: selectedIndex.value,
-        data: chartLabels.value.map((_, i) => ({
-          x: formattedLabels.value[i],
+        data: chartLabels.value.map((label, i) => ({
+          x: label?.length === 8
+            ? new Date(`${label.substring(0,4)}-${label.substring(4,6)}-${label.substring(6,8)}`).getTime()
+            : new Date(label).getTime(),
           o: parseNum(chartOpens.value[i]),
           h: parseNum(chartHighs.value[i]),
           l: parseNum(chartLows.value[i]),
