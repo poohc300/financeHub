@@ -58,6 +58,16 @@
     </select>
 
     <!-- Scheduler Execution Log -->
+    <select id="selectRecentLogs" resultType="com.example.financeHub.scheduler.model.SchedulerExecutionLogDTO">
+        SELECT id, job_name AS jobName, execution_time AS executionTime, status,
+               records_processed AS recordsProcessed, records_inserted AS recordsInserted,
+               records_skipped AS recordsSkipped, error_message AS errorMessage,
+               execution_duration_ms AS executionDurationMs, created_at AS createdAt
+        FROM financehub.scheduler_execution_log
+        ORDER BY execution_time DESC
+        LIMIT #{limit}
+    </select>
+
     <insert id="insertExecutionLog" parameterType="com.example.financeHub.scheduler.model.SchedulerExecutionLogDTO">
         INSERT INTO financehub.scheduler_execution_log
         (job_name, execution_time, status, records_processed, records_inserted, records_skipped, error_message, execution_duration_ms)

@@ -25,4 +25,5 @@ public interface CrawlerDataMapper {
 
     // Scheduler Execution Log
     void insertExecutionLog(SchedulerExecutionLogDTO log);
+    List<SchedulerExecutionLogDTO> selectRecentLogs(@Param("limit") int limit);
 }
