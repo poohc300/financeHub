@@ -110,10 +110,10 @@ CREATE TABLE IF NOT EXISTS financehub.ipo (
     data_hash VARCHAR(64) NOT NULL UNIQUE,
     company_name VARCHAR(200) NOT NULL,
     link VARCHAR(1000),
-    period VARCHAR(50),
-    fixed_offering_price VARCHAR(50),
-    expected_offering_price VARCHAR(50),
-    subscription_rate VARCHAR(50),
+    period VARCHAR(200),
+    fixed_offering_price VARCHAR(200),
+    expected_offering_price VARCHAR(200),
+    subscription_rate VARCHAR(200),
     under_writer VARCHAR(200),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
