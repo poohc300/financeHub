@@ -27,7 +27,7 @@ public class IpoController {
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-        List<IpoDTO> list = crawlerDataMapper.selectFilteredIpo(startDate, endDate, keyword, limit, offset);
+        List<IpoDTO> list = crawlerDataMapper.selectFilteredIpo(startDate, endDate, keyword, Math.min(limit, 100), offset);
         return ResponseEntity.ok(list);
     }
 }
