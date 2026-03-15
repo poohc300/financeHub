@@ -142,7 +142,7 @@ onMounted(() => fetchIpo())
               variant="outlined"
               rounded="lg"
               style="max-width: 260px;"
-              @click:clear="() => { searchKeyword.value = ''; fetchIpo() }"
+              @click:clear="() => { searchKeyword = ''; fetchIpo() }"
             />
           </div>
         </v-card>
