@@ -33,11 +33,13 @@ public class NewsCrawler {
             for (Element link : links) {
                 String title = link.text().trim();
                 String href = link.absUrl("href");
-                if (!title.isEmpty() && !href.isEmpty()) {
+                if (href.isEmpty()) href = link.attr("href");
+                if (!title.isEmpty() && isValidArticleUrl(href)) {
                     NewsDTO dto = new NewsDTO();
                     dto.setTitle(title);
                     dto.setLink(href);
                     newsList.add(dto);
+                    log.debug("뉴스 수집: [{}] {}", title, href);
                 }
             }
 
@@ -47,5 +49,10 @@ public class NewsCrawler {
         }
 
         return newsList;
+    }
+
+    private boolean isValidArticleUrl(String url) {
+        if (url == null || url.isEmpty()) return false;
+        return url.contains("article") || url.contains("news_read") || url.contains("articleid");
     }
 }

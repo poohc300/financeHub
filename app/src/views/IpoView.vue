@@ -52,7 +52,7 @@ const buildUrl = (currentOffset: number) => {
   const params = new URLSearchParams()
   if (startDate) params.set('startDate', startDate)
   if (endDate) params.set('endDate', endDate)
-  if (searchKeyword.value.trim()) params.set('keyword', searchKeyword.value.trim())
+  if (searchKeyword.value?.trim()) params.set('keyword', searchKeyword.value.trim())
   params.set('limit', String(PAGE_SIZE))
   params.set('offset', String(currentOffset))
   return `/ipo/list?${params.toString()}`
@@ -142,7 +142,7 @@ onMounted(() => fetchIpo())
               variant="outlined"
               rounded="lg"
               style="max-width: 260px;"
-              @click:clear="() => { searchKeyword = ''; fetchIpo() }"
+              @click:clear="() => { searchKeyword.value = ''; fetchIpo() }"
             />
           </div>
         </v-card>
@@ -179,8 +179,7 @@ onMounted(() => fetchIpo())
                       :href="item.link"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-body-1 font-weight-bold text-blue-darken-2 text-decoration-none"
-                      style="hover: underline;"
+                      class="text-body-1 font-weight-bold text-blue-darken-2 ipo-link"
                     >{{ item.companyName }}</a>
                     <span v-else class="text-body-1 font-weight-bold text-grey-darken-3">{{ item.companyName }}</span>
                   </div>
@@ -232,3 +231,12 @@ onMounted(() => fetchIpo())
     </v-main>
   </v-app>
 </template>
+
+<style scoped>
+.ipo-link {
+  text-decoration: none;
+}
+.ipo-link:hover {
+  text-decoration: underline;
+}
+</style>
