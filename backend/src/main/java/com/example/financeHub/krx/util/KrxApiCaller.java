@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,10 +16,12 @@ import org.springframework.web.client.RestTemplate;
 
 @Component
 public class KrxApiCaller {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(KrxApiCaller.class);
+
     @Value("${KRX_API_KEY}")
     private String apiKey; // api키는 static이 아니고 인스턴스를 통해 받아야 함
-    private static final String baseUrl = "http://data-dbg.krx.co.kr/svc/apis/";
+    private static final String baseUrl = "https://data-dbg.krx.co.kr/svc/apis/";
     private final RestTemplate restTemplate;
     
     // 생성자에서 RestTemplate 주입
@@ -61,7 +65,7 @@ public class KrxApiCaller {
  		   }
  	       } 
          } catch (Exception e) {
-             System.err.println("API 호출 중 예외 발생: " + e.getMessage());
+             log.error("KRX API 호출 실패 - url: {}, date: {}", apiUrl, formattedDate, e);
          }
        
         return resultList;   

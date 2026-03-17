@@ -40,7 +40,7 @@ logging:
     org:
       springframework: INFO
     com:
-      example: DEBUG\
+      example: DEBUG
     root: DEBUG
 
 jwt:
