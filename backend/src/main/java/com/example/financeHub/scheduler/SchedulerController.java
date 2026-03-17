@@ -61,6 +61,7 @@ public class SchedulerController {
         FetchResult kosdaq = scheduler.fetchKosdaqData(date);
         FetchResult gold   = scheduler.fetchGoldMarketData(date);
         FetchResult oil    = scheduler.fetchOilMarketData(date);
+        FetchResult stock  = scheduler.fetchStockData(date);
 
         Map<String, Object> response = new HashMap<>();
         response.put("date", date);
@@ -68,6 +69,7 @@ public class SchedulerController {
         response.put("kosdaq", toMap("KOSDAQ", date, kosdaq));
         response.put("gold",   toMap("금",     date, gold));
         response.put("oil",    toMap("유가",   date, oil));
+        response.put("stock",  toMap("종목",   date, stock));
         return ResponseEntity.ok(response);
     }
 

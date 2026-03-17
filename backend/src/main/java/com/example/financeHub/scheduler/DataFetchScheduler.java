@@ -279,6 +279,10 @@ public class DataFetchScheduler {
     public record FetchResult(int processed, int inserted, int skipped, String status, String errorMessage) {}
 
     public void fetchStockData() {
+        fetchStockData(null);
+    }
+
+    public FetchResult fetchStockData(String formattedDate) {
         String jobName = "STOCK_DAILY_TRADING";
         long startTime = System.currentTimeMillis();
         int processed = 0;
@@ -288,7 +292,9 @@ public class DataFetchScheduler {
         String errorMessage = null;
 
         try {
-            List<StockDailyTradingDTO> dataList = krxDataService.getStockDailyTradingInfo();
+            List<StockDailyTradingDTO> dataList = formattedDate != null
+                    ? krxDataService.getStockDailyTradingInfo(formattedDate)
+                    : krxDataService.getStockDailyTradingInfo();
             processed = dataList.size();
 
             if (!dataList.isEmpty()) {
@@ -319,6 +325,7 @@ public class DataFetchScheduler {
         } finally {
             saveExecutionLog(jobName, startTime, status, processed, inserted, skipped, errorMessage);
         }
+        return new FetchResult(processed, inserted, skipped, status, errorMessage);
     }
 
     public void fetchNewsData() {

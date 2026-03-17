@@ -77,6 +77,7 @@
 - [x] 날짜별 KRX 수집 API 추가 (`/admin/run-krx-date?date=YYYYMMDD`)
 - [x] 금·유가 단독 수집 API 추가 (`/admin/run-gold`, `/admin/run-oil`, `/admin/run-commodity`)
 - [x] 이란전쟁 시작(2026-02-28) ~ 오늘(2026-03-17) KOSPI·KOSDAQ·금·유가 백필 완료
+- [x] run-krx-date에 개별 종목(stock) 수집 누락 수정 + 종목 백필 완료
 
 ### 인프라 개선
 - [ ] deploy.yml — 배포 시 `fuser -k 8080/tcp` 로 포트 기준 프로세스 종료 추가 (2026-03-17 장애 재발 방지)
