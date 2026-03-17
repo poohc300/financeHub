@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watchEffect } from 'vue';
-import { CrawledIpoDTO, CrawledNewsDTO, GoldMarketTradingDTO, DashboardDataDTO, EconomicIndicatorsDTO, OilMarketDailtyTradingDTO, KospiDailyTradingDTO, StockDailyTradingDTO } from '../model/DashboardDataDTO';
+import { ref, onMounted, computed } from 'vue';
+import { CrawledIpoDTO, CrawledNewsDTO, GoldMarketTradingDTO, DashboardDataDTO, OilMarketDailtyTradingDTO, KospiDailyTradingDTO, KosdaqDailyTradingDTO, StockDailyTradingDTO } from '../model/DashboardDataDTO';
 import { fetchRequest } from '../util/fetchRequest';
 import Calendar from '../components/Calendar.vue';
 import { CalendarEventDTO } from '../model/CalendarEventDTO';
-
-const economicIndicators = ref<EconomicIndicatorsDTO[]>([]);
 
 const ipoList = ref<CrawledIpoDTO[]>([]);
 const newsList = ref<CrawledNewsDTO[]>([]);
 const goldMarketInfo = ref<GoldMarketTradingDTO[]>([]);
 const oilMarketInfo = ref<OilMarketDailtyTradingDTO[]>([]);
 const kospiInfo = ref<KospiDailyTradingDTO[]>([]);
+const kosdaqInfo = ref<KosdaqDailyTradingDTO[]>([]);
 const topGainersList = ref<StockDailyTradingDTO[]>([]);
 const topVolumeList = ref<StockDailyTradingDTO[]>([]);
+const showAllIndicators = ref(false);
 
 const calendarEvents = computed<CalendarEventDTO[]>(() => {
   if (ipoList.value && ipoList.value.length > 0) {
@@ -38,42 +38,24 @@ const calendarEvents = computed<CalendarEventDTO[]>(() => {
   return [];
 });
 
-/**
- * fetch된 데이터 EconomicIndicators에 변환
- *
- * 1) 금
- * 2) 석유
- * 3) ..
- */
-const mapGold = (data: GoldMarketTradingDTO):EconomicIndicatorsDTO => {
-  return {
-    label: data.isuNm,
-    value: data.tddOpnprc,
-    change: data.flucRt,
-    isPositive: parseFloat(data.flucRt) >= 0,
-  };
+interface Indicator {
+  icon: string;
+  label: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+  unit: string;
 }
 
-const mapOil = (data: OilMarketDailtyTradingDTO):EconomicIndicatorsDTO => {
-  const rate = parseFloat(data.flucRt || '0')
-  return {
-    label: data.oilNm,
-    value: data.wtAvgPrc,
-    change: data.flucRt ? `${rate >= 0 ? '+' : ''}${data.flucRt}%` : '',
-    isPositive: rate >= 0
-  }
-}
-const mapKospi = (data: KospiDailyTradingDTO):EconomicIndicatorsDTO => {
-  return {
-    label: data.idxNm,
-    value: data.opnprcIdx,
-    change: data.flucRt,
-    isPositive: parseFloat(data.flucRt) >= 0,
-  }
-}
+const toIndicator = (icon: string, label: string, value: string, change: string, unit = ''): Indicator => ({
+  icon, label, value,
+  change: change || '0',
+  isPositive: parseFloat(change || '0') >= 0,
+  unit,
+})
 
 // fetch
-const fetchDashboardData = async() => {
+const fetchDashboardData = async () => {
   try {
     const data = await fetchRequest<DashboardDataDTO>("/dashboard/data", "GET");
     newsList.value = data.crawledNewsList || [];
@@ -81,14 +63,52 @@ const fetchDashboardData = async() => {
     goldMarketInfo.value = data.goldMarketDailyTradingList || [];
     oilMarketInfo.value = data.oilMarketDailyTradingList || [];
     kospiInfo.value = data.kospiDailyTradingList || [];
+    kosdaqInfo.value = data.kosdaqDailyTradingList || [];
     topGainersList.value = data.topGainersList || [];
     topVolumeList.value = data.topVolumeList || [];
-
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
     throw error;
   }
 }
+
+// 핵심 4개 (디폴트 표시)
+const keyIndicators = computed<Indicator[]>(() => {
+  const result: Indicator[] = [];
+  const kospi = kospiInfo.value.find(x => x.idxNm === '코스피');
+  if (kospi) result.push(toIndicator('📈', '코스피', kospi.clsprcIdx, kospi.flucRt));
+  const kosdaq = kosdaqInfo.value.find(x => x.idxNm === '코스닥');
+  if (kosdaq) result.push(toIndicator('📊', '코스닥', kosdaq.clsprcIdx, kosdaq.flucRt));
+  const gold = goldMarketInfo.value.find(x => x.isuNm.includes('금 99.99_1kg'));
+  if (gold) result.push(toIndicator('🥇', '금 현물 1kg', gold.tddClsprc, gold.flucRt, '원/g'));
+  const gasoline = oilMarketInfo.value.find(x => x.oilNm === '휘발유');
+  if (gasoline) result.push(toIndicator('⛽', '휘발유', gasoline.wtAvgPrc, gasoline.flucRt, '원/ℓ'));
+  return result;
+})
+
+// 전체 지표 그룹 (펼치기 시 표시)
+const allIndicatorGroups = computed(() => [
+  {
+    title: 'KOSPI 업종별',
+    items: kospiInfo.value.filter(x => x.idxNm !== '코스피')
+      .map(x => toIndicator('', x.idxNm, x.clsprcIdx, x.flucRt)),
+  },
+  {
+    title: 'KOSDAQ 업종별',
+    items: kosdaqInfo.value.filter(x => x.idxNm !== '코스닥')
+      .map(x => toIndicator('', x.idxNm, x.clsprcIdx, x.flucRt)),
+  },
+  {
+    title: '원자재',
+    items: goldMarketInfo.value.filter(x => !x.isuNm.includes('금 99.99_1kg'))
+      .map(x => toIndicator('🥇', x.isuNm, x.tddClsprc, x.flucRt, '원/g')),
+  },
+  {
+    title: '에너지',
+    items: oilMarketInfo.value.filter(x => x.oilNm !== '휘발유')
+      .map(x => toIndicator('⛽', x.oilNm, x.wtAvgPrc, x.flucRt, '원/ℓ')),
+  },
+].filter(g => g.items.length > 0))
 
 // 순위 뱃지 색상 (1위=금, 2위=은, 3위=동, 나머지=회색)
 const rankBadgeClass = (index: number): string => {
@@ -127,33 +147,70 @@ onMounted(() => {
   fetchDashboardData();
 })
 
-watchEffect(() => {
-
-  economicIndicators.value = [
-    ...goldMarketInfo.value.map(mapGold),
-    ...oilMarketInfo.value.map(mapOil),
-    ...kospiInfo.value.map(mapKospi),
-  ]
-});
-
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto">
     
-    <!-- 경제 지표 -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-      <h1 class="text-xl font-bold text-gray-800 mb-4">주요 경제 지표</h1>
+    <!-- 주요 경제 지표 -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-800">주요 경제 지표</h2>
+        <button
+          @click="showAllIndicators = !showAllIndicators"
+          class="text-sm text-blue-500 hover:text-blue-700 font-medium transition-colors"
+        >
+          {{ showAllIndicators ? '접기 ▲' : '전체 지표 보기 ▼' }}
+        </button>
+      </div>
 
-      <div 
-        v-for="(indicator, index) in economicIndicators" 
-        :key="index"
-        class="bg-white rounded-xl shadow-sm p-4 border border-gray-200 hover:shadow-md transition-shadow duration-200"
-      >
-        <h3 class="text-sm font-medium text-gray-500 mb-1">{{ indicator.label }}</h3>
-        <div class="text-lg font-bold text-gray-800 mb-1">{{ indicator.value }}</div>
-        <div :class="indicator.isPositive ? 'text-green-600' : 'text-red-600'" class="text-sm font-medium">
-          {{ indicator.change }}
+      <!-- 핵심 4개 카드 -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div
+          v-for="(ind, i) in keyIndicators"
+          :key="i"
+          class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
+        >
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xl">{{ ind.icon }}</span>
+            <span class="text-sm font-medium text-gray-500">{{ ind.label }}</span>
+          </div>
+          <div class="text-2xl font-bold text-gray-900 mb-2 tabular-nums">
+            {{ Number(ind.value.replace(/,/g, '')).toLocaleString('ko-KR') }}
+            <span class="text-xs font-normal text-gray-400 ml-1">{{ ind.unit }}</span>
+          </div>
+          <div
+            :class="ind.isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'"
+            class="inline-flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full"
+          >
+            <span>{{ ind.isPositive ? '▲' : '▼' }}</span>
+            <span>{{ Math.abs(parseFloat(ind.change)).toFixed(2) }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 전체 지표 펼치기 -->
+      <div v-if="showAllIndicators" class="mt-4 space-y-5">
+        <div v-for="group in allIndicatorGroups" :key="group.title">
+          <h3 class="text-sm font-semibold text-gray-500 mb-2 pl-1">{{ group.title }}</h3>
+          <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div
+              v-for="(ind, j) in group.items"
+              :key="j"
+              class="bg-white rounded-lg border border-gray-100 p-3 hover:shadow-sm transition-shadow"
+            >
+              <div class="text-xs text-gray-500 mb-1 truncate" :title="ind.label">{{ ind.label }}</div>
+              <div class="text-sm font-bold text-gray-800 tabular-nums">
+                {{ Number(ind.value.replace(/,/g, '')).toLocaleString('ko-KR') }}
+              </div>
+              <div
+                :class="ind.isPositive ? 'text-green-600' : 'text-red-600'"
+                class="text-xs font-medium mt-0.5"
+              >
+                {{ ind.isPositive ? '▲' : '▼' }} {{ Math.abs(parseFloat(ind.change)).toFixed(2) }}%
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
