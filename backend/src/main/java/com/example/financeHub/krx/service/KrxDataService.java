@@ -91,9 +91,13 @@ public class KrxDataService {
 
     public List<StockDailyTradingDTO> getStockDailyTradingInfo() {
         List<StockDailyTradingDTO> result = new ArrayList<>();
-
         result.addAll(stockFetcher.fetch());
+        return result;
+    }
 
+    public List<StockDailyTradingDTO> getStockDailyTradingInfo(String formattedDate) {
+        List<StockDailyTradingDTO> result = new ArrayList<>();
+        result.addAll(stockFetcher.fetch(formattedDate));
         return result;
     }
 }

@@ -1,5 +1,17 @@
 # financeHub 수정 내역
 
+## 2026-03-17 (2차)
+
+### TOP 5 미표시 버그 수정 — run-krx-date 종목 수집 누락
+
+- `StockFetcher.java` — `fetch(String formattedDate)` 오버로드 추가
+- `KrxDataService.java` — `getStockDailyTradingInfo(String formattedDate)` 추가
+- `DataFetchScheduler.java` — `fetchStockData(String date)` 추가
+- `SchedulerController.java` — `run-krx-date` 응답에 `stock` 필드 추가
+- 2026-02-28 ~ 2026-03-17 개별 종목 데이터 백필 완료 (날짜당 ~950개)
+
+---
+
 ## 2026-03-17
 
 ### KRX 날짜별 수동 수집 기능 추가 + 이란전쟁 이후 데이터 백필
