@@ -1,5 +1,18 @@
 # financeHub 수정 내역
 
+## 2026-03-17 (3차)
+
+### 주요 경제 지표 UI 개편 — 핵심 4개 + 전체 접기/펼치기
+
+- `DashboardDataDTO.ts` — `KosdaqDailyTradingDTO` 인터페이스 추가, `DashboardDataDTO`에 `kosdaqDailyTradingList` 추가
+- `DashboardView.vue` — 경제 지표 섹션 전면 재작성
+  - 디폴트: 코스피·코스닥·금 1kg·휘발유 4개만 큼직한 카드로 표시
+  - "전체 지표 보기 ▼" 버튼으로 KOSPI 업종별·KOSDAQ 업종별·원자재·에너지 전체 펼치기
+  - 코스닥 데이터 표시 추가 (기존에 API에서 받아도 미표시 상태였음)
+  - `mapKospi` 시가(opnprcIdx) → 종가(clsprcIdx) 표시로 수정
+
+---
+
 ## 2026-03-17 (2차)
 
 ### TOP 5 미표시 버그 수정 — run-krx-date 종목 수집 누락

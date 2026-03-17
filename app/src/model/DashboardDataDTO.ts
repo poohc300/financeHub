@@ -90,6 +90,21 @@ export interface StockDailyTradingDTO {
     listShrs: string;  // 상장주수
 }
 
+export interface KosdaqDailyTradingDTO {
+    basDd: string;
+    idxClss: string;
+    idxNm: string;
+    clsprcIdx: string;
+    cmpprevddIdx: string;
+    flucRt: string;
+    opnprcIdx: string;
+    hgprcIdx: string;
+    lwprcIdx: string;
+    accTrdvol: string;
+    accTrdval: string;
+    mktcap: string;
+}
+
 export interface DashboardDataDTO {
     economicIndicators: EconomicIndicatorsDTO[];
     topGainers: TopGainersDTO[];
@@ -98,6 +113,7 @@ export interface DashboardDataDTO {
     goldMarketDailyTradingList: GoldMarketTradingDTO[];
     oilMarketDailyTradingList: OilMarketDailtyTradingDTO[];
     kospiDailyTradingList: KospiDailyTradingDTO[];
+    kosdaqDailyTradingList: KosdaqDailyTradingDTO[];
     topGainersList: StockDailyTradingDTO[];
     topVolumeList: StockDailyTradingDTO[];
 }
