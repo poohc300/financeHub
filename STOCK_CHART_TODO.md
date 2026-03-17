@@ -68,6 +68,11 @@
       → 필터: 키워드 검색 + 기간 버튼(이번달/3개월/전체)
       → Vuetify 카드 or 테이블 형태
 
+### 오늘의 TOP 5 (완료)
+- [x] 상승률 TOP 5 — 백엔드 SQL/Mapper/Controller (기존 구현)
+- [x] 거래량 TOP 5 — 백엔드 SQL/Mapper/Controller (기존 구현)
+- [x] DashboardView UI 개선 — 순위 뱃지, 마켓 뱃지, 등락률 화살표, 거래량 단위 변환
+
 ### KRX 수동 수집 / 백필 (완료)
 - [x] 날짜별 KRX 수집 API 추가 (`/admin/run-krx-date?date=YYYYMMDD`)
 - [x] 금·유가 단독 수집 API 추가 (`/admin/run-gold`, `/admin/run-oil`, `/admin/run-commodity`)
