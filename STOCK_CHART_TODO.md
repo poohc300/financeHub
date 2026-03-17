@@ -33,7 +33,7 @@
 ### 보통 우선순위
 - [x] 스케줄러 수동 트리거 엔드포인트 추가 (`/admin/run-krx`, `/admin/run-all`)
 - [x] 스케줄러 실행 로그 조회 API 추가 (`/admin/scheduler-logs`)
-- [ ] 스케줄러 KRX API 실제 동작 확인 (배포 후 `/admin/run-krx` 호출로 검증)
+- [x] 스케줄러 KRX API 실제 동작 확인 (2026-03-17 `/admin/run-krx-date` 호출로 검증 완료)
 - [x] 스케줄러 ARM 환경 크롤링 → Selenium 제거, Jsoup으로 교체 (브라우저 불필요)
 
 ### 낮은 우선순위
@@ -68,7 +68,13 @@
       → 필터: 키워드 검색 + 기간 버튼(이번달/3개월/전체)
       → Vuetify 카드 or 테이블 형태
 
+### KRX 수동 수집 / 백필 (완료)
+- [x] 날짜별 KRX 수집 API 추가 (`/admin/run-krx-date?date=YYYYMMDD`)
+- [x] 금·유가 단독 수집 API 추가 (`/admin/run-gold`, `/admin/run-oil`, `/admin/run-commodity`)
+- [x] 이란전쟁 시작(2026-02-28) ~ 오늘(2026-03-17) KOSPI·KOSDAQ·금·유가 백필 완료
+
 ### 인프라 개선
-- [ ] deploy.yml — 배포 시 포트 8080 기존 프로세스 강제 종료 로직 추가 (nohup 잔존 프로세스 충돌 방지)
+- [ ] deploy.yml — 배포 시 `fuser -k 8080/tcp` 로 포트 기준 프로세스 종료 추가 (2026-03-17 장애 재발 방지)
+- [ ] nginx `/api/admin/` location block 분리 + IP 제한 또는 Basic Auth 적용 (이슈 3)
 - [ ] nginx 라우팅 추가 — `/admin/`, `/news/` 경로 백엔드 프록시 설정
-- [ ] KRX API 실제 수집 검증 — 평일 18:00 자동 수집 후 DB 데이터 확인
+- [ ] KRX API 평일 18:00 자동 수집 후 DB 데이터 자동 검증 (알림 포함)

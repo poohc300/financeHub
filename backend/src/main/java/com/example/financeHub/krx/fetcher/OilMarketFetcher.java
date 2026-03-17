@@ -1,6 +1,5 @@
 package com.example.financeHub.krx.fetcher;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +22,13 @@ public class OilMarketFetcher {
     }
     
     public List<OilMarketDailyTradingDTO> fetch() {
+        return fetch(KrxCommonUtil.formatDate(KrxCommonUtil.getLastTradingDay()));
+    }
+
+    public List<OilMarketDailyTradingDTO> fetch(String formattedDate) {
 	List<OilMarketDailyTradingDTO> result = new ArrayList<>();
-	
+
 	try {
-	    LocalDate date = KrxCommonUtil.getLastTradingDay();
-	    String formattedDate = KrxCommonUtil.formatDate(date);
-	    
 	    List<Map<String, Object>> dataList = krxApiCaller.callApi(oilUrl, formattedDate);
 	    
 	    if(!dataList.isEmpty()) {
