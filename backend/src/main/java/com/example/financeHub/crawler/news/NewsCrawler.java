@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class NewsCrawler {
@@ -34,6 +36,7 @@ public class NewsCrawler {
                 String title = link.text().trim();
                 String href = link.absUrl("href");
                 if (href.isEmpty()) href = link.attr("href");
+                href = normalizeNewsUrl(href);
                 if (!title.isEmpty() && isValidArticleUrl(href)) {
                     NewsDTO dto = new NewsDTO();
                     dto.setTitle(title);
@@ -54,5 +57,21 @@ public class NewsCrawler {
     private boolean isValidArticleUrl(String url) {
         if (url == null || url.isEmpty()) return false;
         return url.contains("article") || url.contains("news_read") || url.contains("articleid");
+    }
+
+    /**
+     * finance.naver.com/news/news_read.naver?article_id=XXX&office_id=YYY
+     * → https://n.news.naver.com/article/YYY/XXX  (모바일/데스크탑 모두 정상 작동)
+     */
+    private String normalizeNewsUrl(String url) {
+        if (url == null) return url;
+        Pattern p = Pattern.compile("[?&]article_id=(\\d+).*[?&]office_id=(\\d+)|[?&]office_id=(\\d+).*[?&]article_id=(\\d+)");
+        Matcher m = p.matcher(url);
+        if (m.find()) {
+            String articleId = m.group(1) != null ? m.group(1) : m.group(4);
+            String officeId  = m.group(2) != null ? m.group(2) : m.group(3);
+            return "https://n.news.naver.com/article/" + officeId + "/" + articleId;
+        }
+        return url;
     }
 }
