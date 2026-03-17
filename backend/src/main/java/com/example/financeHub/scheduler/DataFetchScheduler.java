@@ -74,6 +74,10 @@ public class DataFetchScheduler {
     }
 
     public void fetchKospiData() {
+        fetchKospiData(null);
+    }
+
+    public FetchResult fetchKospiData(String formattedDate) {
         String jobName = "KOSPI_DAILY_TRADING";
         long startTime = System.currentTimeMillis();
         int processed = 0;
@@ -83,7 +87,9 @@ public class DataFetchScheduler {
         String errorMessage = null;
 
         try {
-            List<KospiDailyTradingDTO> dataList = krxDataService.getKospiDailyTradingInfo();
+            List<KospiDailyTradingDTO> dataList = formattedDate != null
+                    ? krxDataService.getKospiDailyTradingInfo(formattedDate)
+                    : krxDataService.getKospiDailyTradingInfo();
             processed = dataList.size();
 
             if (!dataList.isEmpty()) {
@@ -117,9 +123,14 @@ public class DataFetchScheduler {
         } finally {
             saveExecutionLog(jobName, startTime, status, processed, inserted, skipped, errorMessage);
         }
+        return new FetchResult(processed, inserted, skipped, status, errorMessage);
     }
 
     public void fetchKosdaqData() {
+        fetchKosdaqData(null);
+    }
+
+    public FetchResult fetchKosdaqData(String formattedDate) {
         String jobName = "KOSDAQ_DAILY_TRADING";
         long startTime = System.currentTimeMillis();
         int processed = 0;
@@ -129,7 +140,9 @@ public class DataFetchScheduler {
         String errorMessage = null;
 
         try {
-            List<KosdaqDailyTradingDTO> dataList = krxDataService.getKosdaqDailyTradingInfo();
+            List<KosdaqDailyTradingDTO> dataList = formattedDate != null
+                    ? krxDataService.getKosdaqDailyTradingInfo(formattedDate)
+                    : krxDataService.getKosdaqDailyTradingInfo();
             processed = dataList.size();
 
             if (!dataList.isEmpty()) {
@@ -160,9 +173,14 @@ public class DataFetchScheduler {
         } finally {
             saveExecutionLog(jobName, startTime, status, processed, inserted, skipped, errorMessage);
         }
+        return new FetchResult(processed, inserted, skipped, status, errorMessage);
     }
 
     public void fetchGoldMarketData() {
+        fetchGoldMarketData(null);
+    }
+
+    public FetchResult fetchGoldMarketData(String formattedDate) {
         String jobName = "GOLD_MARKET_DAILY_TRADING";
         long startTime = System.currentTimeMillis();
         int processed = 0;
@@ -172,7 +190,9 @@ public class DataFetchScheduler {
         String errorMessage = null;
 
         try {
-            List<GoldMarketDailyTradingDTO> dataList = krxDataService.getGoldMarketDailyTradingInfo();
+            List<GoldMarketDailyTradingDTO> dataList = formattedDate != null
+                    ? krxDataService.getGoldMarketDailyTradingInfo(formattedDate)
+                    : krxDataService.getGoldMarketDailyTradingInfo();
             processed = dataList.size();
 
             if (!dataList.isEmpty()) {
@@ -203,9 +223,14 @@ public class DataFetchScheduler {
         } finally {
             saveExecutionLog(jobName, startTime, status, processed, inserted, skipped, errorMessage);
         }
+        return new FetchResult(processed, inserted, skipped, status, errorMessage);
     }
 
     public void fetchOilMarketData() {
+        fetchOilMarketData(null);
+    }
+
+    public FetchResult fetchOilMarketData(String formattedDate) {
         String jobName = "OIL_MARKET_DAILY_TRADING";
         long startTime = System.currentTimeMillis();
         int processed = 0;
@@ -215,7 +240,9 @@ public class DataFetchScheduler {
         String errorMessage = null;
 
         try {
-            List<OilMarketDailyTradingDTO> dataList = krxDataService.getOilMarketDailyTradingInfo();
+            List<OilMarketDailyTradingDTO> dataList = formattedDate != null
+                    ? krxDataService.getOilMarketDailyTradingInfo(formattedDate)
+                    : krxDataService.getOilMarketDailyTradingInfo();
             processed = dataList.size();
 
             if (!dataList.isEmpty()) {
@@ -246,7 +273,10 @@ public class DataFetchScheduler {
         } finally {
             saveExecutionLog(jobName, startTime, status, processed, inserted, skipped, errorMessage);
         }
+        return new FetchResult(processed, inserted, skipped, status, errorMessage);
     }
+
+    public record FetchResult(int processed, int inserted, int skipped, String status, String errorMessage) {}
 
     public void fetchStockData() {
         String jobName = "STOCK_DAILY_TRADING";

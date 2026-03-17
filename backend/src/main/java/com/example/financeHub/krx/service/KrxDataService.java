@@ -43,33 +43,49 @@ public class KrxDataService {
     
     public List<GoldMarketDailyTradingDTO> getGoldMarketDailyTradingInfo() {
 	List<GoldMarketDailyTradingDTO> result = new ArrayList<>();
-	
 	result.addAll(goldMarketFetcher.fetch());
-	
 	return result;
     }
-    
+
+    public List<GoldMarketDailyTradingDTO> getGoldMarketDailyTradingInfo(String formattedDate) {
+        List<GoldMarketDailyTradingDTO> result = new ArrayList<>();
+        result.addAll(goldMarketFetcher.fetch(formattedDate));
+        return result;
+    }
+
     public List<OilMarketDailyTradingDTO> getOilMarketDailyTradingInfo() {
 	List<OilMarketDailyTradingDTO> result = new ArrayList<>();
-	
 	result.addAll(oilMarketFetcher.fetch());
-	
 	return result;
+    }
+
+    public List<OilMarketDailyTradingDTO> getOilMarketDailyTradingInfo(String formattedDate) {
+        List<OilMarketDailyTradingDTO> result = new ArrayList<>();
+        result.addAll(oilMarketFetcher.fetch(formattedDate));
+        return result;
     }
     
     public List<KospiDailyTradingDTO> getKospiDailyTradingInfo() {
 	List<KospiDailyTradingDTO> result = new ArrayList<>();
-	
 	result.addAll(kospiFetcher.fetch());
-	
 	return result;
     }
-    
+
+    public List<KospiDailyTradingDTO> getKospiDailyTradingInfo(String formattedDate) {
+        List<KospiDailyTradingDTO> result = new ArrayList<>();
+        result.addAll(kospiFetcher.fetch(formattedDate));
+        return result;
+    }
+
     public List<KosdaqDailyTradingDTO> getKosdaqDailyTradingInfo() {
         List<KosdaqDailyTradingDTO> result = new ArrayList<>();
-
         result.addAll(kosdaqFetcher.fetch());
+        return result;
+    }
 
+    public List<KosdaqDailyTradingDTO> getKosdaqDailyTradingInfo(String formattedDate) {
+        List<KosdaqDailyTradingDTO> result = new ArrayList<>();
+        result.addAll(kosdaqFetcher.fetch(formattedDate));
         return result;
     }
 

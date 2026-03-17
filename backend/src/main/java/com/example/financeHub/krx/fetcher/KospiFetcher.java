@@ -1,6 +1,5 @@
 package com.example.financeHub.krx.fetcher;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,13 +22,13 @@ public class KospiFetcher {
     }
     
     public List<KospiDailyTradingDTO> fetch() {
-	
+        return fetch(KrxCommonUtil.formatDate(KrxCommonUtil.getLastTradingDay()));
+    }
+
+    public List<KospiDailyTradingDTO> fetch(String formattedDate) {
 	List<KospiDailyTradingDTO> result = new ArrayList<>();
-	
+
 	try {
-	    LocalDate date = KrxCommonUtil.getLastTradingDay();
-	    String formattedDate = KrxCommonUtil.formatDate(date);
-	    
 	    List<Map<String, Object>> dataList = krxApiCaller.callApi(kospiUrl, formattedDate);
 	    
 	    if(!dataList.isEmpty()) {

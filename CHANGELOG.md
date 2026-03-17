@@ -1,5 +1,38 @@
 # financeHub 수정 내역
 
+## 2026-03-17
+
+### KRX 날짜별 수동 수집 기능 추가 + 이란전쟁 이후 데이터 백필
+
+#### 백엔드 — Fetcher 날짜 파라미터 오버로드
+- `GoldMarketFetcher.java` — `fetch(String formattedDate)` 추가 (기존 `fetch()`는 위임으로 단순화)
+- `OilMarketFetcher.java` — 동일
+- `KospiFetcher.java` — 동일
+- `KosdaqFetcher.java` — 동일
+
+#### 백엔드 — KrxDataService 날짜별 메서드 추가
+- `getGoldMarketDailyTradingInfo(String formattedDate)`
+- `getOilMarketDailyTradingInfo(String formattedDate)`
+- `getKospiDailyTradingInfo(String formattedDate)`
+- `getKosdaqDailyTradingInfo(String formattedDate)`
+
+#### 백엔드 — DataFetchScheduler 날짜별 메서드 추가
+- `fetchKospiData(String date)`, `fetchKosdaqData(String date)`, `fetchGoldMarketData(String date)`, `fetchOilMarketData(String date)` 추가
+- 기존 void 메서드는 날짜 파라미터 버전으로 위임
+- `FetchResult` record 추가 (processed / inserted / skipped / status / errorMessage)
+
+#### 백엔드 — SchedulerController 엔드포인트 추가
+- `POST /admin/run-krx-date?date=YYYYMMDD` — KOSPI + KOSDAQ + 금 + 유가 일괄 수집
+- `POST /admin/run-gold?date=YYYYMMDD` — 금 시세 단독 수집
+- `POST /admin/run-oil?date=YYYYMMDD` — 유가 단독 수집
+- `POST /admin/run-commodity?date=YYYYMMDD` — 금 + 유가 동시 수집
+
+#### 데이터 백필
+- 이란전쟁 시작일(2026-02-28)부터 오늘(2026-03-17)까지 KRX 영업일 데이터 전량 수집
+- KOSPI 51개 × 13일, KOSDAQ 40개 × 13일, 금 2개 × 13일, 유가 3개 × 13일 삽입
+
+---
+
 ## 2026-03-14 (5차)
 
 ### 뉴스 1시간 크롤링 + Vuetify 카드 리스트 + 필터
