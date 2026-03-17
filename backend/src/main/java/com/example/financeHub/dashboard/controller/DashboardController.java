@@ -60,18 +60,19 @@ public class DashboardController {
         List<GoldMarketDailyTradingDTO> latestGoldMarket = krxDataMapper.selectLatestGoldMarket();
         List<OilMarketDailyTradingDTO> latestOilMarket = krxDataMapper.selectLatestOilMarket();
         List<OilMarketDailyTradingDTO> prevOilMarket = krxDataMapper.selectPrevOilMarket();
-        Map<String, String> prevOilPriceMap = prevOilMarket.stream()
-                .collect(Collectors.toMap(OilMarketDailyTradingDTO::getOilNm, OilMarketDailyTradingDTO::getWtAvgPrc, (a, b) -> a));
+        Map<String, OilMarketDailyTradingDTO> prevOilMap = prevOilMarket.stream()
+                .collect(Collectors.toMap(OilMarketDailyTradingDTO::getOilNm, o -> o, (a, b) -> a));
         latestOilMarket.forEach(oil -> {
-            String prevPrc = prevOilPriceMap.get(oil.getOilNm());
-            if (prevPrc != null && !prevPrc.isBlank()) {
-                try {
-                    double cur = Double.parseDouble(oil.getWtAvgPrc().replace(",", ""));
-                    double prev = Double.parseDouble(prevPrc.replace(",", ""));
-                    double rate = (cur - prev) / prev * 100;
-                    oil.setFlucRt(String.format("%.2f", rate));
-                } catch (NumberFormatException ignored) {
+            OilMarketDailyTradingDTO prev = prevOilMap.get(oil.getOilNm());
+            if (prev != null) {
+                // wt_avg_prc(경쟁)가 0이면 wt_dis_avg_prc(협의)로 폴백
+                double cur  = parseOilPrice(oil.getWtAvgPrc(),  oil.getWtDisAvgPrc());
+                double prevVal = parseOilPrice(prev.getWtAvgPrc(), prev.getWtDisAvgPrc());
+                if (prevVal == 0) {
                     oil.setFlucRt("0.00");
+                } else {
+                    double rate = (cur - prevVal) / prevVal * 100;
+                    oil.setFlucRt(String.format("%.2f", rate));
                 }
             }
         });
@@ -92,6 +93,19 @@ public class DashboardController {
         return ResponseEntity.ok(dashboardDTO);
     }
 
+
+    /** wt_avg_prc(경쟁)가 0 또는 null이면 fallback(협의)으로 대체 */
+    private double parseOilPrice(String primary, String fallback) {
+        double val = parseDouble(primary);
+        if (val == 0 && fallback != null) val = parseDouble(fallback);
+        return val;
+    }
+
+    private double parseDouble(String s) {
+        if (s == null || s.isBlank()) return 0;
+        try { return Double.parseDouble(s.replace(",", "")); }
+        catch (NumberFormatException e) { return 0; }
+    }
 
     @GetMapping("/chart-data")
     public ResponseEntity<ChartDataDTO> getChartData(
