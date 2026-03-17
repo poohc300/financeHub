@@ -90,6 +90,39 @@ const fetchDashboardData = async() => {
   }
 }
 
+// 순위 뱃지 색상 (1위=금, 2위=은, 3위=동, 나머지=회색)
+const rankBadgeClass = (index: number): string => {
+  if (index === 0) return 'bg-yellow-400 text-white';
+  if (index === 1) return 'bg-gray-300 text-gray-700';
+  if (index === 2) return 'bg-orange-400 text-white';
+  return 'bg-gray-100 text-gray-500';
+};
+
+// 마켓 뱃지 색상
+const marketBadgeClass = (mktNm: string): string => {
+  if (mktNm?.includes('코스피') || mktNm?.toUpperCase().includes('KOSPI')) return 'bg-blue-100 text-blue-700';
+  if (mktNm?.includes('코스닥') || mktNm?.toUpperCase().includes('KOSDAQ')) return 'bg-purple-100 text-purple-700';
+  return 'bg-gray-100 text-gray-600';
+};
+
+// 가격 포맷 (1,234 원)
+const formatPrice = (val: string): string => {
+  if (!val) return '-';
+  const n = parseInt(val.replace(/,/g, ''), 10);
+  if (isNaN(n)) return val;
+  return n.toLocaleString('ko-KR') + '원';
+};
+
+// 거래량 포맷 (만/억 단위)
+const formatVolume = (val: string): string => {
+  if (!val) return '-';
+  const n = parseInt(val.replace(/,/g, ''), 10);
+  if (isNaN(n)) return val;
+  if (n >= 100_000_000) return (n / 100_000_000).toFixed(1) + '억주';
+  if (n >= 10_000) return (n / 10_000).toFixed(1) + '만주';
+  return n.toLocaleString('ko-KR') + '주';
+};
+
 onMounted(() => {
   fetchDashboardData();
 })
@@ -129,66 +162,83 @@ watchEffect(() => {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
       <!-- 상승률 TOP 5 -->
       <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">오늘의 상승률 TOP 5</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-gray-200">
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">순위</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">종목명</th>
-                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">현재가</th>
-                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">등락률</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(stock, index) in topGainersList"
-                :key="stock.isuCd"
-                class="border-b border-gray-100 hover:bg-gray-50"
-              >
-                <td class="py-3 px-4 text-sm">{{ index + 1 }}</td>
-                <td class="py-3 px-4 font-medium">{{ stock.isuNm }}</td>
-                <td class="py-3 px-4 text-right">{{ stock.tddClsprc }}</td>
-                <td class="py-3 px-4 text-right text-green-600">{{ stock.flucRt }}%</td>
-              </tr>
-              <tr v-if="topGainersList.length === 0">
-                <td colspan="4" class="py-3 px-4 text-center text-gray-500">데이터가 없습니다</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="flex items-center gap-2 mb-5">
+          <span class="text-xl">🚀</span>
+          <h2 class="text-lg font-bold text-gray-800">오늘의 상승률 TOP 5</h2>
         </div>
+        <div v-if="topGainersList.length === 0" class="flex flex-col items-center justify-center py-10 text-gray-400">
+          <span class="text-3xl mb-2">📭</span>
+          <span class="text-sm">데이터가 없습니다</span>
+        </div>
+        <ul v-else class="space-y-2">
+          <li
+            v-for="(stock, index) in topGainersList"
+            :key="stock.isuCd"
+            class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
+          >
+            <!-- 순위 뱃지 -->
+            <span :class="rankBadgeClass(index)" class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold">
+              {{ index + 1 }}
+            </span>
+            <!-- 종목 정보 -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="font-semibold text-gray-800 text-sm truncate">{{ stock.isuNm }}</span>
+                <span :class="marketBadgeClass(stock.mktNm)" class="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+                  {{ stock.mktNm }}
+                </span>
+              </div>
+              <div class="text-xs text-gray-400 mt-0.5">{{ stock.isuSrtCd }}</div>
+            </div>
+            <!-- 가격 & 등락률 -->
+            <div class="text-right flex-shrink-0">
+              <div class="text-sm font-semibold text-gray-800">{{ formatPrice(stock.tddClsprc) }}</div>
+              <div class="flex items-center justify-end gap-0.5 text-green-600">
+                <span class="text-xs">▲</span>
+                <span class="text-sm font-bold">{{ stock.flucRt }}%</span>
+              </div>
+            </div>
+          </li>
+        </ul>
       </div>
 
       <!-- 거래량 TOP 5 -->
       <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">오늘의 거래량 TOP 5</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-gray-200">
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">순위</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">종목명</th>
-                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">현재가</th>
-                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">거래량</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(stock, index) in topVolumeList"
-                :key="stock.isuCd"
-                class="border-b border-gray-100 hover:bg-gray-50"
-              >
-                <td class="py-3 px-4 text-sm">{{ index + 1 }}</td>
-                <td class="py-3 px-4 font-medium">{{ stock.isuNm }}</td>
-                <td class="py-3 px-4 text-right">{{ stock.tddClsprc }}</td>
-                <td class="py-3 px-4 text-right text-gray-600">{{ stock.accTrdvol }}</td>
-              </tr>
-              <tr v-if="topVolumeList.length === 0">
-                <td colspan="4" class="py-3 px-4 text-center text-gray-500">데이터가 없습니다</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="flex items-center gap-2 mb-5">
+          <span class="text-xl">🔥</span>
+          <h2 class="text-lg font-bold text-gray-800">오늘의 거래량 TOP 5</h2>
         </div>
+        <div v-if="topVolumeList.length === 0" class="flex flex-col items-center justify-center py-10 text-gray-400">
+          <span class="text-3xl mb-2">📭</span>
+          <span class="text-sm">데이터가 없습니다</span>
+        </div>
+        <ul v-else class="space-y-2">
+          <li
+            v-for="(stock, index) in topVolumeList"
+            :key="stock.isuCd"
+            class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
+          >
+            <!-- 순위 뱃지 -->
+            <span :class="rankBadgeClass(index)" class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold">
+              {{ index + 1 }}
+            </span>
+            <!-- 종목 정보 -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="font-semibold text-gray-800 text-sm truncate">{{ stock.isuNm }}</span>
+                <span :class="marketBadgeClass(stock.mktNm)" class="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+                  {{ stock.mktNm }}
+                </span>
+              </div>
+              <div class="text-xs text-gray-400 mt-0.5">{{ stock.isuSrtCd }}</div>
+            </div>
+            <!-- 가격 & 거래량 -->
+            <div class="text-right flex-shrink-0">
+              <div class="text-sm font-semibold text-gray-800">{{ formatPrice(stock.tddClsprc) }}</div>
+              <div class="text-sm font-bold text-blue-600">{{ formatVolume(stock.accTrdvol) }}</div>
+            </div>
+          </li>
+        </ul>
       </div>
     </div>
 
