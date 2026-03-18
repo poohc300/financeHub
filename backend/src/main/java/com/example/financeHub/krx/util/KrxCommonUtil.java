@@ -13,11 +13,11 @@ public class KrxCommonUtil {
      */
    public static LocalDate getLastTradingDay() {
        LocalDate date = LocalDate.now();
-       
+
        switch (date.getDayOfWeek()) {
-       	case DayOfWeek.MONDAY: return date.minusDays(3);
-       	case DayOfWeek.SUNDAY: return date.minusDays(2);
-       	default: return date.minusDays(1);
+           case DayOfWeek.SATURDAY: return date.minusDays(1);
+           case DayOfWeek.SUNDAY:   return date.minusDays(2);
+           default:                  return date;
        }
    }
    /**
