@@ -50,8 +50,8 @@ public class DataFetchScheduler {
         this.crawlerDataMapper = crawlerDataMapper;
     }
 
-    /** KRX + 크롤링 전체 (평일 18시) */
-    @Scheduled(cron = "0 0 18 * * MON-FRI", zone = "Asia/Seoul")
+    /** KRX + 크롤링 전체 (평일 16시) */
+    @Scheduled(cron = "0 0 16 * * MON-FRI", zone = "Asia/Seoul")
     public void fetchAllData() {
         log.info("Starting scheduled data fetch at {}", LocalDateTime.now());
 

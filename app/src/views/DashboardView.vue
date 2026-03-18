@@ -14,6 +14,13 @@ const kosdaqInfo = ref<KosdaqDailyTradingDTO[]>([]);
 const topGainersList = ref<StockDailyTradingDTO[]>([]);
 const topVolumeList = ref<StockDailyTradingDTO[]>([]);
 const showAllIndicators = ref(false);
+const lastUpdated = ref<Date | null>(null);
+const isRefreshing = ref(false);
+
+const lastUpdatedText = computed(() => {
+  if (!lastUpdated.value) return '';
+  return lastUpdated.value.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+});
 
 const calendarEvents = computed<CalendarEventDTO[]>(() => {
   if (ipoList.value && ipoList.value.length > 0) {
@@ -66,9 +73,19 @@ const fetchDashboardData = async () => {
     kosdaqInfo.value = data.kosdaqDailyTradingList || [];
     topGainersList.value = data.topGainersList || [];
     topVolumeList.value = data.topVolumeList || [];
+    lastUpdated.value = new Date();
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
     throw error;
+  }
+}
+
+const refreshData = async () => {
+  isRefreshing.value = true;
+  try {
+    await fetchDashboardData();
+  } finally {
+    isRefreshing.value = false;
   }
 }
 
@@ -151,7 +168,20 @@ onMounted(() => {
 
 <template>
   <div class="max-w-6xl mx-auto">
-    
+
+    <!-- 마지막 업데이트 시각 + 새로고침 -->
+    <div class="flex justify-end items-center gap-3 mb-4 text-sm text-gray-400">
+      <span v-if="lastUpdatedText">마지막 업데이트: {{ lastUpdatedText }}</span>
+      <button
+        @click="refreshData"
+        :disabled="isRefreshing"
+        class="flex items-center gap-1 px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+      >
+        <span :class="{ 'animate-spin': isRefreshing }" class="inline-block">↻</span>
+        새로고침
+      </button>
+    </div>
+
     <!-- 주요 경제 지표 -->
     <div class="mb-8">
       <div class="flex items-center justify-between mb-4">
