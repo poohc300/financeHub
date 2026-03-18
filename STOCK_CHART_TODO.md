@@ -40,6 +40,16 @@
 - [x] 금/오일 데이터 없을 때 안내 문구 — 2026-03-18 완료
 - [ ] 비교 차트 범례 개선
 - [x] 모바일 UI 고도화 — 하단 탭바 활성 인디케이터, StockView 마켓 버튼 가로 스크롤 — 2026-03-18 완료
+- [ ] **모바일 탭바 Vuetify 전환** — 현재 Tailwind 커스텀 구현을 `v-bottom-navigation`으로 교체해 Material Design 스타일 적용
+  - 현재: `App.vue` 50-67라인, Tailwind `grid grid-cols-4` + 커스텀 인디케이터
+  - 전환 방향: `v-bottom-navigation` + `v-btn` (value= 라우터 path) + `useRouter().push()` 연동
+  - 주요 props: `grow`, `mandatory`, `elevation="4"`, `color="primary"`, `mode="shift"` (활성 탭만 라벨 표시) 검토
+  - 아이콘: emoji → `mdi-home`, `mdi-newspaper`, `mdi-chart-line`, `mdi-briefcase` 교체
+  - 📖 참고자료:
+    - 공식 문서: https://vuetifyjs.com/en/components/bottom-navigation/
+    - API 레퍼런스: https://vuetifyjs.com/en/api/v-bottom-navigation
+    - 레이아웃 예시: https://snips.vuetifyjs.com/application-ui/core-layouts/bottom-navigation-layouts
+    - 로컬 타입 정의: `app/node_modules/vuetify/lib/components/VBottomNavigation/VBottomNavigation.d.ts`
 - [ ] 모바일 뉴스 링크 개선 — `target="_blank"` 이미 있으나 PWA/모바일 브라우저에서 앱을 벗어나는 문제. `window.open()` 강제 처리 또는 인앱 링크 미리보기 검토
 
 ### 뉴스 고도화 (완료)
