@@ -19,7 +19,7 @@ const navigateTo = (path: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+  <v-app style="background: linear-gradient(to bottom right, #f9fafb, #f3f4f6);">
 
     <!-- 데스크탑 상단 네비게이션 (md 이상) -->
     <nav class="hidden md:block bg-white shadow-sm border-b border-gray-200">
@@ -77,7 +77,7 @@ const navigateTo = (path: string) => {
       </v-btn>
     </v-bottom-navigation>
 
-  </div>
+  </v-app>
 </template>
 
 <style scoped>
