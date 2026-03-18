@@ -40,6 +40,7 @@ const searchQuery = ref('')
 const searchResults = ref<StockDailyTradingDTO[]>([])
 const showDropdown = ref(false)
 const selectedIsuCd = ref('')
+const selectedIsuSrtCd = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 const chartLabels = ref<string[]>([])
@@ -51,8 +52,8 @@ const chartLows = ref<string[]>([])
 const compareValues = ref<string[]>([])
 const topVolumeList = ref<StockDailyTradingDTO[]>([])
 
-// 실시간 WebSocket
-const realtimePrice = ref<{
+// 실시간 가격 캐시 (isuSrtCd → 가격)
+const realtimePrices = ref<Record<string, {
   isuSrtCd: string
   currentPrice: string
   change: string
@@ -62,7 +63,9 @@ const realtimePrice = ref<{
   open: string
   high: string
   low: string
-} | null>(null)
+}>>({})
+// 선택된 종목의 실시간 가격
+const selectedRealtimePrice = ref<typeof realtimePrices.value[string] | null>(null)
 let ws: WebSocket | null = null
 
 const candleCanvasRef = ref<HTMLCanvasElement | null>(null)
@@ -260,37 +263,33 @@ const onSearchInput = () => {
 
 const selectStock = (stock: StockDailyTradingDTO) => {
   selectedIsuCd.value = stock.isuCd
+  selectedIsuSrtCd.value = stock.isuSrtCd
   searchQuery.value = stock.isuNm
   showDropdown.value = false
-  realtimePrice.value = null
+  selectedRealtimePrice.value = realtimePrices.value[stock.isuSrtCd] ?? null
   changeMarket('STOCK', stock.isuNm)
-  connectRealtime(stock.isuSrtCd)
 }
 
-const connectRealtime = (isuSrtCd: string) => {
-  if (ws) {
-    ws.close()
-    ws = null
-  }
+const connectRealtime = () => {
+  if (ws) ws.close()
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
   ws = new WebSocket(`${protocol}//${location.host}/ws/stock`)
 
-  ws.onopen = () => {
-    ws?.send(JSON.stringify({ type: 'subscribe', isuSrtCd }))
-  }
   ws.onmessage = (event) => {
     try {
-      realtimePrice.value = JSON.parse(event.data)
+      const price = JSON.parse(event.data)
+      if (price.isuSrtCd) {
+        realtimePrices.value = { ...realtimePrices.value, [price.isuSrtCd]: price }
+        // 현재 선택 종목이면 selectedRealtimePrice 갱신
+        if (selectedIsuSrtCd.value === price.isuSrtCd) {
+          selectedRealtimePrice.value = price
+        }
+      }
     } catch (e) {
-      console.error('WS 메시지 파싱 오류', e)
+      console.error('WS 파싱 오류', e)
     }
   }
-  ws.onclose = () => {
-    console.log('WS 종료')
-  }
-  ws.onerror = (e) => {
-    console.error('WS 오류', e)
-  }
+  ws.onerror = (e) => console.error('WS 오류', e)
 }
 
 const closeDropdown = () => {
@@ -372,6 +371,7 @@ const toggleCompare = () => {
 onMounted(() => {
   fetchChartData()
   fetchTopVolume()
+  connectRealtime()
 })
 </script>
 
@@ -407,27 +407,27 @@ onMounted(() => {
           </ul>
         </div>
 
-        <!-- 실시간 시세 -->
-        <div v-if="realtimePrice" class="mt-4 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <!-- 선택 종목 실시간 시세 -->
+        <div v-if="selectedRealtimePrice" class="mt-4 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div class="flex justify-between items-center mb-1">
             <h3 class="font-bold text-gray-800 text-sm">실시간 시세</h3>
-            <span class="text-xs text-gray-400">{{ realtimePrice.time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') }}</span>
+            <span class="text-xs text-gray-400">{{ selectedRealtimePrice.time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') }}</span>
           </div>
           <div class="flex justify-between items-end">
-            <p class="text-2xl font-bold text-gray-900">{{ Number(realtimePrice.currentPrice).toLocaleString() }}원</p>
+            <p class="text-2xl font-bold text-gray-900">{{ Number(selectedRealtimePrice.currentPrice).toLocaleString() }}원</p>
             <div class="text-right">
-              <p :class="Number(realtimePrice.change) >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
-                {{ Number(realtimePrice.change) >= 0 ? '+' : '' }}{{ Number(realtimePrice.change).toLocaleString() }}
-                ({{ realtimePrice.changeRate }}%)
+              <p :class="Number(selectedRealtimePrice.change) >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
+                {{ Number(selectedRealtimePrice.change) >= 0 ? '+' : '' }}{{ Number(selectedRealtimePrice.change).toLocaleString() }}
+                ({{ selectedRealtimePrice.changeRate }}%)
               </p>
             </div>
           </div>
           <div class="grid grid-cols-3 gap-2 mt-2 text-xs text-gray-500">
-            <div>시 <span class="text-gray-700 font-medium">{{ Number(realtimePrice.open).toLocaleString() }}</span></div>
-            <div>고 <span class="text-green-600 font-medium">{{ Number(realtimePrice.high).toLocaleString() }}</span></div>
-            <div>저 <span class="text-red-600 font-medium">{{ Number(realtimePrice.low).toLocaleString() }}</span></div>
+            <div>시 <span class="text-gray-700 font-medium">{{ Number(selectedRealtimePrice.open).toLocaleString() }}</span></div>
+            <div>고 <span class="text-green-600 font-medium">{{ Number(selectedRealtimePrice.high).toLocaleString() }}</span></div>
+            <div>저 <span class="text-red-600 font-medium">{{ Number(selectedRealtimePrice.low).toLocaleString() }}</span></div>
           </div>
-          <p class="text-xs text-gray-400 mt-1">거래량 {{ Number(realtimePrice.volume).toLocaleString() }}</p>
+          <p class="text-xs text-gray-400 mt-1">거래량 {{ Number(selectedRealtimePrice.volume).toLocaleString() }}</p>
         </div>
 
         <h2 class="text-xl font-bold text-gray-800 mb-4">거래량 TOP</h2>
@@ -436,18 +436,27 @@ onMounted(() => {
             <div
               v-for="(stock) in topVolumeList"
               :key="stock.isuCd"
-              class="p-4 hover:bg-gray-50 transition-colors duration-200"
+              class="p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+              @click="selectStock(stock)"
             >
               <div class="flex justify-between items-center">
                 <div>
                   <h3 class="font-medium text-gray-800">{{ stock.isuNm }}</h3>
-                  <p class="text-sm text-gray-500">거래량: {{ stock.accTrdvol }}</p>
+                  <p class="text-sm text-gray-500">거래량: {{ realtimePrices[stock.isuSrtCd]?.volume ?? stock.accTrdvol }}</p>
                 </div>
                 <div class="text-right">
-                  <p class="font-bold text-gray-800">{{ stock.tddClsprc }}</p>
-                  <p :class="parseFloat(stock.flucRt) >= 0 ? 'text-green-600' : 'text-red-600'">
-                    {{ stock.flucRt }}%
-                  </p>
+                  <template v-if="realtimePrices[stock.isuSrtCd]">
+                    <p class="font-bold text-gray-800">{{ Number(realtimePrices[stock.isuSrtCd].currentPrice).toLocaleString() }}<span class="text-xs text-blue-500 ml-1">실시간</span></p>
+                    <p :class="Number(realtimePrices[stock.isuSrtCd].change) >= 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ realtimePrices[stock.isuSrtCd].changeRate }}%
+                    </p>
+                  </template>
+                  <template v-else>
+                    <p class="font-bold text-gray-800">{{ stock.tddClsprc }}</p>
+                    <p :class="parseFloat(stock.flucRt) >= 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ stock.flucRt }}%
+                    </p>
+                  </template>
                 </div>
               </div>
             </div>

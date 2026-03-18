@@ -42,6 +42,18 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         sessions.put(session.getId(), session);
         log.info("프론트 WS 연결: {}", session.getId());
+        // 접속 즉시 캐시된 현재 가격 전송 (DB 조회 없음)
+        if (kisWebSocketClient != null) {
+            kisWebSocketClient.getPriceCache().values().forEach(price -> {
+                try {
+                    if (session.isOpen()) {
+                        session.sendMessage(new TextMessage(mapper.writeValueAsString(price)));
+                    }
+                } catch (IOException e) {
+                    log.error("초기 가격 전송 실패: {}", e.getMessage());
+                }
+            });
+        }
     }
 
     @Override
@@ -99,19 +111,15 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void broadcastPrice(KisStockPrice price) {
-        Set<String> subscriberIds = symbolSubscriptions.get(price.getIsuSrtCd());
-        if (subscriberIds == null || subscriberIds.isEmpty()) return;
-
         try {
             String json = mapper.writeValueAsString(price);
             TextMessage msg = new TextMessage(json);
-            for (String sessionId : subscriberIds) {
-                WebSocketSession session = sessions.get(sessionId);
+            for (WebSocketSession session : sessions.values()) {
                 if (session != null && session.isOpen()) {
                     try {
                         session.sendMessage(msg);
                     } catch (IOException e) {
-                        log.error("메시지 전송 실패 sessionId={}: {}", sessionId, e.getMessage());
+                        log.error("메시지 전송 실패 sessionId={}: {}", session.getId(), e.getMessage());
                     }
                 }
             }
