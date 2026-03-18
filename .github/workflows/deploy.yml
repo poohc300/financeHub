@@ -37,3 +37,6 @@ jobs:
           sudo systemctl restart financehub-backend
           sleep 5
           sudo systemctl is-active --quiet financehub-backend && echo "Backend started successfully" || (echo "Backend failed to start" && exit 1)
+
+      - name: Reload Nginx
+        run: docker exec nginx nginx -s reload

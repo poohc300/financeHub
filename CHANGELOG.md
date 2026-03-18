@@ -1,5 +1,30 @@
 # financeHub 수정 내역
 
+## 2026-03-18
+
+### 보안: nginx /api/admin/ IP 접근 제한
+
+- `nginx.conf` — `/api/admin/` location block 분리, 내부 IP(127.0.0.1, 192.168.x.x, 10.x.x.x)만 허용, 외부 접근 403 차단
+- `deploy.yml` — 배포 시 `docker exec nginx nginx -s reload` 추가 (nginx 설정 변경 자동 반영)
+
+## 2026-03-17 (5차)
+
+### 모바일 네비게이션 + 뉴스 링크 수정
+
+- `App.vue` — 모바일 하단 탭바 추가 (데스크탑 상단 nav 유지, 모바일 fixed bottom tab)
+- `NewsCrawler.java` — 뉴스 링크 URL 정규화 추가
+  - `finance.naver.com/news/news_read.naver?article_id=XXX&office_id=YYY` → `n.news.naver.com/article/YYY/XXX`
+  - 기존 URL은 모바일에서 Pay증권 투자정보 페이지로 리다이렉트되는 문제 해결
+
+---
+
+## 2026-03-17 (4차)
+
+### 모바일 네비게이션 바 수정 (하단 탭바)
+- 위 5차에 통합
+
+---
+
 ## 2026-03-17 (3차)
 
 ### 주요 경제 지표 UI 개편 — 핵심 4개 + 전체 접기/펼치기
