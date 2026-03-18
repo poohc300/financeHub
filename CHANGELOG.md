@@ -1,5 +1,15 @@
 # financeHub 수정 내역
 
+## 2026-03-18 (11차)
+
+### 장중 실시간 TOP 5 동적 갱신 구현
+
+- `KisRankingItem.java` — 순위 항목 DTO 추가
+- `KisRankingPoller.java` — 5분마다 KIS 등락률 순위 REST API 폴링, 메모리(rankingCache)만 사용
+- `KisWebSocketClient.java` — `updateSubscriptions()` 추가, KrxDataMapper 의존성 제거
+- `StockPriceWebSocketHandler.java` — `broadcastRanking()` 추가, 접속 시 랭킹 캐시 즉시 전송
+- `StockView.vue` — ranking 메시지 처리, 장 중/마감 구분 표시, 실시간 TOP 5 리스트
+
 ## 2026-03-18 (10차)
 
 ### KIS WebSocket 실시간 주식 시세 기능 추가

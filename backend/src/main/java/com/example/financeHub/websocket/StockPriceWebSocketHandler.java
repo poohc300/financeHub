@@ -13,10 +13,13 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.example.financeHub.kis.KisRankingPoller;
 import com.example.financeHub.kis.KisWebSocketClient;
+import com.example.financeHub.kis.model.KisRankingItem;
 import com.example.financeHub.kis.model.KisStockPrice;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 
 @Component
 public class StockPriceWebSocketHandler extends TextWebSocketHandler {
@@ -32,27 +35,37 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, String> sessionSymbol = new ConcurrentHashMap<>();
 
     private KisWebSocketClient kisWebSocketClient;
+    private KisRankingPoller rankingPoller;
 
     // 순환 의존 방지를 위해 setter 주입
     public void setKisWebSocketClient(KisWebSocketClient kisWebSocketClient) {
         this.kisWebSocketClient = kisWebSocketClient;
     }
 
+    public void setRankingPoller(KisRankingPoller rankingPoller) {
+        this.rankingPoller = rankingPoller;
+    }
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         sessions.put(session.getId(), session);
         log.info("프론트 WS 연결: {}", session.getId());
-        // 접속 즉시 캐시된 현재 가격 전송 (DB 조회 없음)
-        if (kisWebSocketClient != null) {
-            kisWebSocketClient.getPriceCache().values().forEach(price -> {
-                try {
+        try {
+            // 접속 즉시 캐시된 실시간 가격 전송
+            if (kisWebSocketClient != null) {
+                for (KisStockPrice price : kisWebSocketClient.getPriceCache().values()) {
                     if (session.isOpen()) {
                         session.sendMessage(new TextMessage(mapper.writeValueAsString(price)));
                     }
-                } catch (IOException e) {
-                    log.error("초기 가격 전송 실패: {}", e.getMessage());
                 }
-            });
+            }
+            // 접속 즉시 캐시된 랭킹 전송
+            if (rankingPoller != null && !rankingPoller.getRankingCache().isEmpty()) {
+                String rankingJson = buildRankingMessage(rankingPoller.getRankingCache());
+                session.sendMessage(new TextMessage(rankingJson));
+            }
+        } catch (Exception e) {
+            log.error("초기 데이터 전송 실패: {}", e.getMessage());
         }
     }
 
@@ -126,5 +139,30 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
         } catch (Exception e) {
             log.error("broadcastPrice 오류: {}", e.getMessage());
         }
+    }
+
+    public void broadcastRanking(List<KisRankingItem> items) {
+        try {
+            String json = buildRankingMessage(items);
+            TextMessage msg = new TextMessage(json);
+            for (WebSocketSession session : sessions.values()) {
+                if (session.isOpen()) {
+                    try {
+                        session.sendMessage(msg);
+                    } catch (IOException e) {
+                        log.error("랭킹 전송 실패 sessionId={}: {}", session.getId(), e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("broadcastRanking 오류: {}", e.getMessage());
+        }
+    }
+
+    private String buildRankingMessage(List<KisRankingItem> items) throws Exception {
+        java.util.Map<String, Object> msg = new java.util.HashMap<>();
+        msg.put("type", "ranking");
+        msg.put("items", items);
+        return mapper.writeValueAsString(msg);
     }
 }

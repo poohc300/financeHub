@@ -16,8 +16,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.example.financeHub.kis.model.KisStockPrice;
-import com.example.financeHub.krx.mapper.KrxDataMapper;
-import com.example.financeHub.krx.model.StockDailyTradingDTO;
 import com.example.financeHub.websocket.StockPriceWebSocketHandler;
 
 import jakarta.annotation.PostConstruct;
@@ -32,7 +30,6 @@ public class KisWebSocketClient {
 
     private final KisTokenManager tokenManager;
     private final StockPriceWebSocketHandler broadcastHandler;
-    private final KrxDataMapper krxDataMapper;
 
     // 실시간 가격 메모리 캐시 (DB 미사용)
     private final Map<String, KisStockPrice> priceCache = new ConcurrentHashMap<>();
@@ -42,45 +39,14 @@ public class KisWebSocketClient {
     private volatile boolean connected = false;
 
     public KisWebSocketClient(KisTokenManager tokenManager,
-                               StockPriceWebSocketHandler broadcastHandler,
-                               KrxDataMapper krxDataMapper) {
+                               StockPriceWebSocketHandler broadcastHandler) {
         this.tokenManager = tokenManager;
         this.broadcastHandler = broadcastHandler;
-        this.krxDataMapper = krxDataMapper;
     }
 
     @PostConstruct
     public void init() {
         broadcastHandler.setKisWebSocketClient(this);
-        // 서버 시작 시 장 중이면 즉시 구독 (09:00~15:29)
-        int hour = java.time.LocalTime.now(java.time.ZoneId.of("Asia/Seoul")).getHour();
-        int minute = java.time.LocalTime.now(java.time.ZoneId.of("Asia/Seoul")).getMinute();
-        boolean isWeekday = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"))
-                .getDayOfWeek().getValue() <= 5;
-        boolean isMarketOpen = isWeekday && (hour > 9 || (hour == 9 && minute >= 0)) && (hour < 15 || (hour == 15 && minute < 30));
-        if (isMarketOpen) {
-            subscribeTop5();
-        }
-    }
-
-    /** 매 영업일 09:00 — TOP 5 구독 시작 */
-    @Scheduled(cron = "0 0 9 * * MON-FRI", zone = "Asia/Seoul")
-    public void subscribeTop5() {
-        try {
-            List<StockDailyTradingDTO> top5 = krxDataMapper.selectTopVolume(5);
-            if (top5.isEmpty()) {
-                log.warn("TOP 5 종목 없음 — KIS 구독 스킵");
-                return;
-            }
-            ensureConnected();
-            for (StockDailyTradingDTO stock : top5) {
-                subscribe(stock.getIsuSrtCd());
-            }
-            log.info("TOP 5 자동 구독 완료: {}", top5.stream()
-                    .map(StockDailyTradingDTO::getIsuSrtCd).toList());
-        } catch (Exception e) {
-            log.error("TOP 5 구독 실패: {}", e.getMessage(), e);
-        }
     }
 
     /** 매 영업일 15:30 — 장 마감, 전체 구독 해제 */
@@ -94,6 +60,27 @@ public class KisWebSocketClient {
 
     public Map<String, KisStockPrice> getPriceCache() {
         return priceCache;
+    }
+
+    /**
+     * 구독 종목 목록을 새 목록으로 교체.
+     * 추가된 종목은 구독, 제거된 종목은 해제.
+     * DB IO 없음 — 메모리만 사용.
+     */
+    public void updateSubscriptions(List<String> newSymbols) {
+        ensureConnected();
+        // 해제: 기존에 있지만 새 목록에 없는 종목
+        for (String symbol : List.copyOf(subscribedSymbols)) {
+            if (!newSymbols.contains(symbol)) {
+                unsubscribe(symbol);
+            }
+        }
+        // 구독: 새 목록에 있지만 기존에 없는 종목
+        for (String symbol : newSymbols) {
+            if (!subscribedSymbols.contains(symbol)) {
+                subscribe(symbol);
+            }
+        }
     }
 
     private synchronized void ensureConnected() {
