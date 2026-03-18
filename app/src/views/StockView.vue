@@ -51,6 +51,20 @@ const chartLows = ref<string[]>([])
 const compareValues = ref<string[]>([])
 const topVolumeList = ref<StockDailyTradingDTO[]>([])
 
+// 실시간 WebSocket
+const realtimePrice = ref<{
+  isuSrtCd: string
+  currentPrice: string
+  change: string
+  changeRate: string
+  volume: string
+  time: string
+  open: string
+  high: string
+  low: string
+} | null>(null)
+let ws: WebSocket | null = null
+
 const candleCanvasRef = ref<HTMLCanvasElement | null>(null)
 let candleChartInstance: Chart | null = null
 
@@ -206,6 +220,7 @@ watch([chartType, chartLabels], () => {
 
 onBeforeUnmount(() => {
   candleChartInstance?.destroy()
+  ws?.close()
 })
 
 const buildUrl = (market: string, index: string) => {
@@ -247,7 +262,35 @@ const selectStock = (stock: StockDailyTradingDTO) => {
   selectedIsuCd.value = stock.isuCd
   searchQuery.value = stock.isuNm
   showDropdown.value = false
+  realtimePrice.value = null
   changeMarket('STOCK', stock.isuNm)
+  connectRealtime(stock.isuSrtCd)
+}
+
+const connectRealtime = (isuSrtCd: string) => {
+  if (ws) {
+    ws.close()
+    ws = null
+  }
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  ws = new WebSocket(`${protocol}//${location.host}/ws/stock`)
+
+  ws.onopen = () => {
+    ws?.send(JSON.stringify({ type: 'subscribe', isuSrtCd }))
+  }
+  ws.onmessage = (event) => {
+    try {
+      realtimePrice.value = JSON.parse(event.data)
+    } catch (e) {
+      console.error('WS 메시지 파싱 오류', e)
+    }
+  }
+  ws.onclose = () => {
+    console.log('WS 종료')
+  }
+  ws.onerror = (e) => {
+    console.error('WS 오류', e)
+  }
 }
 
 const closeDropdown = () => {
@@ -362,6 +405,29 @@ onMounted(() => {
               <span class="ml-2 text-gray-400 text-xs">{{ stock.isuSrtCd }}</span>
             </li>
           </ul>
+        </div>
+
+        <!-- 실시간 시세 -->
+        <div v-if="realtimePrice" class="mt-4 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div class="flex justify-between items-center mb-1">
+            <h3 class="font-bold text-gray-800 text-sm">실시간 시세</h3>
+            <span class="text-xs text-gray-400">{{ realtimePrice.time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') }}</span>
+          </div>
+          <div class="flex justify-between items-end">
+            <p class="text-2xl font-bold text-gray-900">{{ Number(realtimePrice.currentPrice).toLocaleString() }}원</p>
+            <div class="text-right">
+              <p :class="Number(realtimePrice.change) >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
+                {{ Number(realtimePrice.change) >= 0 ? '+' : '' }}{{ Number(realtimePrice.change).toLocaleString() }}
+                ({{ realtimePrice.changeRate }}%)
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-2 text-xs text-gray-500">
+            <div>시 <span class="text-gray-700 font-medium">{{ Number(realtimePrice.open).toLocaleString() }}</span></div>
+            <div>고 <span class="text-green-600 font-medium">{{ Number(realtimePrice.high).toLocaleString() }}</span></div>
+            <div>저 <span class="text-red-600 font-medium">{{ Number(realtimePrice.low).toLocaleString() }}</span></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">거래량 {{ Number(realtimePrice.volume).toLocaleString() }}</p>
         </div>
 
         <h2 class="text-xl font-bold text-gray-800 mb-4">거래량 TOP</h2>

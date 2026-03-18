@@ -51,3 +51,9 @@ jwt:
 jasypt:
   encryptor:
     password: ${JASYPT_ENCRYPTOR_PASSWORD}
+
+kis:
+  app-key: ${KIS_APP_KEY}
+  app-secret: ${KIS_APP_SECRET}
+  base-url: https://openapi.koreainvestment.com:9443
+  ws-url: ws://ops.koreainvestment.com:21000

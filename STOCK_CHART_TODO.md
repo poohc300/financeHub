@@ -75,10 +75,13 @@
 ### 오늘의 TOP 5 고도화 (미완료)
 - [x] 스케줄러 시간 18:00 → 16:00으로 당기기 (KRX 데이터 공개 직후 수집) — 2026-03-18 완료
 - [x] 대시보드에 "마지막 업데이트 시각" 표시 + 수동 새로고침 버튼 — 2026-03-18 완료
-- [ ] **장중 실시간 TOP 5** — 한국투자증권 KIS API 연동
-  - 계좌 개설 → App Key 발급 → 모의투자로 먼저 검증
-  - REST 폴링(간단) 또는 WebSocket 실시간(정확) 중 선택
+- [x] **실시간 주식 조회 — KIS API WebSocket 연동** (2026-03-18 완료)
+  - [x] 백엔드: `KisTokenManager` — OAuth2 access_token 발급/24h 캐싱
+  - [x] 백엔드: `KisWebSocketClient` — KIS WS 연결, 종목 구독/해제
+  - [x] 백엔드: Spring WebSocket 서버 (`/ws/stock`) — 프론트 연결 관리 + KIS 가격 릴레이
+  - [x] 프론트: `StockView.vue` WebSocket 클라이언트 — 종목 선택 시 실시간 가격 수신
   - 📖 상세 조사 내용: [KIS_API_RESEARCH.md](KIS_API_RESEARCH.md)
+  - 구조: `KIS WS → 백엔드(릴레이) → 프론트 WS` (1세션 최대 41종목)
 
 ### 오늘의 TOP 5 (완료)
 - [x] 상승률 TOP 5 — 백엔드 SQL/Mapper/Controller (기존 구현)
