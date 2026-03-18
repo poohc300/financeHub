@@ -53,9 +53,13 @@ const navItems = [
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="flex flex-col items-center justify-center py-2 gap-0.5 transition-colors"
+          class="relative flex flex-col items-center justify-center py-2 gap-0.5 transition-colors"
           :class="$route.path === item.to ? 'text-blue-600' : 'text-gray-400'"
         >
+          <span
+            class="absolute top-0 inset-x-4 h-0.5 rounded-full transition-all"
+            :class="$route.path === item.to ? 'bg-blue-600' : 'bg-transparent'"
+          ></span>
           <span class="text-xl leading-none">{{ item.icon }}</span>
           <span class="text-[11px] font-medium">{{ item.label }}</span>
         </RouterLink>

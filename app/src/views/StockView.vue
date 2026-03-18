@@ -392,13 +392,13 @@ onMounted(() => {
       <div class="lg:col-span-2">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
           <h2 class="text-xl font-bold text-gray-800">시장 동향</h2>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex gap-2 overflow-x-auto pb-0.5">
             <button
               v-for="btn in marketButtons"
               :key="btn.market"
               @click="changeMarket(btn.market, btn.index)"
               :class="[
-                'px-4 py-2 rounded-lg font-medium transition-colors',
+                'px-4 py-2 rounded-lg font-medium transition-colors flex-shrink-0',
                 selectedMarket === btn.market && !compareMode
                   ? 'bg-gray-800 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -407,7 +407,7 @@ onMounted(() => {
             <button
               @click="toggleCompare"
               :class="[
-                'px-4 py-2 rounded-lg font-medium transition-colors',
+                'px-4 py-2 rounded-lg font-medium transition-colors flex-shrink-0',
                 compareMode ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               ]"
             >비교</button>

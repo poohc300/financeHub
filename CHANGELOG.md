@@ -1,5 +1,14 @@
 # financeHub 수정 내역
 
+## 2026-03-18 (5차)
+
+### nginx 라우팅 + 모바일 UI + 빈 데이터 안내
+
+- `nginx.conf` — `/admin/` 직접 프록시 추가 (IP 제한), `/news/` 백엔드 프록시 추가
+- `App.vue` — 모바일 탭바 활성 탭 상단 인디케이터 라인 추가
+- `StockView.vue` — 마켓 버튼 모바일 가로 스크롤 처리 (`overflow-x-auto`, `flex-shrink-0`)
+- `DashboardView.vue` — 금/오일 데이터 없을 때 "데이터 없음 · 평일 16시 수집" 안내 문구 표시
+
 ## 2026-03-18 (4차)
 
 ### 공모주(IPO) 고도화 완료
