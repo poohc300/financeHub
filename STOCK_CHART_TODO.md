@@ -75,13 +75,21 @@
 ### 오늘의 TOP 5 고도화 (미완료)
 - [x] 스케줄러 시간 18:00 → 16:00으로 당기기 (KRX 데이터 공개 직후 수집) — 2026-03-18 완료
 - [x] 대시보드에 "마지막 업데이트 시각" 표시 + 수동 새로고침 버튼 — 2026-03-18 완료
-- [x] **실시간 주식 조회 — KIS API WebSocket 연동** (2026-03-18 완료)
-  - [x] 백엔드: `KisTokenManager` — OAuth2 access_token 발급/24h 캐싱
-  - [x] 백엔드: `KisWebSocketClient` — KIS WS 연결, 종목 구독/해제
-  - [x] 백엔드: Spring WebSocket 서버 (`/ws/stock`) — 프론트 연결 관리 + KIS 가격 릴레이
-  - [x] 프론트: `StockView.vue` WebSocket 클라이언트 — 종목 선택 시 실시간 가격 수신
-  - 📖 상세 조사 내용: [KIS_API_RESEARCH.md](KIS_API_RESEARCH.md)
+- [x] **KIS WebSocket 인프라 구축** (2026-03-18 완료) — 단일 종목 선택 시 실시간 가격 수신
+  - [x] 백엔드: `KisTokenManager` — OAuth2 access_token / approval_key 발급·캐싱
+  - [x] 백엔드: `KisWebSocketClient` — KIS WS 연결, 종목 구독/해제, 재연결
+  - [x] 백엔드: Spring WebSocket 서버 (`/ws/stock`) — 프론트 세션 관리 + 가격 브로드캐스트
+  - [x] 프론트: `StockView.vue` — 종목 선택 시 WS 연결, 실시간 시세 카드 표시
   - 구조: `KIS WS → 백엔드(릴레이) → 프론트 WS` (1세션 최대 41종목)
+
+- [ ] **장중 실시간 TOP 5 자동 표시** (목표: 매수/매도 없이 조회 전용) — 2026-03-18 시작
+  - 목적: 장 중(09:00~15:30) 거래량·상승률 TOP 5 종목의 실시간 가격을 자동으로 갱신해서 보여줌
+  - [ ] 백엔드: 서버 시작 시 DB에서 거래량 TOP 5 종목 자동 조회 → KIS WS 구독 (5종목 고정)
+  - [ ] 백엔드: `StockPriceWebSocketHandler` — 프론트 접속 시 즉시 현재 캐시 가격 5종목 전송
+  - [ ] 백엔드: 16:00 이후(장 마감) KIS WS 구독 자동 해제, 09:00 재구독
+  - [ ] 프론트: `StockView.vue` 거래량 TOP 리스트 — 장 중이면 WS로 실시간 가격 갱신
+  - [ ] 프론트: 장 중/마감 여부 표시 (실시간 vs 전일 종가)
+  - 📖 상세 조사 내용: [KIS_API_RESEARCH.md](KIS_API_RESEARCH.md)
 
 ### 오늘의 TOP 5 (완료)
 - [x] 상승률 TOP 5 — 백엔드 SQL/Mapper/Controller (기존 구현)
