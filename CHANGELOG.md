@@ -1,5 +1,14 @@
 # financeHub 수정 내역
 
+## 2026-03-18 (4차)
+
+### 공모주(IPO) 고도화 완료
+
+- `CrawlerData.xml` — `selectFilteredIpo`에 `period LIKE '%~%'` 노이즈 필터 추가 (크롤링 쓰레기 데이터 제거)
+- 백엔드: `IpoController` (`GET /ipo/list`), `selectFilteredIpo` SQL, `CrawlerDataMapper` 이미 구현 확인
+- 프론트: `IpoView.vue` (필터/페이지네이션), 라우터 `/ipo`, 네비 이미 구현 확인
+- DB: 컬럼 이미 `text` 타입으로 VARCHAR 제한 없음 — ALTER TABLE 불필요
+
 ## 2026-03-18 (3차)
 
 ### 스케줄러 + 대시보드 UX 개선

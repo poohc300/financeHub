@@ -85,17 +85,16 @@
                under_writer AS underWriter, data_hash AS dataHash,
                TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS createdAt
         FROM financehub.ipo
-        <where>
-            <if test="startDate != null and startDate != ''">
-                AND DATE(created_at) &gt;= #{startDate}::date
-            </if>
-            <if test="endDate != null and endDate != ''">
-                AND DATE(created_at) &lt;= #{endDate}::date
-            </if>
-            <if test="keyword != null and keyword != ''">
-                AND LOWER(company_name) LIKE LOWER(CONCAT('%', #{keyword}, '%'))
-            </if>
-        </where>
+        WHERE period LIKE '%~%'
+        <if test="startDate != null and startDate != ''">
+            AND DATE(created_at) &gt;= #{startDate}::date
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(created_at) &lt;= #{endDate}::date
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND LOWER(company_name) LIKE LOWER(CONCAT('%', #{keyword}, '%'))
+        </if>
         ORDER BY created_at DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
