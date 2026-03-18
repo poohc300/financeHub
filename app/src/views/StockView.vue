@@ -118,8 +118,12 @@ const lineChartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: { position: 'top' as const },
-    title: { display: true, text: `${selectedIndex.value} 추이`, font: { size: 16, weight: 'bold' as const } }
+    legend: { display: false },
+    title: {
+      display: true,
+      text: compareMode.value ? 'KOSPI vs 코스닥 비교' : `${selectedIndex.value} 추이`,
+      font: { size: 16, weight: 'bold' as const }
+    }
   },
   scales: {
     y: { beginAtZero: false, grid: { color: 'rgba(0,0,0,0.1)' } },
@@ -457,6 +461,20 @@ onMounted(() => {
                 >✕</button>
               </div>
             </div>
+          </div>
+
+          <!-- 비교 모드 범례 -->
+          <div v-if="compareMode" class="flex items-center gap-5 mb-3 text-sm">
+            <span class="flex items-center gap-2">
+              <span class="inline-block w-8 h-[3px] rounded bg-blue-500"></span>
+              <span class="font-medium text-gray-700">KOSPI</span>
+              <span class="text-xs text-gray-400">(좌축)</span>
+            </span>
+            <span class="flex items-center gap-2">
+              <span class="inline-block w-8 h-[3px] rounded bg-orange-500"></span>
+              <span class="font-medium text-gray-700">코스닥</span>
+              <span class="text-xs text-gray-400">(우축)</span>
+            </span>
           </div>
 
           <!-- 지수 차트 -->
