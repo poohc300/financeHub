@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { openLink } from '../util/openLink';
 import { CrawledIpoDTO, CrawledNewsDTO, GoldMarketTradingDTO, DashboardDataDTO, OilMarketDailtyTradingDTO, KospiDailyTradingDTO, KosdaqDailyTradingDTO, StockDailyTradingDTO } from '../model/DashboardDataDTO';
 import { fetchRequest } from '../util/fetchRequest';
 import Calendar from '../components/Calendar.vue';
@@ -357,10 +358,9 @@ onMounted(() => {
           >
             <span class="inline-block w-2 h-2 mt-2 mr-3 flex-shrink-0 bg-blue-500 rounded-full"></span>
             <a
-              :href="news.link"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-gray-600 hover:text-blue-600 hover:underline text-sm leading-snug"
+              href="javascript:void(0)"
+              @click="openLink(news.link)"
+              class="text-gray-600 hover:text-blue-600 hover:underline text-sm leading-snug cursor-pointer"
             >{{ news.title }}</a>
           </li>
         </ul>
