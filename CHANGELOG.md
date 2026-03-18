@@ -1,5 +1,15 @@
 # financeHub 수정 내역
 
+## 2026-03-18 (7차)
+
+### 모바일 뉴스/공모주 링크 개선
+
+- `openLink.ts` — `window.open(url, '_blank', 'noopener,noreferrer')` 공용 유틸 추가
+- `NewsView.vue` — v-card href 제거 → `@click="openLink()"` 처리
+- `DashboardView.vue` — 뉴스 `<a>` href 제거 → `@click="openLink()"` 처리
+- `IpoView.vue` — 공모주명 링크 href 제거 → `@click="openLink()"` 처리
+- PWA/모바일 브라우저에서 앱을 벗어나는 문제 해결
+
 ## 2026-03-18 (6차)
 
 ### 모바일 탭바 Vuetify v-bottom-navigation 전환

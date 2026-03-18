@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { fetchRequest } from '../util/fetchRequest'
+import { openLink } from '../util/openLink'
 
 interface NewsItem {
   title: string
@@ -210,13 +211,12 @@ onMounted(() => fetchNews())
           <v-card
             v-for="(item, index) in newsList"
             :key="item.dataHash || index"
-            :href="item.link"
-            target="_blank"
-            rel="noopener noreferrer"
+            @click="openLink(item.link)"
             class="mb-3"
             elevation="1"
             rounded="lg"
             hover
+            style="cursor: pointer;"
           >
             <v-card-text class="py-3 px-4">
               <div class="d-flex align-start justify-space-between gap-3">

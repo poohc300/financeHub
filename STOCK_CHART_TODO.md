@@ -50,7 +50,7 @@
     - API 레퍼런스: https://vuetifyjs.com/en/api/v-bottom-navigation
     - 레이아웃 예시: https://snips.vuetifyjs.com/application-ui/core-layouts/bottom-navigation-layouts
     - 로컬 타입 정의: `app/node_modules/vuetify/lib/components/VBottomNavigation/VBottomNavigation.d.ts`
-- [ ] 모바일 뉴스 링크 개선 — `target="_blank"` 이미 있으나 PWA/모바일 브라우저에서 앱을 벗어나는 문제. `window.open()` 강제 처리 또는 인앱 링크 미리보기 검토
+- [x] 모바일 뉴스 링크 개선 — `window.open()` 강제 처리로 PWA 이탈 문제 해결 — 2026-03-18 완료
 
 ### 뉴스 고도화 (완료)
 - [x] 뉴스 1시간 단위 자동 크롤링

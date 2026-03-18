@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { fetchRequest } from '../util/fetchRequest'
+import { openLink } from '../util/openLink'
 
 interface IpoItem {
   companyName: string
@@ -174,9 +175,8 @@ onMounted(() => fetchIpo())
                   <div class="d-flex align-center gap-2 mb-1">
                     <a
                       v-if="item.link"
-                      :href="item.link"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="javascript:void(0)"
+                      @click="openLink(item.link)"
                       class="text-body-1 font-weight-bold text-blue-darken-2 ipo-link"
                     >{{ item.companyName }}</a>
                     <span v-else class="text-body-1 font-weight-bold text-grey-darken-3">{{ item.companyName }}</span>
