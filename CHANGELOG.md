@@ -1,5 +1,11 @@
 # financeHub 수정 내역
 
+## 2026-03-18 (2차)
+
+### 인프라: 배포 시 포트 충돌 방지
+
+- `deploy.yml` — `systemctl restart` 전 `fuser -k 8080/tcp` 추가, 포트 점유 프로세스 강제 종료
+
 ## 2026-03-18
 
 ### 보안: nginx /api/admin/ IP 접근 제한

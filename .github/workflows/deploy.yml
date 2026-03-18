@@ -33,6 +33,7 @@ jobs:
       - name: Deploy Backend
         run: |
           cp backend/build/libs/*.jar /home/jeremy/dev/financeHub/backend/app.jar
+          sudo fuser -k 8080/tcp || true
           sudo systemctl daemon-reload
           sudo systemctl restart financehub-backend
           sleep 5
