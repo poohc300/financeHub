@@ -1,5 +1,19 @@
 # financeHub 수정 내역
 
+## 2026-03-18 (10차)
+
+### KIS WebSocket 실시간 주식 시세 기능 추가
+
+- `backend/build.gradle` — `spring-boot-starter-websocket` 의존성 주석 해제
+- `backend/src/main/resources/application.yml` — `kis.base-url`, `kis.ws-url` 설정 추가
+- `backend/.../kis/KisTokenManager.java` — KIS OAuth2 access_token / approval_key 발급 및 캐싱
+- `backend/.../kis/KisWebSocketClient.java` — KIS WS 연결, H0STCNT0 종목 구독/해제, 재연결 처리
+- `backend/.../kis/model/KisStockPrice.java` — 실시간 체결가 DTO
+- `backend/.../websocket/WebSocketConfig.java` — Spring WebSocket `/ws/stock` 엔드포인트 등록
+- `backend/.../websocket/StockPriceWebSocketHandler.java` — 프론트 세션 관리, KIS 가격 브로드캐스트
+- `nginx.conf` — `/ws/` WebSocket 프록시 블록 추가 (Upgrade 헤더 포함)
+- `app/src/views/StockView.vue` — 종목 선택 시 WebSocket 연결, 실시간 시세 카드 UI 표시
+
 ## 2026-03-18 (9차)
 
 ### 스케줄러 당일 데이터 미수집 버그 수정
