@@ -89,18 +89,20 @@ const refreshData = async () => {
   }
 }
 
-// 핵심 4개 (디폴트 표시)
-const keyIndicators = computed<Indicator[]>(() => {
-  const result: Indicator[] = [];
+interface KeySlot { icon: string; label: string; indicator: Indicator | null }
+
+// 핵심 4개 (디폴트 표시) — 데이터 없을 때 안내 문구 표시
+const keyIndicators = computed<KeySlot[]>(() => {
   const kospi = kospiInfo.value.find(x => x.idxNm === '코스피');
-  if (kospi) result.push(toIndicator('📈', '코스피', kospi.clsprcIdx, kospi.flucRt));
   const kosdaq = kosdaqInfo.value.find(x => x.idxNm === '코스닥');
-  if (kosdaq) result.push(toIndicator('📊', '코스닥', kosdaq.clsprcIdx, kosdaq.flucRt));
   const gold = goldMarketInfo.value.find(x => x.isuNm.includes('금 99.99_1kg'));
-  if (gold) result.push(toIndicator('🥇', '금 현물 1kg', gold.tddClsprc, gold.flucRt, '원/g'));
   const gasoline = oilMarketInfo.value.find(x => x.oilNm === '휘발유');
-  if (gasoline) result.push(toIndicator('⛽', '휘발유', gasoline.wtAvgPrc, gasoline.flucRt, '원/ℓ'));
-  return result;
+  return [
+    { icon: '📈', label: '코스피',      indicator: kospi    ? toIndicator('📈', '코스피',      kospi.clsprcIdx,    kospi.flucRt)              : null },
+    { icon: '📊', label: '코스닥',      indicator: kosdaq   ? toIndicator('📊', '코스닥',      kosdaq.clsprcIdx,   kosdaq.flucRt)             : null },
+    { icon: '🥇', label: '금 현물 1kg', indicator: gold     ? toIndicator('🥇', '금 현물 1kg', gold.tddClsprc,     gold.flucRt,     '원/g')   : null },
+    { icon: '⛽', label: '휘발유',      indicator: gasoline ? toIndicator('⛽', '휘발유',      gasoline.wtAvgPrc,  gasoline.flucRt, '원/ℓ')  : null },
+  ];
 })
 
 // 전체 지표 그룹 (펼치기 시 표시)
@@ -197,25 +199,31 @@ onMounted(() => {
       <!-- 핵심 4개 카드 -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div
-          v-for="(ind, i) in keyIndicators"
+          v-for="(slot, i) in keyIndicators"
           :key="i"
           class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
         >
           <div class="flex items-center gap-2 mb-3">
-            <span class="text-xl">{{ ind.icon }}</span>
-            <span class="text-sm font-medium text-gray-500">{{ ind.label }}</span>
+            <span class="text-xl">{{ slot.icon }}</span>
+            <span class="text-sm font-medium text-gray-500">{{ slot.label }}</span>
           </div>
-          <div class="text-2xl font-bold text-gray-900 mb-2 tabular-nums">
-            {{ Number(ind.value.replace(/,/g, '')).toLocaleString('ko-KR') }}
-            <span class="text-xs font-normal text-gray-400 ml-1">{{ ind.unit }}</span>
-          </div>
-          <div
-            :class="ind.isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'"
-            class="inline-flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full"
-          >
-            <span>{{ ind.isPositive ? '▲' : '▼' }}</span>
-            <span>{{ Math.abs(parseFloat(ind.change)).toFixed(2) }}%</span>
-          </div>
+          <template v-if="slot.indicator">
+            <div class="text-2xl font-bold text-gray-900 mb-2 tabular-nums">
+              {{ Number(slot.indicator.value.replace(/,/g, '')).toLocaleString('ko-KR') }}
+              <span class="text-xs font-normal text-gray-400 ml-1">{{ slot.indicator.unit }}</span>
+            </div>
+            <div
+              :class="slot.indicator.isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'"
+              class="inline-flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full"
+            >
+              <span>{{ slot.indicator.isPositive ? '▲' : '▼' }}</span>
+              <span>{{ Math.abs(parseFloat(slot.indicator.change)).toFixed(2) }}%</span>
+            </div>
+          </template>
+          <template v-else>
+            <div class="text-2xl font-bold text-gray-200 mb-2">—</div>
+            <div class="text-xs text-gray-400">데이터 없음 · 평일 16시 수집</div>
+          </template>
         </div>
       </div>
 
