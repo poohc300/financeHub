@@ -99,9 +99,7 @@ onMounted(() => fetchIpo())
 </script>
 
 <template>
-  <v-app style="background: #f5f5f5;">
-    <v-main>
-      <v-container fluid class="pa-4" style="max-width: 1000px;">
+  <v-container fluid class="pa-4" style="max-width: 1000px;">
 
         <!-- 헤더 -->
         <div class="mb-4">
@@ -227,9 +225,7 @@ onMounted(() => fetchIpo())
           </div>
         </div>
 
-      </v-container>
-    </v-main>
-  </v-app>
+  </v-container>
 </template>
 
 <style scoped>

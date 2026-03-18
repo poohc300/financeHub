@@ -131,9 +131,7 @@ onMounted(() => fetchNews())
 </script>
 
 <template>
-  <v-app style="background: #f5f5f5;">
-    <v-main>
-      <v-container fluid class="pa-4" style="max-width: 960px;">
+  <v-container fluid class="pa-4" style="max-width: 960px;">
 
         <!-- 헤더 -->
         <div class="mb-4">
@@ -255,9 +253,7 @@ onMounted(() => fetchNews())
           </div>
         </div>
 
-      </v-container>
-    </v-main>
-  </v-app>
+  </v-container>
 </template>
 
 <style scoped>
