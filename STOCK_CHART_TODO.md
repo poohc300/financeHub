@@ -48,27 +48,13 @@
 - [x] Vuetify 카드 리스트 UI (기간/주제/검색 필터)
 
 ### 공모주 (IPO) 고도화
-- [ ] **DB 선행 작업** — 서버에서 ALTER TABLE 실행 (VARCHAR 50→200)
-      ```sql
-      ALTER TABLE financehub.ipo ALTER COLUMN period TYPE VARCHAR(200);
-      ALTER TABLE financehub.ipo ALTER COLUMN fixed_offering_price TYPE VARCHAR(200);
-      ALTER TABLE financehub.ipo ALTER COLUMN expected_offering_price TYPE VARCHAR(200);
-      ALTER TABLE financehub.ipo ALTER COLUMN subscription_rate TYPE VARCHAR(200);
-      ```
-- [ ] **DB 추가 컬럼** — `created_at` 조회 지원 (현재 INSERT에만 사용, SELECT에서 누락)
-      → `IpoDTO`에 `createdAt` 필드 추가
-      → `selectLatestIpo` SQL에 `TO_CHAR(created_at, 'YYYY-MM-DD') AS createdAt` 추가
-- [ ] **백엔드** — `selectFilteredIpo` SQL 추가 (CrawlerData.xml)
-      → 조건: 종목명 키워드(`company_name ILIKE`), 기간(`created_at` DATE 범위)
-      → 페이지네이션: `LIMIT #{limit} OFFSET #{offset}`, `ORDER BY created_at DESC`
-      → `period` 컬럼은 "26.03.14~26.03.15" 텍스트라 날짜 파싱 불가 → `created_at` 기준 필터
-- [ ] **백엔드** — `CrawlerDataMapper`에 `selectFilteredIpo` 메서드 추가
-- [ ] **백엔드** — `IpoController` 신규 생성 (`GET /ipo/list?keyword=&startDate=&endDate=&limit=20&offset=0`)
-- [ ] **프론트** — DashboardView 캘린더 섹션: compact 유지, 표시 건수 제한(월 기준 필터)
-- [ ] **프론트** — IpoView 신규 or DashboardView 내 리스트 섹션
-      → 최신순 내림차순, 페이지네이션(20건씩)
-      → 필터: 키워드 검색 + 기간 버튼(이번달/3개월/전체)
-      → Vuetify 카드 or 테이블 형태
+- [x] **DB 선행 작업** — 컬럼이 이미 `text` 타입 (VARCHAR 제한 없음) — ALTER TABLE 불필요
+- [x] **DB 추가 컬럼** — `created_at` 이미 존재, `IpoDTO.createdAt` 이미 구현
+- [x] **백엔드** — `selectFilteredIpo` SQL (CrawlerData.xml) — `period LIKE '%~%'` 노이즈 필터 추가로 완료 (2026-03-18)
+- [x] **백엔드** — `CrawlerDataMapper.selectFilteredIpo` 이미 구현
+- [x] **백엔드** — `IpoController` (`GET /ipo/list`) 이미 구현
+- [x] **프론트** — `IpoView.vue` (필터/페이지네이션/카드 UI) 이미 구현
+- [x] **프론트** — 라우터 `/ipo`, 네비게이션 이미 연결 완료
 
 ### 주요 경제 지표 UI (완료)
 - [x] 핵심 4개(코스피·코스닥·금·휘발유) 큼직한 카드 디폴트 표시
