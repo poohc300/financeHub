@@ -66,6 +66,17 @@ const realtimePrices = ref<Record<string, {
 }>>({})
 // 선택된 종목의 실시간 가격
 const selectedRealtimePrice = ref<typeof realtimePrices.value[string] | null>(null)
+// 실시간 TOP 5 랭킹 (ranking 메시지 수신 시 갱신)
+interface RankingItem {
+  isuSrtCd: string
+  isuNm: string
+  currentPrice: string
+  change: string
+  changeRate: string
+  volume: string
+}
+const realtimeRanking = ref<RankingItem[]>([])
+const isMarketOpen = ref(false)
 let ws: WebSocket | null = null
 
 const candleCanvasRef = ref<HTMLCanvasElement | null>(null)
@@ -277,12 +288,23 @@ const connectRealtime = () => {
 
   ws.onmessage = (event) => {
     try {
-      const price = JSON.parse(event.data)
-      if (price.isuSrtCd) {
-        realtimePrices.value = { ...realtimePrices.value, [price.isuSrtCd]: price }
-        // 현재 선택 종목이면 selectedRealtimePrice 갱신
-        if (selectedIsuSrtCd.value === price.isuSrtCd) {
-          selectedRealtimePrice.value = price
+      const msg = JSON.parse(event.data)
+      if (msg.type === 'ranking') {
+        // 랭킹 메시지: TOP 5 리스트 갱신
+        realtimeRanking.value = msg.items || []
+        isMarketOpen.value = true
+      } else if (msg.isuSrtCd) {
+        // 체결가 메시지: 가격 캐시 갱신
+        realtimePrices.value = { ...realtimePrices.value, [msg.isuSrtCd]: msg }
+        if (selectedIsuSrtCd.value === msg.isuSrtCd) {
+          selectedRealtimePrice.value = msg
+        }
+        // 랭킹 내 해당 종목 가격도 갱신
+        const idx = realtimeRanking.value.findIndex(r => r.isuSrtCd === msg.isuSrtCd)
+        if (idx !== -1) {
+          realtimeRanking.value = realtimeRanking.value.map((r, i) =>
+            i === idx ? { ...r, currentPrice: msg.currentPrice, change: msg.change, changeRate: msg.changeRate, volume: msg.volume } : r
+          )
         }
       }
     } catch (e) {
@@ -430,38 +452,64 @@ onMounted(() => {
           <p class="text-xs text-gray-400 mt-1">거래량 {{ Number(selectedRealtimePrice.volume).toLocaleString() }}</p>
         </div>
 
-        <h2 class="text-xl font-bold text-gray-800 mb-4">거래량 TOP</h2>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div class="divide-y divide-gray-200">
-            <div
-              v-for="(stock) in topVolumeList"
-              :key="stock.isuCd"
-              class="p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
-              @click="selectStock(stock)"
-            >
-              <div class="flex justify-between items-center">
-                <div>
-                  <h3 class="font-medium text-gray-800">{{ stock.isuNm }}</h3>
-                  <p class="text-sm text-gray-500">거래량: {{ realtimePrices[stock.isuSrtCd]?.volume ?? stock.accTrdvol }}</p>
+        <!-- 실시간 TOP 5 / 거래량 TOP -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <h2 class="text-xl font-bold text-gray-800">
+              {{ isMarketOpen ? '실시간 상승률 TOP 5' : '거래량 TOP' }}
+            </h2>
+            <span v-if="isMarketOpen" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">LIVE</span>
+            <span v-else class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">전일 종가</span>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="divide-y divide-gray-200">
+              <!-- 장 중: 실시간 랭킹 -->
+              <template v-if="isMarketOpen && realtimeRanking.length > 0">
+                <div
+                  v-for="(stock) in realtimeRanking"
+                  :key="stock.isuSrtCd"
+                  class="p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                  @click="selectStock({ isuCd: stock.isuSrtCd, isuSrtCd: stock.isuSrtCd, isuNm: stock.isuNm, accTrdvol: stock.volume, tddClsprc: stock.currentPrice, flucRt: stock.changeRate } as any)"
+                >
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <h3 class="font-medium text-gray-800">{{ stock.isuNm }}</h3>
+                      <p class="text-sm text-gray-500">거래량: {{ Number(stock.volume).toLocaleString() }}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="font-bold text-gray-800">{{ Number(stock.currentPrice).toLocaleString() }}원</p>
+                      <p :class="Number(stock.changeRate) >= 0 ? 'text-green-600' : 'text-red-600'">
+                        {{ Number(stock.changeRate) >= 0 ? '+' : '' }}{{ stock.changeRate }}%
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div class="text-right">
-                  <template v-if="realtimePrices[stock.isuSrtCd]">
-                    <p class="font-bold text-gray-800">{{ Number(realtimePrices[stock.isuSrtCd].currentPrice).toLocaleString() }}<span class="text-xs text-blue-500 ml-1">실시간</span></p>
-                    <p :class="Number(realtimePrices[stock.isuSrtCd].change) >= 0 ? 'text-green-600' : 'text-red-600'">
-                      {{ realtimePrices[stock.isuSrtCd].changeRate }}%
-                    </p>
-                  </template>
-                  <template v-else>
-                    <p class="font-bold text-gray-800">{{ stock.tddClsprc }}</p>
-                    <p :class="parseFloat(stock.flucRt) >= 0 ? 'text-green-600' : 'text-red-600'">
-                      {{ stock.flucRt }}%
-                    </p>
-                  </template>
+              </template>
+              <!-- 장 마감: DB 기반 거래량 TOP -->
+              <template v-else>
+                <div
+                  v-for="(stock) in topVolumeList"
+                  :key="stock.isuCd"
+                  class="p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                  @click="selectStock(stock)"
+                >
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <h3 class="font-medium text-gray-800">{{ stock.isuNm }}</h3>
+                      <p class="text-sm text-gray-500">거래량: {{ stock.accTrdvol }}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="font-bold text-gray-800">{{ stock.tddClsprc }}</p>
+                      <p :class="parseFloat(stock.flucRt) >= 0 ? 'text-green-600' : 'text-red-600'">
+                        {{ stock.flucRt }}%
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div v-if="topVolumeList.length === 0" class="p-4 text-center text-gray-500">
-              데이터가 없습니다
+                <div v-if="topVolumeList.length === 0" class="p-4 text-center text-gray-500">
+                  데이터가 없습니다
+                </div>
+              </template>
             </div>
           </div>
         </div>
