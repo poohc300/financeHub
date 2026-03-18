@@ -1,5 +1,14 @@
 # financeHub 수정 내역
 
+## 2026-03-18 (6차)
+
+### 모바일 탭바 Vuetify v-bottom-navigation 전환
+
+- `App.vue` — 커스텀 Tailwind 탭바 → `v-bottom-navigation` 교체
+  - `useDisplay` 로 모바일(md 미만) 조건부 렌더링
+  - emoji 아이콘 → MDI 아이콘 (`mdi-home`, `mdi-newspaper-variant-outline`, `mdi-chart-line`, `mdi-briefcase-outline`)
+  - 활성 탭 자동 색상 + elevation 그림자 적용
+
 ## 2026-03-18 (5차)
 
 ### nginx 라우팅 + 모바일 UI + 빈 데이터 안내

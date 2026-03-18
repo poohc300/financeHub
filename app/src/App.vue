@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { RouterView, RouterLink } from 'vue-router'
+import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
+import { useDisplay } from 'vuetify'
+
+const router = useRouter()
+const route = useRoute()
+const { mdAndUp } = useDisplay()
 
 const navItems = [
-  { to: '/',       label: '홈',    icon: '🏠' },
-  { to: '/news',   label: '뉴스',  icon: '📰' },
-  { to: '/stocks', label: '주식',  icon: '📈' },
-  { to: '/ipo',    label: '공모주', icon: '🏢' },
+  { to: '/',       label: '홈',    icon: 'mdi-home',                     iconActive: 'mdi-home' },
+  { to: '/news',   label: '뉴스',  icon: 'mdi-newspaper-variant-outline', iconActive: 'mdi-newspaper-variant' },
+  { to: '/stocks', label: '주식',  icon: 'mdi-chart-line',                iconActive: 'mdi-chart-line' },
+  { to: '/ipo',    label: '공모주', icon: 'mdi-briefcase-outline',         iconActive: 'mdi-briefcase' },
 ]
+
+const navigateTo = (path: string) => {
+  if (path && path !== route.path) router.push(path)
+}
 </script>
 
 <template>
@@ -46,25 +55,27 @@ const navItems = [
       </RouterView>
     </main>
 
-    <!-- 모바일 하단 탭 바 (md 미만) -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div class="grid grid-cols-4">
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          class="relative flex flex-col items-center justify-center py-2 gap-0.5 transition-colors"
-          :class="$route.path === item.to ? 'text-blue-600' : 'text-gray-400'"
-        >
-          <span
-            class="absolute top-0 inset-x-4 h-0.5 rounded-full transition-all"
-            :class="$route.path === item.to ? 'bg-blue-600' : 'bg-transparent'"
-          ></span>
-          <span class="text-xl leading-none">{{ item.icon }}</span>
-          <span class="text-[11px] font-medium">{{ item.label }}</span>
-        </RouterLink>
-      </div>
-    </nav>
+    <!-- 모바일 하단 탭바 — Vuetify v-bottom-navigation (md 미만) -->
+    <v-bottom-navigation
+      v-if="!mdAndUp"
+      :model-value="route.path"
+      @update:model-value="navigateTo"
+      grow
+      elevation="8"
+      color="primary"
+      height="60"
+    >
+      <v-btn
+        v-for="item in navItems"
+        :key="item.to"
+        :value="item.to"
+      >
+        <v-icon size="22">
+          {{ route.path === item.to ? item.iconActive : item.icon }}
+        </v-icon>
+        <span class="text-[11px] mt-0.5">{{ item.label }}</span>
+      </v-btn>
+    </v-bottom-navigation>
 
   </div>
 </template>
