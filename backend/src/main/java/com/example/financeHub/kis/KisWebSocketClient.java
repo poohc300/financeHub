@@ -3,6 +3,8 @@ package com.example.financeHub.kis;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,11 +12,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.example.financeHub.kis.model.KisStockPrice;
+import com.example.financeHub.krx.mapper.KrxDataMapper;
+import com.example.financeHub.krx.model.StockDailyTradingDTO;
 import com.example.financeHub.websocket.StockPriceWebSocketHandler;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 
@@ -22,27 +26,74 @@ import jakarta.annotation.PostConstruct;
 public class KisWebSocketClient {
 
     private static final Logger log = LoggerFactory.getLogger(KisWebSocketClient.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${kis.ws-url}")
     private String wsUrl;
 
     private final KisTokenManager tokenManager;
     private final StockPriceWebSocketHandler broadcastHandler;
+    private final KrxDataMapper krxDataMapper;
+
+    // 실시간 가격 메모리 캐시 (DB 미사용)
+    private final Map<String, KisStockPrice> priceCache = new ConcurrentHashMap<>();
 
     private WebSocket webSocket;
     private final Set<String> subscribedSymbols = ConcurrentHashMap.newKeySet();
     private volatile boolean connected = false;
 
-    public KisWebSocketClient(KisTokenManager tokenManager, StockPriceWebSocketHandler broadcastHandler) {
+    public KisWebSocketClient(KisTokenManager tokenManager,
+                               StockPriceWebSocketHandler broadcastHandler,
+                               KrxDataMapper krxDataMapper) {
         this.tokenManager = tokenManager;
         this.broadcastHandler = broadcastHandler;
+        this.krxDataMapper = krxDataMapper;
     }
 
     @PostConstruct
     public void init() {
-        // 순환 의존 해소: handler에 this 주입
         broadcastHandler.setKisWebSocketClient(this);
+        // 서버 시작 시 장 중이면 즉시 구독 (09:00~15:29)
+        int hour = java.time.LocalTime.now(java.time.ZoneId.of("Asia/Seoul")).getHour();
+        int minute = java.time.LocalTime.now(java.time.ZoneId.of("Asia/Seoul")).getMinute();
+        boolean isWeekday = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"))
+                .getDayOfWeek().getValue() <= 5;
+        boolean isMarketOpen = isWeekday && (hour > 9 || (hour == 9 && minute >= 0)) && (hour < 15 || (hour == 15 && minute < 30));
+        if (isMarketOpen) {
+            subscribeTop5();
+        }
+    }
+
+    /** 매 영업일 09:00 — TOP 5 구독 시작 */
+    @Scheduled(cron = "0 0 9 * * MON-FRI", zone = "Asia/Seoul")
+    public void subscribeTop5() {
+        try {
+            List<StockDailyTradingDTO> top5 = krxDataMapper.selectTopVolume(5);
+            if (top5.isEmpty()) {
+                log.warn("TOP 5 종목 없음 — KIS 구독 스킵");
+                return;
+            }
+            ensureConnected();
+            for (StockDailyTradingDTO stock : top5) {
+                subscribe(stock.getIsuSrtCd());
+            }
+            log.info("TOP 5 자동 구독 완료: {}", top5.stream()
+                    .map(StockDailyTradingDTO::getIsuSrtCd).toList());
+        } catch (Exception e) {
+            log.error("TOP 5 구독 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /** 매 영업일 15:30 — 장 마감, 전체 구독 해제 */
+    @Scheduled(cron = "0 30 15 * * MON-FRI", zone = "Asia/Seoul")
+    public void unsubscribeAll() {
+        for (String symbol : List.copyOf(subscribedSymbols)) {
+            unsubscribe(symbol);
+        }
+        log.info("장 마감 — 전체 KIS 구독 해제");
+    }
+
+    public Map<String, KisStockPrice> getPriceCache() {
+        return priceCache;
     }
 
     private synchronized void ensureConnected() {
@@ -54,7 +105,7 @@ public class KisWebSocketClient {
                     .buildAsync(URI.create(wsUrl), new KisWebSocketListener(approvalKey))
                     .join();
             connected = true;
-            log.info("KIS WebSocket 연결 완료: {}", wsUrl);
+            log.info("KIS WebSocket 연결: {}", wsUrl);
         } catch (Exception e) {
             connected = false;
             log.error("KIS WebSocket 연결 실패: {}", e.getMessage(), e);
@@ -66,14 +117,15 @@ public class KisWebSocketClient {
         if (subscribedSymbols.contains(isuSrtCd)) return;
         sendSubscribeMessage(isuSrtCd, "1");
         subscribedSymbols.add(isuSrtCd);
-        log.info("KIS 종목 구독: {}", isuSrtCd);
+        log.info("구독: {}", isuSrtCd);
     }
 
     public void unsubscribe(String isuSrtCd) {
         if (!subscribedSymbols.contains(isuSrtCd)) return;
         sendSubscribeMessage(isuSrtCd, "2");
         subscribedSymbols.remove(isuSrtCd);
-        log.info("KIS 종목 구독 해제: {}", isuSrtCd);
+        priceCache.remove(isuSrtCd);
+        log.info("구독 해제: {}", isuSrtCd);
     }
 
     private void sendSubscribeMessage(String isuSrtCd, String trType) {
@@ -81,47 +133,46 @@ public class KisWebSocketClient {
         try {
             String approvalKey = tokenManager.getApprovalKey();
             String msg = String.format(
-                    "{\"header\":{\"approval_key\":\"%s\",\"custtype\":\"P\",\"tr_type\":\"%s\",\"content-type\":\"utf-8\"}," +
-                    "\"body\":{\"input\":{\"tr_id\":\"H0STCNT0\",\"tr_key\":\"%s\"}}}",
+                    "{\"header\":{\"approval_key\":\"%s\",\"custtype\":\"P\",\"tr_type\":\"%s\",\"content-type\":\"utf-8\"},"
+                    + "\"body\":{\"input\":{\"tr_id\":\"H0STCNT0\",\"tr_key\":\"%s\"}}}",
                     approvalKey, trType, isuSrtCd);
             webSocket.sendText(msg, true);
         } catch (Exception e) {
-            log.error("KIS 구독 메시지 전송 실패: {}", e.getMessage());
+            log.error("구독 메시지 전송 실패: {}", e.getMessage());
         }
     }
 
     private void handleMessage(String message) {
         try {
-            // PINGPONG 처리
             if (message.contains("PINGPONG")) {
                 webSocket.sendText(message, true);
                 return;
             }
-
-            // 데이터 형식: 0|H0STCNT0|001|데이터
+            // 형식: 0|H0STCNT0|001|종목코드^체결시간^현재가^전일대비^등락률^시가^고가^저가^누적거래량^...
             String[] parts = message.split("\\|");
-            if (parts.length < 4) return;
-            if (!"H0STCNT0".equals(parts[1])) return;
+            if (parts.length < 4 || !"H0STCNT0".equals(parts[1])) return;
 
-            String[] fields = parts[3].split("\\^");
-            if (fields.length < 9) return;
+            String[] f = parts[3].split("\\^");
+            if (f.length < 9) return;
 
             KisStockPrice price = KisStockPrice.builder()
-                    .isuSrtCd(fields[0])
-                    .time(fields[1])
-                    .currentPrice(fields[2])
-                    .change(fields[3])
-                    .changeRate(fields[4])
-                    .open(fields[5])
-                    .high(fields[6])
-                    .low(fields[7])
-                    .volume(fields[8])
+                    .isuSrtCd(f[0])
+                    .time(f[1])
+                    .currentPrice(f[2])
+                    .change(f[3])
+                    .changeRate(f[4])
+                    .open(f[5])
+                    .high(f[6])
+                    .low(f[7])
+                    .volume(f[8])
                     .build();
 
+            // DB 쓰기 없이 메모리에만 저장
+            priceCache.put(price.getIsuSrtCd(), price);
             broadcastHandler.broadcastPrice(price);
 
         } catch (Exception e) {
-            log.error("KIS 메시지 파싱 오류: {}", e.getMessage());
+            log.error("메시지 파싱 오류: {}", e.getMessage());
         }
     }
 
@@ -132,6 +183,12 @@ public class KisWebSocketClient {
 
         KisWebSocketListener(String approvalKey) {
             this.approvalKey = approvalKey;
+        }
+
+        @Override
+        public void onOpen(WebSocket ws) {
+            log.info("KIS WS onOpen");
+            ws.request(1);
         }
 
         @Override
@@ -147,25 +204,19 @@ public class KisWebSocketClient {
         }
 
         @Override
-        public void onOpen(WebSocket ws) {
-            log.info("KIS WS onOpen");
-            ws.request(1);
-        }
-
-        @Override
         public CompletionStage<?> onClose(WebSocket ws, int statusCode, String reason) {
-            log.warn("KIS WS 연결 종료: {} {}", statusCode, reason);
+            log.warn("KIS WS 종료: {} {}", statusCode, reason);
             connected = false;
-            // 재연결 시 기존 구독 심볼 다시 구독
             if (!subscribedSymbols.isEmpty()) {
                 new Thread(() -> {
                     try {
-                        Thread.sleep(3000);
+                        Thread.sleep(5000);
                         tokenManager.resetApprovalKey();
                         ensureConnected();
                         for (String symbol : subscribedSymbols) {
                             sendSubscribeMessage(symbol, "1");
                         }
+                        log.info("KIS WS 재연결 후 {}종목 재구독", subscribedSymbols.size());
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
