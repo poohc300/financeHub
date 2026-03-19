@@ -120,7 +120,7 @@ public class KisRankingPoller {
             List<KisRankingItem> newRanking = new ArrayList<>();
             for (Map<String, Object> item : output.subList(0, Math.min(TOP_N, output.size()))) {
                 newRanking.add(KisRankingItem.builder()
-                        .isuSrtCd(str(item, "mksc_shrn_iscd"))
+                        .isuSrtCd(str(item, "stck_shrn_iscd"))
                         .isuNm(str(item, "hts_kor_isnm"))
                         .currentPrice(str(item, "stck_prpr"))
                         .change(str(item, "prdy_vrss"))
