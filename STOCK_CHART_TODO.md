@@ -113,4 +113,5 @@
 - [x] deploy.yml — 배포 시 `fuser -k 8080/tcp` 로 포트 기준 프로세스 종료 추가 (2026-03-17 장애 재발 방지) — 2026-03-18 완료
 - [x] nginx `/api/admin/` location block 분리 + IP 제한 또는 Basic Auth 적용 (이슈 3) — 2026-03-18 완료
 - [x] nginx 라우팅 추가 — `/admin/`, `/news/` 경로 백엔드 프록시 설정 — 2026-03-18 완료
+- [ ] **HTTP → HTTPS 전환** — Let's Encrypt 인증서 발급, nginx 443 설정, 80 → 443 리다이렉트, WSS 전환
 - [ ] KRX API 평일 18:00 자동 수집 후 DB 데이터 자동 검증 (알림 포함)
