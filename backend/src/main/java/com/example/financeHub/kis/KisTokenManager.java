@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -37,9 +38,19 @@ public class KisTokenManager {
         this.restTemplate = restTemplate;
     }
 
+    /** 평일 08:50 — 장 시작 10분 전 토큰 강제 갱신 */
+    @Scheduled(cron = "0 50 8 * * MON-FRI", zone = "Asia/Seoul")
+    public void refreshTokenBeforeMarketOpen() {
+        log.info("장 시작 전 KIS 토큰 강제 갱신");
+        issueAccessToken();
+    }
+
     public synchronized String getAccessToken() {
         if (accessToken == null || LocalDateTime.now().isAfter(tokenExpiry)) {
             issueAccessToken();
+        }
+        if (accessToken == null) {
+            throw new RuntimeException("KIS access_token 없음 — 발급 실패");
         }
         return accessToken;
     }
