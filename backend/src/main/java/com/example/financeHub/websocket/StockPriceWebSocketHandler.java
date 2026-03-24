@@ -13,8 +13,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.example.financeHub.kis.KisMarketPoller;
 import com.example.financeHub.kis.KisRankingPoller;
 import com.example.financeHub.kis.KisWebSocketClient;
+import com.example.financeHub.kis.model.KisMarketIndex;
 import com.example.financeHub.kis.model.KisRankingItem;
 import com.example.financeHub.kis.model.KisStockPrice;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -36,6 +38,7 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
 
     private KisWebSocketClient kisWebSocketClient;
     private KisRankingPoller rankingPoller;
+    private KisMarketPoller marketPoller;
 
     // 순환 의존 방지를 위해 setter 주입
     public void setKisWebSocketClient(KisWebSocketClient kisWebSocketClient) {
@@ -44,6 +47,10 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
 
     public void setRankingPoller(KisRankingPoller rankingPoller) {
         this.rankingPoller = rankingPoller;
+    }
+
+    public void setMarketPoller(KisMarketPoller marketPoller) {
+        this.marketPoller = marketPoller;
     }
 
     @Override
@@ -63,6 +70,11 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
             if (rankingPoller != null && !rankingPoller.getRankingCache().isEmpty()) {
                 String rankingJson = buildRankingMessage(rankingPoller.getRankingCache());
                 session.sendMessage(new TextMessage(rankingJson));
+            }
+            // 접속 즉시 캐시된 시장 지수 전송
+            if (marketPoller != null && !marketPoller.getMarketCache().isEmpty()) {
+                String marketJson = buildMarketMessage(marketPoller.getMarketCache());
+                session.sendMessage(new TextMessage(marketJson));
             }
         } catch (Exception e) {
             log.error("초기 데이터 전송 실패: {}", e.getMessage());
@@ -159,9 +171,34 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    public void broadcastMarket(List<KisMarketIndex> items) {
+        try {
+            String json = buildMarketMessage(items);
+            TextMessage msg = new TextMessage(json);
+            for (WebSocketSession session : sessions.values()) {
+                if (session.isOpen()) {
+                    try {
+                        session.sendMessage(msg);
+                    } catch (IOException e) {
+                        log.error("시장지수 전송 실패 sessionId={}: {}", session.getId(), e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("broadcastMarket 오류: {}", e.getMessage());
+        }
+    }
+
     private String buildRankingMessage(List<KisRankingItem> items) throws Exception {
         java.util.Map<String, Object> msg = new java.util.HashMap<>();
         msg.put("type", "ranking");
+        msg.put("items", items);
+        return mapper.writeValueAsString(msg);
+    }
+
+    private String buildMarketMessage(List<KisMarketIndex> items) throws Exception {
+        java.util.Map<String, Object> msg = new java.util.HashMap<>();
+        msg.put("type", "market");
         msg.put("items", items);
         return mapper.writeValueAsString(msg);
     }

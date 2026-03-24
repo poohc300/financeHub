@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { openLink } from '../util/openLink';
 import { CrawledIpoDTO, CrawledNewsDTO, GoldMarketTradingDTO, DashboardDataDTO, OilMarketDailtyTradingDTO, KospiDailyTradingDTO, KosdaqDailyTradingDTO, StockDailyTradingDTO } from '../model/DashboardDataDTO';
 import { fetchRequest } from '../util/fetchRequest';
@@ -17,6 +17,19 @@ const topVolumeList = ref<StockDailyTradingDTO[]>([]);
 const showAllIndicators = ref(false);
 const lastUpdated = ref<Date | null>(null);
 const isRefreshing = ref(false);
+
+// 실시간 (WebSocket)
+interface RankingItem {
+  isuSrtCd: string
+  isuNm: string
+  currentPrice: string
+  change: string
+  changeRate: string
+  volume: string
+}
+const realtimeRanking = ref<RankingItem[]>([])
+const isMarketOpen = ref(false)
+let ws: WebSocket | null = null
 
 const lastUpdatedText = computed(() => {
   if (!lastUpdated.value) return '';
@@ -163,8 +176,46 @@ const formatVolume = (val: string): string => {
   return n.toLocaleString('ko-KR') + '주';
 };
 
+const connectWebSocket = () => {
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  ws = new WebSocket(`${protocol}//${location.host}/ws/stock`)
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data)
+      if (msg.type === 'market') {
+        // KOSPI/KOSDAQ 현재지수 갱신
+        msg.items?.forEach((item: any) => {
+          if (item.idxNm === '코스피') {
+            const entry = kospiInfo.value.find(x => x.idxNm === '코스피')
+            if (entry) { entry.clsprcIdx = item.currentIdx; entry.flucRt = item.changeRate }
+          } else if (item.idxNm === '코스닥') {
+            const entry = kosdaqInfo.value.find(x => x.idxNm === '코스닥')
+            if (entry) { entry.clsprcIdx = item.currentIdx; entry.flucRt = item.changeRate }
+          }
+        })
+        lastUpdated.value = new Date()
+      } else if (msg.type === 'ranking') {
+        realtimeRanking.value = msg.items || []
+        isMarketOpen.value = true
+        lastUpdated.value = new Date()
+      }
+    } catch (e) {
+      console.error('Dashboard WS 파싱 오류', e)
+    }
+  }
+  ws.onerror = (e) => console.error('Dashboard WS 오류', e)
+  ws.onclose = () => { isMarketOpen.value = false }
+}
+
 onMounted(() => {
   fetchDashboardData();
+  connectWebSocket();
+})
+
+onUnmounted(() => {
+  ws?.close()
+  ws = null
 })
 
 </script>
@@ -260,42 +311,70 @@ onMounted(() => {
       <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <div class="flex items-center gap-2 mb-5">
           <span class="text-xl">🚀</span>
-          <h2 class="text-lg font-bold text-gray-800">오늘의 상승률 TOP 5</h2>
+          <h2 class="text-lg font-bold text-gray-800">
+            {{ isMarketOpen && realtimeRanking.length > 0 ? '실시간 상승률 TOP 5' : '오늘의 상승률 TOP 5' }}
+          </h2>
+          <span v-if="isMarketOpen && realtimeRanking.length > 0" class="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">LIVE</span>
         </div>
-        <div v-if="topGainersList.length === 0" class="flex flex-col items-center justify-center py-10 text-gray-400">
-          <span class="text-3xl mb-2">📭</span>
-          <span class="text-sm">데이터가 없습니다</span>
-        </div>
-        <ul v-else class="space-y-2">
+
+        <!-- 실시간 랭킹 (장 중) -->
+        <ul v-if="isMarketOpen && realtimeRanking.length > 0" class="space-y-2">
           <li
-            v-for="(stock, index) in topGainersList"
-            :key="stock.isuCd"
+            v-for="(item, index) in realtimeRanking"
+            :key="item.isuSrtCd"
             class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
           >
-            <!-- 순위 뱃지 -->
             <span :class="rankBadgeClass(index)" class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold">
               {{ index + 1 }}
             </span>
-            <!-- 종목 정보 -->
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-1.5">
-                <span class="font-semibold text-gray-800 text-sm truncate">{{ stock.isuNm }}</span>
-                <span :class="marketBadgeClass(stock.mktNm)" class="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0">
-                  {{ stock.mktNm }}
-                </span>
-              </div>
-              <div class="text-xs text-gray-400 mt-0.5">{{ stock.isuSrtCd }}</div>
+              <div class="font-semibold text-gray-800 text-sm truncate">{{ item.isuNm }}</div>
+              <div class="text-xs text-gray-400 mt-0.5">{{ item.isuSrtCd }}</div>
             </div>
-            <!-- 가격 & 등락률 -->
             <div class="text-right flex-shrink-0">
-              <div class="text-sm font-semibold text-gray-800">{{ formatPrice(stock.tddClsprc) }}</div>
-              <div class="flex items-center justify-end gap-0.5 text-green-600">
-                <span class="text-xs">▲</span>
-                <span class="text-sm font-bold">{{ stock.flucRt }}%</span>
+              <div class="text-sm font-semibold text-gray-800">{{ Number(item.currentPrice).toLocaleString('ko-KR') }}원</div>
+              <div class="flex items-center justify-end gap-0.5" :class="parseFloat(item.changeRate) >= 0 ? 'text-green-600' : 'text-red-600'">
+                <span class="text-xs">{{ parseFloat(item.changeRate) >= 0 ? '▲' : '▼' }}</span>
+                <span class="text-sm font-bold">{{ Math.abs(parseFloat(item.changeRate)).toFixed(2) }}%</span>
               </div>
             </div>
           </li>
         </ul>
+
+        <!-- KRX 정적 랭킹 (장 마감 후) -->
+        <template v-else>
+          <div v-if="topGainersList.length === 0" class="flex flex-col items-center justify-center py-10 text-gray-400">
+            <span class="text-3xl mb-2">📭</span>
+            <span class="text-sm">데이터가 없습니다</span>
+          </div>
+          <ul v-else class="space-y-2">
+            <li
+              v-for="(stock, index) in topGainersList"
+              :key="stock.isuCd"
+              class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
+            >
+              <span :class="rankBadgeClass(index)" class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold">
+                {{ index + 1 }}
+              </span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-semibold text-gray-800 text-sm truncate">{{ stock.isuNm }}</span>
+                  <span :class="marketBadgeClass(stock.mktNm)" class="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+                    {{ stock.mktNm }}
+                  </span>
+                </div>
+                <div class="text-xs text-gray-400 mt-0.5">{{ stock.isuSrtCd }}</div>
+              </div>
+              <div class="text-right flex-shrink-0">
+                <div class="text-sm font-semibold text-gray-800">{{ formatPrice(stock.tddClsprc) }}</div>
+                <div class="flex items-center justify-end gap-0.5 text-green-600">
+                  <span class="text-xs">▲</span>
+                  <span class="text-sm font-bold">{{ stock.flucRt }}%</span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </template>
       </div>
 
       <!-- 거래량 TOP 5 -->

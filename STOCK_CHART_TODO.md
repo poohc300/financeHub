@@ -72,6 +72,24 @@
 - [x] 코스닥 데이터 표시 추가
 - [x] 종가 기준 표시로 수정 (시가→종가)
 
+### 실시간 대시보드 갱신 (미완료)
+
+#### 이슈 1: DashboardView 상승률 TOP 5 실시간 미갱신
+- **원인**: `topGainersList`는 `krxDataMapper.selectTopGainers()` → KRX DB 조회 (전일 종가 기준). DashboardView에 WebSocket 연결 없음. StockView의 `KisRankingPoller` 결과가 DashboardView까지 전달되지 않음.
+- **해결 방법**:
+  - [ ] 백엔드: `GET /dashboard/realtime-ranking` REST API 추가 — `KisRankingPoller.getRankingCache()` 반환 (장 중일 때만 유효)
+  - [ ] 또는 DashboardView도 `/ws/stock` WebSocket 연결 추가, `type=ranking` 메시지 수신 시 TOP 5 갱신
+  - [ ] 장 마감 후(15:30 이후)엔 KRX DB 데이터(전일 종가)로 폴백 표시
+
+#### 이슈 2: 주요 경제 지표(코스피·코스닥·금·유가) 실시간 미갱신
+- **원인**: KRX API는 **일별 종가 데이터만 제공** — 장 중에는 당일 데이터가 없음. 5분 폴링해도 전일 종가만 반환. DashboardView는 `onMounted` 1회 호출만 있고 이후 갱신 없음.
+- **해결 방법**:
+  - [ ] 코스피/코스닥 지수: KIS WebSocket에서 실시간 지수 구독 (`tr_id: H0UPCNT0` 등 KIS 지수 실시간 TR) → 백엔드 메모리 캐시 → DashboardView WebSocket 수신
+  - [ ] 금 현물: KIS WebSocket 금현물 실시간 체결가 구독
+  - [ ] 유가: 국내 한국석유공사 API는 일별 → 실시간 미지원. 해외 원유 실시간은 별도 API 필요 (단기 해결 불가)
+  - [ ] 단기 대안: DashboardView에 5분 `setInterval` + REST API 폴링 추가 (단, 데이터 자체가 전일 종가라 장 중엔 의미 없음)
+  - ⚠️ **근본 한계**: KRX 데이터 소스를 KIS 실시간 API로 교체하지 않는 한 장 중 실시간 반영 불가
+
 ### 오늘의 TOP 5 고도화 (미완료)
 - [x] 스케줄러 시간 18:00 → 16:00으로 당기기 (KRX 데이터 공개 직후 수집) — 2026-03-18 완료
 - [x] 대시보드에 "마지막 업데이트 시각" 표시 + 수동 새로고침 버튼 — 2026-03-18 완료
