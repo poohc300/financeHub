@@ -184,14 +184,16 @@ const connectWebSocket = () => {
     try {
       const msg = JSON.parse(event.data)
       if (msg.type === 'market') {
-        // KOSPI/KOSDAQ 현재지수 갱신
+        // KOSPI/KOSDAQ 현재지수 갱신 — ref.value 교체로 Vue 반응성 확실히 보장
         msg.items?.forEach((item: any) => {
-          if (item.idxNm === '코스피') {
-            const entry = kospiInfo.value.find(x => x.idxNm === '코스피')
-            if (entry) { entry.clsprcIdx = item.currentIdx; entry.flucRt = item.changeRate }
-          } else if (item.idxNm === '코스닥') {
-            const entry = kosdaqInfo.value.find(x => x.idxNm === '코스닥')
-            if (entry) { entry.clsprcIdx = item.currentIdx; entry.flucRt = item.changeRate }
+          if (item.idxNm === '코스피' && kospiInfo.value.length > 0) {
+            kospiInfo.value = kospiInfo.value.map(x =>
+              x.idxNm === '코스피' ? { ...x, clsprcIdx: item.currentIdx, flucRt: item.changeRate } : x
+            )
+          } else if (item.idxNm === '코스닥' && kosdaqInfo.value.length > 0) {
+            kosdaqInfo.value = kosdaqInfo.value.map(x =>
+              x.idxNm === '코스닥' ? { ...x, clsprcIdx: item.currentIdx, flucRt: item.changeRate } : x
+            )
           }
         })
         lastUpdated.value = new Date()
@@ -208,8 +210,9 @@ const connectWebSocket = () => {
   ws.onclose = () => { isMarketOpen.value = false }
 }
 
-onMounted(() => {
-  fetchDashboardData();
+// fetchDashboardData 완료 후 WS 연결 — 초기 캐시 메시지 수신 시 kospiInfo가 비어있는 race condition 방지
+onMounted(async () => {
+  await fetchDashboardData();
   connectWebSocket();
 })
 
