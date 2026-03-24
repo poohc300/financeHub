@@ -163,15 +163,25 @@ public class KisWebSocketClient {
             // 업종지수 실시간 (H0UPCNT0)
             if ("H0UPCNT0".equals(parts[1])) {
                 String[] f = parts[3].split("\\^");
-                if (f.length < 6) return;
+                if (f.length < 5) return;
                 // f[0]=업종코드, f[1]=시간, f[2]=현재지수, f[3]=전일대비부호(1상승/4하한/5하락),
-                // f[4]=전일대비, f[5]=등락률, f[6]=시가, f[7]=고가, f[8]=저가, f[9]=거래량
+                // f[4]=전일대비(포인트), f[5]= KIS 포맷 불확실(거래량일 수 있음) → 직접 계산
+                log.debug("H0UPCNT0 raw fields: {}", String.join("|", f));
                 String code = f[0];
                 String idxNm = "0001".equals(code) ? "코스피" : "1001".equals(code) ? "코스닥" : code;
                 String sign = f[3];
                 boolean negative = "4".equals(sign) || "5".equals(sign);
                 String change = negative && !f[4].startsWith("-") ? "-" + f[4] : f[4];
-                String changeRate = negative && !f[5].startsWith("-") ? "-" + f[5] : f[5];
+                // f[5]가 등락률인지 거래량인지 KIS 포맷 불확실 → 현재지수와 전일대비로 직접 계산
+                String changeRate;
+                try {
+                    double currentVal = Double.parseDouble(f[2]);
+                    double changeVal = Double.parseDouble(change);
+                    double prevVal = currentVal - changeVal;
+                    changeRate = prevVal != 0 ? String.format("%.2f", (changeVal / prevVal) * 100) : "0.00";
+                } catch (NumberFormatException e) {
+                    changeRate = "0.00";
+                }
 
                 KisMarketIndex idx = KisMarketIndex.builder()
                         .idxNm(idxNm)
