@@ -72,25 +72,22 @@
 - [x] 코스닥 데이터 표시 추가
 - [x] 종가 기준 표시로 수정 (시가→종가)
 
-### 실시간 대시보드 갱신 (미완료)
+### 실시간 대시보드 갱신 (완료)
 
-#### 이슈 1: DashboardView 상승률 TOP 5 실시간 미갱신
-- **원인**: `topGainersList`는 `krxDataMapper.selectTopGainers()` → KRX DB 조회 (전일 종가 기준). DashboardView에 WebSocket 연결 없음. StockView의 `KisRankingPoller` 결과가 DashboardView까지 전달되지 않음.
-- **해결 방법**:
-  - [ ] 백엔드: `GET /dashboard/realtime-ranking` REST API 추가 — `KisRankingPoller.getRankingCache()` 반환 (장 중일 때만 유효)
-  - [ ] 또는 DashboardView도 `/ws/stock` WebSocket 연결 추가, `type=ranking` 메시지 수신 시 TOP 5 갱신
-  - [ ] 장 마감 후(15:30 이후)엔 KRX DB 데이터(전일 종가)로 폴백 표시
+#### 이슈 1: DashboardView 상승률 TOP 5 실시간 미갱신 — 2026-03-24 완료
+- **원인**: `topGainersList`는 `krxDataMapper.selectTopGainers()` → KRX DB 조회 (전일 종가 기준). DashboardView에 WebSocket 연결 없음.
+- **해결**:
+  - [x] DashboardView `/ws/stock` WebSocket 연결 추가, `type=ranking` 수신 시 실시간 TOP 5 갱신
+  - [x] 장 마감 후 KRX DB 데이터(전일 종가)로 폴백 (LIVE 뱃지로 구분 표시)
 
-#### 이슈 2: 주요 경제 지표(코스피·코스닥·금·유가) 실시간 미갱신
-- **원인**: KRX API는 **일별 종가 데이터만 제공** — 장 중에는 당일 데이터가 없음. 5분 폴링해도 전일 종가만 반환. DashboardView는 `onMounted` 1회 호출만 있고 이후 갱신 없음.
-- **해결 방법**:
-  - [ ] 코스피/코스닥 지수: KIS WebSocket에서 실시간 지수 구독 (`tr_id: H0UPCNT0` 등 KIS 지수 실시간 TR) → 백엔드 메모리 캐시 → DashboardView WebSocket 수신
-  - [ ] 금 현물: KIS WebSocket 금현물 실시간 체결가 구독
-  - [ ] 유가: 국내 한국석유공사 API는 일별 → 실시간 미지원. 해외 원유 실시간은 별도 API 필요 (단기 해결 불가)
-  - [ ] 단기 대안: DashboardView에 5분 `setInterval` + REST API 폴링 추가 (단, 데이터 자체가 전일 종가라 장 중엔 의미 없음)
-  - ⚠️ **근본 한계**: KRX 데이터 소스를 KIS 실시간 API로 교체하지 않는 한 장 중 실시간 반영 불가
+#### 이슈 2: 주요 경제 지표(코스피·코스닥) 실시간 미갱신 — 2026-03-24 완료
+- **원인**: KRX API는 일별 종가 데이터만 제공. DashboardView는 `onMounted` 1회 호출만 있고 이후 갱신 없음.
+- **해결**:
+  - [x] `KisMarketPoller` 신규 추가 — 평일 09:00~15:30 5분마다 KIS REST로 KOSPI/KOSDAQ 현재지수 폴링, WebSocket 브로드캐스트
+  - [x] DashboardView WebSocket에서 `type=market` 수신 시 코스피/코스닥 지수 실시간 갱신
+- ⚠️ **잔존 한계**: 금/유가는 KRX 일별 데이터라 실시간 불가 (국내 에너지시장 KIS 미지원)
 
-### 오늘의 TOP 5 고도화 (미완료)
+### 오늘의 TOP 5 고도화 (완료)
 - [x] 스케줄러 시간 18:00 → 16:00으로 당기기 (KRX 데이터 공개 직후 수집) — 2026-03-18 완료
 - [x] 대시보드에 "마지막 업데이트 시각" 표시 + 수동 새로고침 버튼 — 2026-03-18 완료
 - [x] **KIS WebSocket 인프라 구축** (2026-03-18 완료) — 단일 종목 선택 시 실시간 가격 수신
@@ -100,16 +97,16 @@
   - [x] 프론트: `StockView.vue` — 종목 선택 시 WS 연결, 실시간 시세 카드 표시
   - 구조: `KIS WS → 백엔드(릴레이) → 프론트 WS` (1세션 최대 41종목)
 
-- [ ] **장중 실시간 TOP 5 동적 갱신** (목표: 매수/매도 없이 조회 전용) — 2026-03-18 시작
+- [x] **장중 실시간 TOP 5 동적 갱신** — 2026-03-24 완료
   - 목적: 장 중 현재 시점 상승률 TOP 5를 5분마다 갱신 + 해당 종목 실시간 체결가 표시
   - 설계: DB IO 없음, 메모리(priceCache, rankingCache)만 사용
   - 흐름: `KIS 순위 REST(5분) → 구독 변경 → KIS WS 체결 → 메모리 → 브라우저`
-  - [ ] 백엔드: `KisRankingPoller` — 5분마다 KIS 등락률 순위 REST API 호출, 메모리에 저장
-  - [ ] 백엔드: `KisWebSocketClient.updateSubscriptions()` — 순위 변동 시 구독 종목 동적 교체
-  - [ ] 백엔드: `StockPriceWebSocketHandler` — 순위 변경 시 `{"type":"ranking",...}` 브로드캐스트
-  - [ ] 프론트: `StockView.vue` — ranking 메시지 수신 시 TOP 5 리스트 동적 갱신
-  - [ ] 프론트: 장 중/마감 여부 표시 (실시간 vs 전일 종가)
-  - 📖 상세 조사 내용: [KIS_API_RESEARCH.md](KIS_API_RESEARCH.md)
+  - [x] 백엔드: `KisRankingPoller` — 5분마다 KIS FHPST01700000 REST 호출, rankingCache 저장
+  - [x] 백엔드: `KisWebSocketClient.updateSubscriptions()` — 순위 변동 시 구독 종목 동적 교체
+  - [x] 백엔드: `StockPriceWebSocketHandler.broadcastRanking()` — ranking 메시지 브로드캐스트
+  - [x] 프론트: DashboardView `ranking` 메시지 수신 시 실시간 TOP 5 갱신, LIVE 뱃지 표시
+  - [x] 프론트: 장 중/마감 여부 표시 (LIVE vs KRX 전일 종가 폴백)
+  - [x] 프론트: H0STCNT0 개별 체결가 수신 시 ranking 아이템 가격 tick 단위 갱신 — 2026-03-24
 
 ### 오늘의 TOP 5 (완료)
 - [x] 상승률 TOP 5 — 백엔드 SQL/Mapper/Controller (기존 구현)
@@ -131,5 +128,5 @@
 - [x] deploy.yml — 배포 시 `fuser -k 8080/tcp` 로 포트 기준 프로세스 종료 추가 (2026-03-17 장애 재발 방지) — 2026-03-18 완료
 - [x] nginx `/api/admin/` location block 분리 + IP 제한 또는 Basic Auth 적용 (이슈 3) — 2026-03-18 완료
 - [x] nginx 라우팅 추가 — `/admin/`, `/news/` 경로 백엔드 프록시 설정 — 2026-03-18 완료
-- [ ] **HTTP → HTTPS 전환** — Let's Encrypt 인증서 발급, nginx 443 설정, 80 → 443 리다이렉트, WSS 전환
+- [x] **HTTP → HTTPS 전환** — Cloudflare Origin 인증서 + nginx 443 설정 + WSS 전환 — 2026-03-24 완료
 - [ ] KRX API 평일 18:00 자동 수집 후 DB 데이터 자동 검증 (알림 포함)

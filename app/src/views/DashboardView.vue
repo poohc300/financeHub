@@ -201,6 +201,14 @@ const connectWebSocket = () => {
         realtimeRanking.value = msg.items || []
         isMarketOpen.value = true
         lastUpdated.value = new Date()
+      } else if (!msg.type && msg.isuSrtCd) {
+        // 개별 종목 실시간 체결가 (KisStockPrice) — ranking 아이템 가격 tick 갱신
+        const idx = realtimeRanking.value.findIndex(r => r.isuSrtCd === msg.isuSrtCd)
+        if (idx !== -1) {
+          const updated = [...realtimeRanking.value]
+          updated[idx] = { ...updated[idx], currentPrice: msg.currentPrice, change: msg.change, changeRate: msg.changeRate }
+          realtimeRanking.value = updated
+        }
       }
     } catch (e) {
       console.error('Dashboard WS 파싱 오류', e)
