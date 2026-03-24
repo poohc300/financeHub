@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.example.financeHub.kis.model.KisMarketIndex;
 import com.example.financeHub.kis.model.KisStockPrice;
 import com.example.financeHub.websocket.StockPriceWebSocketHandler;
 
@@ -33,9 +34,12 @@ public class KisWebSocketClient {
 
     // 실시간 가격 메모리 캐시 (DB 미사용)
     private final Map<String, KisStockPrice> priceCache = new ConcurrentHashMap<>();
+    // 업종지수 실시간 캐시 (H0UPCNT0)
+    private final Map<String, KisMarketIndex> indexCache = new ConcurrentHashMap<>();
 
     private WebSocket webSocket;
     private final Set<String> subscribedSymbols = ConcurrentHashMap.newKeySet();
+    private final Set<String> subscribedIndexCodes = ConcurrentHashMap.newKeySet();
     private volatile boolean connected = false;
 
     public KisWebSocketClient(KisTokenManager tokenManager,
@@ -60,6 +64,19 @@ public class KisWebSocketClient {
 
     public Map<String, KisStockPrice> getPriceCache() {
         return priceCache;
+    }
+
+    public Map<String, KisMarketIndex> getIndexCache() {
+        return indexCache;
+    }
+
+    /** 업종지수 실시간 구독 (H0UPCNT0) — 0001=KOSPI, 1001=KOSDAQ */
+    public void subscribeIndex(String indexCode) {
+        ensureConnected();
+        if (subscribedIndexCodes.contains(indexCode)) return;
+        sendMessageWithTrId("H0UPCNT0", indexCode, "1");
+        subscribedIndexCodes.add(indexCode);
+        log.info("업종지수 구독: {}", indexCode);
     }
 
     /**
@@ -116,16 +133,20 @@ public class KisWebSocketClient {
     }
 
     private void sendSubscribeMessage(String isuSrtCd, String trType) {
+        sendMessageWithTrId("H0STCNT0", isuSrtCd, trType);
+    }
+
+    private void sendMessageWithTrId(String trId, String trKey, String trType) {
         if (webSocket == null) return;
         try {
             String approvalKey = tokenManager.getApprovalKey();
             String msg = String.format(
                     "{\"header\":{\"approval_key\":\"%s\",\"custtype\":\"P\",\"tr_type\":\"%s\",\"content-type\":\"utf-8\"},"
-                    + "\"body\":{\"input\":{\"tr_id\":\"H0STCNT0\",\"tr_key\":\"%s\"}}}",
-                    approvalKey, trType, isuSrtCd);
+                    + "\"body\":{\"input\":{\"tr_id\":\"%s\",\"tr_key\":\"%s\"}}}",
+                    approvalKey, trType, trId, trKey);
             webSocket.sendText(msg, true);
         } catch (Exception e) {
-            log.error("구독 메시지 전송 실패: {}", e.getMessage());
+            log.error("메시지 전송 실패 trId={}: {}", trId, e.getMessage());
         }
     }
 
@@ -137,7 +158,39 @@ public class KisWebSocketClient {
             }
             // 형식: 0|H0STCNT0|001|종목코드^체결시간^현재가^전일대비^등락률^시가^고가^저가^누적거래량^...
             String[] parts = message.split("\\|");
-            if (parts.length < 4 || !"H0STCNT0".equals(parts[1])) return;
+            if (parts.length < 4) return;
+
+            // 업종지수 실시간 (H0UPCNT0)
+            if ("H0UPCNT0".equals(parts[1])) {
+                String[] f = parts[3].split("\\^");
+                if (f.length < 6) return;
+                // f[0]=업종코드, f[1]=시간, f[2]=현재지수, f[3]=전일대비부호(1상승/4하한/5하락),
+                // f[4]=전일대비, f[5]=등락률, f[6]=시가, f[7]=고가, f[8]=저가, f[9]=거래량
+                String code = f[0];
+                String idxNm = "0001".equals(code) ? "코스피" : "1001".equals(code) ? "코스닥" : code;
+                String sign = f[3];
+                boolean negative = "4".equals(sign) || "5".equals(sign);
+                String change = negative && !f[4].startsWith("-") ? "-" + f[4] : f[4];
+                String changeRate = negative && !f[5].startsWith("-") ? "-" + f[5] : f[5];
+
+                KisMarketIndex idx = KisMarketIndex.builder()
+                        .idxNm(idxNm)
+                        .currentIdx(f[2])
+                        .change(change)
+                        .changeRate(changeRate)
+                        .open(f.length > 6 ? f[6] : "")
+                        .high(f.length > 7 ? f[7] : "")
+                        .low(f.length > 8 ? f[8] : "")
+                        .volume(f.length > 9 ? f[9] : "")
+                        .build();
+
+                indexCache.put(code, idx);
+                broadcastHandler.broadcastMarket(new java.util.ArrayList<>(indexCache.values()));
+                log.debug("업종지수 갱신: {} {}", idxNm, f[2]);
+                return;
+            }
+
+            if (!"H0STCNT0".equals(parts[1])) return;
 
             String[] f = parts[3].split("\\^");
             if (f.length < 9) return;
@@ -203,7 +256,11 @@ public class KisWebSocketClient {
                         for (String symbol : subscribedSymbols) {
                             sendSubscribeMessage(symbol, "1");
                         }
-                        log.info("KIS WS 재연결 후 {}종목 재구독", subscribedSymbols.size());
+                        for (String idxCode : subscribedIndexCodes) {
+                            sendMessageWithTrId("H0UPCNT0", idxCode, "1");
+                        }
+                        log.info("KIS WS 재연결 후 {}종목 + {}지수 재구독",
+                                subscribedSymbols.size(), subscribedIndexCodes.size());
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
