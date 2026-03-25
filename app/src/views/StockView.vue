@@ -456,57 +456,63 @@ onMounted(() => {
         <div>
           <div class="flex items-center gap-2 mb-4">
             <h2 class="text-xl font-bold text-gray-800">
-              {{ isMarketOpen ? '실시간 상승률 TOP 5' : '거래량 TOP' }}
+              {{ isMarketOpen ? '실시간 상승률 TOP 5' : '거래량 TOP 5' }}
             </h2>
             <span v-if="isMarketOpen" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">LIVE</span>
             <span v-else class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">전일 종가</span>
           </div>
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="divide-y divide-gray-200">
-              <!-- 장 중: 실시간 랭킹 -->
+              <!-- 장 중: 실시간 랭킹 상위 5개 -->
               <template v-if="isMarketOpen && realtimeRanking.length > 0">
                 <div
-                  v-for="(stock) in realtimeRanking"
+                  v-for="(stock, index) in realtimeRanking.slice(0, 5)"
                   :key="stock.isuSrtCd"
-                  class="p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                  class="p-3 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
                   @click="selectStock({ isuCd: stock.isuSrtCd, isuSrtCd: stock.isuSrtCd, isuNm: stock.isuNm, accTrdvol: stock.volume, tddClsprc: stock.currentPrice, flucRt: stock.changeRate } as any)"
                 >
-                  <div class="flex justify-between items-center">
-                    <div>
-                      <h3 class="font-medium text-gray-800">{{ stock.isuNm }}</h3>
-                      <p class="text-sm text-gray-500">거래량: {{ Number(stock.volume).toLocaleString() }}</p>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold w-5 text-center" :class="index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-400' : index === 2 ? 'text-orange-400' : 'text-gray-300'">
+                      {{ index + 1 }}
+                    </span>
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-medium text-gray-800 text-sm truncate">{{ stock.isuNm }}</h3>
+                      <p class="text-xs text-gray-400">거래량 {{ Number(stock.volume).toLocaleString() }}</p>
                     </div>
-                    <div class="text-right">
-                      <p class="font-bold text-gray-800">{{ Number(stock.currentPrice).toLocaleString() }}원</p>
-                      <p :class="Number(stock.changeRate) >= 0 ? 'text-green-600' : 'text-red-600'">
+                    <div class="text-right flex-shrink-0">
+                      <p class="text-sm font-bold text-gray-800">{{ Number(stock.currentPrice).toLocaleString() }}원</p>
+                      <p class="text-xs" :class="Number(stock.changeRate) >= 0 ? 'text-green-600' : 'text-red-600'">
                         {{ Number(stock.changeRate) >= 0 ? '+' : '' }}{{ stock.changeRate }}%
                       </p>
                     </div>
                   </div>
                 </div>
               </template>
-              <!-- 장 마감: DB 기반 거래량 TOP -->
+              <!-- 장 마감: DB 기반 거래량 TOP 5 -->
               <template v-else>
                 <div
-                  v-for="(stock) in topVolumeList"
+                  v-for="(stock, index) in topVolumeList.slice(0, 5)"
                   :key="stock.isuCd"
-                  class="p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                  class="p-3 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
                   @click="selectStock(stock)"
                 >
-                  <div class="flex justify-between items-center">
-                    <div>
-                      <h3 class="font-medium text-gray-800">{{ stock.isuNm }}</h3>
-                      <p class="text-sm text-gray-500">거래량: {{ stock.accTrdvol }}</p>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold w-5 text-center" :class="index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-400' : index === 2 ? 'text-orange-400' : 'text-gray-300'">
+                      {{ index + 1 }}
+                    </span>
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-medium text-gray-800 text-sm truncate">{{ stock.isuNm }}</h3>
+                      <p class="text-xs text-gray-400">거래량 {{ stock.accTrdvol }}</p>
                     </div>
-                    <div class="text-right">
-                      <p class="font-bold text-gray-800">{{ stock.tddClsprc }}</p>
-                      <p :class="parseFloat(stock.flucRt) >= 0 ? 'text-green-600' : 'text-red-600'">
+                    <div class="text-right flex-shrink-0">
+                      <p class="text-sm font-bold text-gray-800">{{ stock.tddClsprc }}</p>
+                      <p class="text-xs" :class="parseFloat(stock.flucRt) >= 0 ? 'text-green-600' : 'text-red-600'">
                         {{ stock.flucRt }}%
                       </p>
                     </div>
                   </div>
                 </div>
-                <div v-if="topVolumeList.length === 0" class="p-4 text-center text-gray-500">
+                <div v-if="topVolumeList.length === 0" class="p-4 text-center text-gray-500 text-sm">
                   데이터가 없습니다
                 </div>
               </template>
@@ -518,7 +524,16 @@ onMounted(() => {
       <!-- 차트 -->
       <div class="lg:col-span-2">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-          <h2 class="text-xl font-bold text-gray-800">시장 동향</h2>
+          <div class="flex items-center gap-2">
+            <h2 class="text-xl font-bold text-gray-800">
+              {{ selectedMarket === 'STOCK' ? selectedIndex : '시장 동향' }}
+            </h2>
+            <button
+              v-if="selectedMarket === 'STOCK'"
+              @click="changeMarket('KOSPI', '코스피')"
+              class="text-xs text-gray-400 hover:text-gray-600 underline"
+            >시장으로</button>
+          </div>
           <div class="flex gap-2 overflow-x-auto pb-0.5">
             <button
               v-for="btn in marketButtons"
@@ -528,7 +543,7 @@ onMounted(() => {
                 'px-4 py-2 rounded-lg font-medium transition-colors flex-shrink-0',
                 selectedMarket === btn.market && !compareMode
                   ? 'bg-gray-800 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               ]"
             >{{ btn.label }}</button>
             <button
