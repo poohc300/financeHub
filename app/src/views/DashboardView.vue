@@ -173,10 +173,12 @@ const pagedRanking = computed(() =>
 const totalPages = computed(() => Math.ceil(filteredRanking.value.length / PAGE_SIZE))
 
 // 순위 뱃지 색상 (1위=금, 2위=은, 3위=동, 나머지=회색)
-const rankBadgeClass = (index: number): string => {
-  if (index === 0) return 'bg-yellow-400 text-white';
-  if (index === 1) return 'bg-gray-300 text-gray-700';
-  if (index === 2) return 'bg-orange-400 text-white';
+const rankBadgeClass = (pageIndex: number): string => {
+  if (rankingPage.value === 0) {
+    if (pageIndex === 0) return 'bg-yellow-400 text-white';
+    if (pageIndex === 1) return 'bg-gray-300 text-gray-700';
+    if (pageIndex === 2) return 'bg-orange-400 text-white';
+  }
   return 'bg-gray-100 text-gray-500';
 };
 
@@ -388,7 +390,7 @@ onUnmounted(() => {
             class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
           >
             <span :class="rankBadgeClass(index)" class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold">
-              {{ index + 1 }}
+              {{ rankingPage * PAGE_SIZE + index + 1 }}
             </span>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5">
