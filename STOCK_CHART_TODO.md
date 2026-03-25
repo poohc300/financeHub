@@ -124,6 +124,13 @@
 - [ ] **SD카드 이미지 백업** — Pi 전체 이미지 주기적 백업 (SD카드 마모/불량 대비)
 - [ ] **로그 용량 관리** — Spring Boot / nginx 로그 로테이션 설정 (무제한 쌓임 방지)
 
+### 보안
+- [x] `docker-compose.yml` POSTGRES_PASSWORD 하드코딩 → 환경변수(`${POSTGRES_PASSWORD}`) 처리 — 2026-03-25 완료
+  - ⚠️ 기존 커밋 히스토리에 `${POSTGRES_PASSWORD}` 노출 이력 있음 (private repo라면 큰 문제 없으나 비밀번호 교체 권장)
+- [x] `.env.example` 템플릿 파일 추가 (실제 값 없이 키 구조만) — 2026-03-25 완료
+- [x] `application.yml` — DB/JWT/KIS 모두 `${ENV_VAR}` 환경변수 처리 완료 (노출 없음)
+- [ ] **git 히스토리에서 민감값 제거** — BFG Repo Cleaner 또는 `git filter-repo`로 과거 커밋의 `${POSTGRES_PASSWORD}` 삭제 (선택사항, private repo면 낮은 우선순위)
+
 ### 인프라 개선
 - [x] deploy.yml — 배포 시 `fuser -k 8080/tcp` 로 포트 기준 프로세스 종료 추가 (2026-03-17 장애 재발 방지) — 2026-03-18 완료
 - [x] nginx `/api/admin/` location block 분리 + IP 제한 또는 Basic Auth 적용 (이슈 3) — 2026-03-18 완료
