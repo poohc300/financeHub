@@ -1,5 +1,16 @@
 # financeHub 수정 내역
 
+## 2026-03-24 (12차)
+
+### DashboardView 실시간 경제지표 + 상승률 TOP 5 WebSocket 갱신
+- `KisMarketPoller` 추가: 평일 09:00~15:30 5분마다 KOSPI/KOSDAQ 현재지수 KIS REST 폴링
+- `KisMarketIndex` 모델 추가
+- `StockPriceWebSocketHandler`: `broadcastMarket()` 추가, 신규 접속 시 캐시 즉시 전송
+- `DashboardView`: `/ws/stock` WebSocket 연결 추가
+  - `type=market` → 코스피/코스닥 현재지수 실시간 갱신
+  - `type=ranking` → 장 중 실시간 상승률 TOP 5 표시 (LIVE 뱃지), 마감 후 KRX 데이터 폴백
+- STOCK_CHART_TODO.md: 이슈 1/2 해결방법 상세 추가
+
 ## 2026-03-18 (11차)
 
 ### 장중 실시간 TOP 5 동적 갱신 구현

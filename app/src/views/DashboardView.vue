@@ -12,7 +12,6 @@ const goldMarketInfo = ref<GoldMarketTradingDTO[]>([]);
 const oilMarketInfo = ref<OilMarketDailtyTradingDTO[]>([]);
 const kospiInfo = ref<KospiDailyTradingDTO[]>([]);
 const kosdaqInfo = ref<KosdaqDailyTradingDTO[]>([]);
-const topGainersList = ref<StockDailyTradingDTO[]>([]);
 const topVolumeList = ref<StockDailyTradingDTO[]>([]);
 const showAllIndicators = ref(false);
 const lastUpdated = ref<Date | null>(null);
@@ -86,7 +85,6 @@ const fetchDashboardData = async () => {
     oilMarketInfo.value = data.oilMarketDailyTradingList || [];
     kospiInfo.value = data.kospiDailyTradingList || [];
     kosdaqInfo.value = data.kosdaqDailyTradingList || [];
-    topGainersList.value = data.topGainersList || [];
     topVolumeList.value = data.topVolumeList || [];
     lastUpdated.value = new Date();
   } catch (error) {
@@ -256,6 +254,7 @@ const connectWebSocket = () => {
     }
   }
   ws.onerror = (e) => console.error('Dashboard WS 오류', e)
+  // 장 마감 시 isMarketOpen만 false로 — realtimeRanking은 유지해서 당일 마지막 데이터 보존
   ws.onclose = () => { isMarketOpen.value = false }
 }
 
@@ -367,14 +366,15 @@ onUnmounted(() => {
       <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <div class="flex items-center gap-2 mb-5">
           <span class="text-xl">🚀</span>
-          <h2 class="text-lg font-bold text-gray-800">
-            {{ isMarketOpen && realtimeRanking.length > 0 ? '실시간 상승률 랭킹' : '오늘의 상승률 TOP 5' }}
-          </h2>
-          <span v-if="isMarketOpen && realtimeRanking.length > 0" class="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">LIVE</span>
+          <h2 class="text-lg font-bold text-gray-800">실시간 상승률 랭킹</h2>
+          <span v-if="isMarketOpen && realtimeRanking.length > 0"
+            class="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">LIVE</span>
+          <span v-else-if="!isMarketOpen && realtimeRanking.length > 0"
+            class="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-medium">장 마감</span>
         </div>
 
-        <!-- 필터 탭 (장 중에만 표시) -->
-        <div v-if="isMarketOpen && realtimeRanking.length > 0" class="flex gap-1 mb-3">
+        <!-- 필터 탭 -->
+        <div v-if="realtimeRanking.length > 0" class="flex gap-1 mb-3">
           <button
             v-for="tab in ([{ key: 'all', label: '전체' }, { key: 'upper', label: '상한가' }, { key: 'ipo', label: '신규상장' }] as const)"
             :key="tab.key"
@@ -386,8 +386,8 @@ onUnmounted(() => {
           >{{ tab.label }}</button>
         </div>
 
-        <!-- 실시간 랭킹 (장 중) -->
-        <template v-if="isMarketOpen && realtimeRanking.length > 0">
+        <!-- 랭킹 (장 중: LIVE / 장 마감: 당일 마지막 데이터) -->
+        <template v-if="realtimeRanking.length > 0">
           <div
             @touchstart.passive="onTouchStart"
             @touchend.passive="onTouchEnd"
@@ -447,39 +447,13 @@ onUnmounted(() => {
           </div><!-- swipe wrapper -->
         </template>
 
-        <!-- KRX 정적 랭킹 (장 마감 후) -->
+        <!-- 장 시작 전 / 페이지 로드 시 실시간 데이터 없는 경우 -->
         <template v-else>
-          <div v-if="topGainersList.length === 0" class="flex flex-col items-center justify-center py-10 text-gray-400">
-            <span class="text-3xl mb-2">📭</span>
-            <span class="text-sm">데이터가 없습니다</span>
+          <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+            <span class="text-3xl mb-2">📈</span>
+            <span class="text-sm font-medium">장 시작 후 실시간 데이터가 표시됩니다</span>
+            <span class="text-xs mt-1">평일 09:00 ~ 15:30</span>
           </div>
-          <ul v-else class="space-y-2">
-            <li
-              v-for="(stock, index) in topGainersList"
-              :key="stock.isuCd"
-              class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
-            >
-              <span :class="rankBadgeClass(index)" class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold">
-                {{ index + 1 }}
-              </span>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-1.5">
-                  <span class="font-semibold text-gray-800 text-sm truncate">{{ stock.isuNm }}</span>
-                  <span :class="marketBadgeClass(stock.mktNm)" class="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0">
-                    {{ stock.mktNm }}
-                  </span>
-                </div>
-                <div class="text-xs text-gray-400 mt-0.5">{{ stock.isuSrtCd }}</div>
-              </div>
-              <div class="text-right flex-shrink-0">
-                <div class="text-sm font-semibold text-gray-800">{{ formatPrice(stock.tddClsprc) }}</div>
-                <div class="flex items-center justify-end gap-0.5 text-green-600">
-                  <span class="text-xs">▲</span>
-                  <span class="text-sm font-bold">{{ stock.flucRt }}%</span>
-                </div>
-              </div>
-            </li>
-          </ul>
         </template>
       </div>
 

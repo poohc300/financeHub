@@ -112,6 +112,15 @@
 - [x] 상승률 TOP 5 — 백엔드 SQL/Mapper/Controller (기존 구현)
 - [x] 거래량 TOP 5 — 백엔드 SQL/Mapper/Controller (기존 구현)
 - [x] DashboardView UI 개선 — 순위 뱃지, 마켓 뱃지, 등락률 화살표, 거래량 단위 변환
+- [x] Dashboard 상승률 랭킹 — KRX DB 구 데이터 제거, 실시간 WebSocket 데이터만 표시 — 2026-03-25
+  - 장 마감 후엔 당일 마지막 실시간 랭킹을 "장 마감" 뱃지와 함께 유지
+  - 장 시작 전 / 실시간 데이터 없을 때는 "장 시작 후 표시됩니다" 안내
+
+### StockView 히스토리 차트 고도화
+- [ ] **일별 상승률 TOP 히스토리** — KRX DB에 저장된 `topGainersList` 데이터를 StockView에서 날짜별로 조회
+  - 용도: "이 종목이 언제 상승률 TOP에 올랐나" 히스토리 시각화
+  - 백엔드: `/stocks/{code}/ranking-history?from=&to=` API 추가
+  - 프론트: StockView 차트에 "상승률 TOP 진입 날짜" 마커 표시
 
 ### KRX 수동 수집 / 백필 (완료)
 - [x] 날짜별 KRX 수집 API 추가 (`/admin/run-krx-date?date=YYYYMMDD`)
