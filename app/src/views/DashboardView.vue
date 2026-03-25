@@ -144,6 +144,22 @@ const allIndicatorGroups = computed(() => [
   },
 ].filter(g => g.items.length > 0))
 
+// 실시간 랭킹 필터 탭
+type RankingFilter = 'all' | 'upper' | 'ipo'
+const rankingFilter = ref<RankingFilter>('all')
+
+const stockType = (rate: string): 'upper' | 'ipo' | 'normal' => {
+  const r = parseFloat(rate)
+  if (r >= 29.5 && r <= 30.5) return 'upper'
+  if (r > 30.5) return 'ipo'
+  return 'normal'
+}
+
+const filteredRanking = computed(() => {
+  if (rankingFilter.value === 'all') return realtimeRanking.value
+  return realtimeRanking.value.filter(item => stockType(item.changeRate) === rankingFilter.value)
+})
+
 // 순위 뱃지 색상 (1위=금, 2위=은, 3위=동, 나머지=회색)
 const rankBadgeClass = (index: number): string => {
   if (index === 0) return 'bg-yellow-400 text-white';
@@ -334,10 +350,28 @@ onUnmounted(() => {
           <span v-if="isMarketOpen && realtimeRanking.length > 0" class="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">LIVE</span>
         </div>
 
+        <!-- 필터 탭 (장 중에만 표시) -->
+        <div v-if="isMarketOpen && realtimeRanking.length > 0" class="flex gap-1 mb-3">
+          <button
+            v-for="tab in ([{ key: 'all', label: '전체' }, { key: 'upper', label: '상한가' }, { key: 'ipo', label: '신규상장' }] as const)"
+            :key="tab.key"
+            @click="rankingFilter = tab.key"
+            :class="rankingFilter === tab.key
+              ? tab.key === 'upper' ? 'bg-red-500 text-white' : tab.key === 'ipo' ? 'bg-purple-500 text-white' : 'bg-gray-700 text-white'
+              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+            class="text-xs px-2.5 py-1 rounded-full font-medium transition-colors"
+          >{{ tab.label }}</button>
+        </div>
+
         <!-- 실시간 랭킹 (장 중) -->
-        <ul v-if="isMarketOpen && realtimeRanking.length > 0" class="space-y-2">
+        <template v-if="isMarketOpen && realtimeRanking.length > 0">
+          <div v-if="filteredRanking.length === 0" class="flex flex-col items-center justify-center py-8 text-gray-400">
+            <span class="text-2xl mb-1">—</span>
+            <span class="text-sm">해당 종목 없음</span>
+          </div>
+          <ul v-else class="space-y-2">
           <li
-            v-for="(item, index) in realtimeRanking"
+            v-for="(item, index) in filteredRanking"
             :key="item.isuSrtCd"
             class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
           >
@@ -345,18 +379,29 @@ onUnmounted(() => {
               {{ index + 1 }}
             </span>
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-gray-800 text-sm truncate">{{ item.isuNm }}</div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-semibold text-gray-800 text-sm truncate">{{ item.isuNm }}</span>
+                <span v-if="parseFloat(item.changeRate) >= 29.5 && parseFloat(item.changeRate) <= 30.5"
+                  class="flex-shrink-0 text-[10px] px-1.5 py-0.5 bg-red-500 text-white rounded font-bold tracking-tight">
+                  상한가
+                </span>
+                <span v-else-if="parseFloat(item.changeRate) > 30.5"
+                  class="flex-shrink-0 text-[10px] px-1.5 py-0.5 bg-purple-500 text-white rounded font-bold tracking-tight">
+                  신규상장
+                </span>
+              </div>
               <div class="text-xs text-gray-400 mt-0.5">{{ item.isuSrtCd }}</div>
             </div>
             <div class="text-right flex-shrink-0">
               <div class="text-sm font-semibold text-gray-800">{{ Number(item.currentPrice).toLocaleString('ko-KR') }}원</div>
-              <div class="flex items-center justify-end gap-0.5" :class="parseFloat(item.changeRate) >= 0 ? 'text-green-600' : 'text-red-600'">
+              <div class="flex items-center justify-end gap-0.5" :class="parseFloat(item.changeRate) >= 29.5 && parseFloat(item.changeRate) <= 30.5 ? 'text-red-500' : parseFloat(item.changeRate) > 30.5 ? 'text-purple-600' : parseFloat(item.changeRate) >= 0 ? 'text-green-600' : 'text-red-600'">
                 <span class="text-xs">{{ parseFloat(item.changeRate) >= 0 ? '▲' : '▼' }}</span>
                 <span class="text-sm font-bold">{{ Math.abs(parseFloat(item.changeRate)).toFixed(2) }}%</span>
               </div>
             </div>
           </li>
         </ul>
+        </template>
 
         <!-- KRX 정적 랭킹 (장 마감 후) -->
         <template v-else>
