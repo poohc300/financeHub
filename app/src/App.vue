@@ -91,3 +91,12 @@ const navigateTo = (path: string) => {
   opacity: 0;
 }
 </style>
+
+<style>
+/* Vuetify v-bottom-navigation 사용 시 html에 overflow:hidden 주입됨 → 페이지 스크롤 차단 해제 */
+html,
+body,
+.v-application {
+  overflow-y: auto !important;
+}
+</style>
