@@ -172,6 +172,15 @@ const pagedRanking = computed(() =>
 
 const totalPages = computed(() => Math.ceil(filteredRanking.value.length / PAGE_SIZE))
 
+// 모바일 스와이프
+let touchStartX = 0
+const onTouchStart = (e: TouchEvent) => { touchStartX = e.touches[0].clientX }
+const onTouchEnd = (e: TouchEvent) => {
+  const dx = e.changedTouches[0].clientX - touchStartX
+  if (dx < -50 && rankingPage.value < totalPages.value - 1) rankingPage.value++
+  else if (dx > 50 && rankingPage.value > 0) rankingPage.value--
+}
+
 // 순위 뱃지 색상 (1위=금, 2위=은, 3위=동, 나머지=회색)
 const rankBadgeClass = (pageIndex: number): string => {
   if (rankingPage.value === 0) {
@@ -354,12 +363,12 @@ onUnmounted(() => {
 
     <!-- 상승률 TOP 5 & 거래량 TOP 5 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <!-- 상승률 TOP 5 -->
+      <!-- 상승률 랭킹 -->
       <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <div class="flex items-center gap-2 mb-5">
           <span class="text-xl">🚀</span>
           <h2 class="text-lg font-bold text-gray-800">
-            {{ isMarketOpen && realtimeRanking.length > 0 ? '실시간 상승률 TOP 5' : '오늘의 상승률 TOP 5' }}
+            {{ isMarketOpen && realtimeRanking.length > 0 ? '실시간 상승률 랭킹' : '오늘의 상승률 TOP 5' }}
           </h2>
           <span v-if="isMarketOpen && realtimeRanking.length > 0" class="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">LIVE</span>
         </div>
@@ -379,6 +388,11 @@ onUnmounted(() => {
 
         <!-- 실시간 랭킹 (장 중) -->
         <template v-if="isMarketOpen && realtimeRanking.length > 0">
+          <div
+            @touchstart.passive="onTouchStart"
+            @touchend.passive="onTouchEnd"
+            class="select-none"
+          >
           <div v-if="filteredRanking.length === 0" class="flex flex-col items-center justify-center py-8 text-gray-400">
             <span class="text-2xl mb-1">—</span>
             <span class="text-sm">해당 종목 없음</span>
@@ -430,6 +444,7 @@ onUnmounted(() => {
             class="w-7 h-7 flex items-center justify-center rounded-full text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >›</button>
         </div>
+          </div><!-- swipe wrapper -->
         </template>
 
         <!-- KRX 정적 랭킹 (장 마감 후) -->
