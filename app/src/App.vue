@@ -48,13 +48,15 @@ const navigateTo = (path: string) => {
     </header>
 
     <!-- 본문 — 모바일은 하단 탭바 높이만큼 패딩 추가 -->
-    <main class="container mx-auto px-4 py-6 pb-24 md:pb-8">
-      <RouterView v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </RouterView>
-    </main>
+    <v-main scrollable>
+      <div class="container mx-auto px-4 py-6 pb-24 md:pb-8">
+        <RouterView v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </RouterView>
+      </div>
+    </v-main>
 
     <!-- 모바일 하단 탭바 — Vuetify v-bottom-navigation (md 미만) -->
     <v-bottom-navigation
