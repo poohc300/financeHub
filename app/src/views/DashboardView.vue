@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { openLink } from '../util/openLink';
 import { CrawledIpoDTO, CrawledNewsDTO, GoldMarketTradingDTO, DashboardDataDTO, OilMarketDailtyTradingDTO, KospiDailyTradingDTO, KosdaqDailyTradingDTO, StockDailyTradingDTO } from '../model/DashboardDataDTO';
 import { fetchRequest } from '../util/fetchRequest';
@@ -155,10 +155,22 @@ const stockType = (rate: string): 'upper' | 'ipo' | 'normal' => {
   return 'normal'
 }
 
+const PAGE_SIZE = 5
+const rankingPage = ref(0)
+
 const filteredRanking = computed(() => {
   if (rankingFilter.value === 'all') return realtimeRanking.value
   return realtimeRanking.value.filter(item => stockType(item.changeRate) === rankingFilter.value)
 })
+
+// 필터 변경 시 첫 페이지로
+watch(rankingFilter, () => { rankingPage.value = 0 })
+
+const pagedRanking = computed(() =>
+  filteredRanking.value.slice(rankingPage.value * PAGE_SIZE, (rankingPage.value + 1) * PAGE_SIZE)
+)
+
+const totalPages = computed(() => Math.ceil(filteredRanking.value.length / PAGE_SIZE))
 
 // 순위 뱃지 색상 (1위=금, 2위=은, 3위=동, 나머지=회색)
 const rankBadgeClass = (index: number): string => {
@@ -371,7 +383,7 @@ onUnmounted(() => {
           </div>
           <ul v-else class="space-y-2">
           <li
-            v-for="(item, index) in filteredRanking"
+            v-for="(item, index) in pagedRanking"
             :key="item.isuSrtCd"
             class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
           >
@@ -401,6 +413,21 @@ onUnmounted(() => {
             </div>
           </li>
         </ul>
+
+        <!-- 페이지네이션 -->
+        <div v-if="totalPages > 1" class="flex items-center justify-center gap-2 mt-3">
+          <button
+            @click="rankingPage--"
+            :disabled="rankingPage === 0"
+            class="w-7 h-7 flex items-center justify-center rounded-full text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >‹</button>
+          <span class="text-xs text-gray-400 tabular-nums">{{ rankingPage + 1 }} / {{ totalPages }}</span>
+          <button
+            @click="rankingPage++"
+            :disabled="rankingPage >= totalPages - 1"
+            class="w-7 h-7 flex items-center justify-center rounded-full text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >›</button>
+        </div>
         </template>
 
         <!-- KRX 정적 랭킹 (장 마감 후) -->

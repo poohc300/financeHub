@@ -25,7 +25,8 @@ import jakarta.annotation.PostConstruct;
 public class KisRankingPoller {
 
     private static final Logger log = LoggerFactory.getLogger(KisRankingPoller.class);
-    private static final int TOP_N = 5;
+    private static final int FETCH_N = 30;    // REST API로 가져올 종목 수 (페이지네이션용)
+    private static final int SUBSCRIBE_N = 5; // KIS WebSocket 구독 종목 수 (상한가는 체결 없어 구독 불필요)
 
     @Value("${kis.base-url}")
     private String baseUrl;
@@ -118,7 +119,7 @@ public class KisRankingPoller {
             if (output == null || output.isEmpty()) return;
 
             List<KisRankingItem> newRanking = new ArrayList<>();
-            for (Map<String, Object> item : output.subList(0, Math.min(TOP_N, output.size()))) {
+            for (Map<String, Object> item : output.subList(0, Math.min(FETCH_N, output.size()))) {
                 newRanking.add(KisRankingItem.builder()
                         .isuSrtCd(str(item, "stck_shrn_iscd"))
                         .isuNm(str(item, "hts_kor_isnm"))
@@ -129,15 +130,16 @@ public class KisRankingPoller {
                         .build());
             }
 
-            // 구독 종목 동적 교체
-            List<String> newSymbols = newRanking.stream().map(KisRankingItem::getIsuSrtCd).toList();
-            kisWebSocketClient.updateSubscriptions(newSymbols);
+            // WebSocket 구독은 상위 SUBSCRIBE_N개만 (상한가 종목은 체결 없어 구독 불필요)
+            List<String> subscribeSymbols = newRanking.subList(0, Math.min(SUBSCRIBE_N, newRanking.size()))
+                    .stream().map(KisRankingItem::getIsuSrtCd).toList();
+            kisWebSocketClient.updateSubscriptions(subscribeSymbols);
 
             rankingCache = newRanking;
 
-            // 프론트에 랭킹 브로드캐스트
+            // 프론트에 전체 랭킹(FETCH_N) 브로드캐스트
             broadcastHandler.broadcastRanking(newRanking);
-            log.info("TOP {} 랭킹 갱신: {}", TOP_N, newSymbols);
+            log.info("랭킹 갱신: 조회 {}개, 구독 {}개 {}", newRanking.size(), subscribeSymbols.size(), subscribeSymbols);
 
         } catch (Exception e) {
             log.error("랭킹 폴링 실패: {}", e.getMessage(), e);
