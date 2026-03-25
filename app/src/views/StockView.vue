@@ -9,8 +9,44 @@ import {
   CandlestickController, CandlestickElement
 } from 'chartjs-chart-financial'
 import { ref, onMounted, computed, watch, onBeforeUnmount } from 'vue'
+import { useRoute } from 'vue-router'
 import { fetchRequest } from '../util/fetchRequest'
 import { StockDailyTradingDTO } from '../model/DashboardDataDTO'
+
+const route = useRoute()
+
+// 관심 종목 (localStorage)
+const WATCHLIST_KEY = 'watchlist'
+const MAX_WATCHLIST = 5
+const isInWatchlist = ref(false)
+
+const loadWatchlistState = () => {
+  try {
+    const list = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]')
+    isInWatchlist.value = list.some((w: any) => w.isuSrtCd === selectedIsuSrtCd.value)
+  } catch {
+    isInWatchlist.value = false
+  }
+}
+
+const toggleWatchlist = () => {
+  try {
+    const list: any[] = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]')
+    if (isInWatchlist.value) {
+      const updated = list.filter((w: any) => w.isuSrtCd !== selectedIsuSrtCd.value)
+      localStorage.setItem(WATCHLIST_KEY, JSON.stringify(updated))
+      isInWatchlist.value = false
+    } else {
+      if (list.length >= MAX_WATCHLIST) {
+        alert(`관심 종목은 최대 ${MAX_WATCHLIST}개까지 등록할 수 있습니다.`)
+        return
+      }
+      list.push({ isuSrtCd: selectedIsuSrtCd.value, isuCd: selectedIsuCd.value, isuNm: selectedIndex.value })
+      localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list))
+      isInWatchlist.value = true
+    }
+  } catch {}
+}
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement,
@@ -275,6 +311,7 @@ const selectStock = (stock: StockDailyTradingDTO) => {
   showDropdown.value = false
   selectedRealtimePrice.value = realtimePrices.value[stock.isuSrtCd] ?? null
   changeMarket('STOCK', stock.isuNm)
+  loadWatchlistState()
 }
 
 const connectRealtime = () => {
@@ -386,7 +423,18 @@ const toggleCompare = () => {
 }
 
 onMounted(() => {
-  fetchChartData()
+  // 관심 종목 탭에서 넘어온 경우 바로 종목 선택
+  if (route.query.isuCd && route.query.isuNm) {
+    selectedIsuCd.value = route.query.isuCd as string
+    selectedIsuSrtCd.value = (route.query.isuSrtCd as string) || ''
+    searchQuery.value = route.query.isuNm as string
+    selectedMarket.value = 'STOCK'
+    selectedIndex.value = route.query.isuNm as string
+    fetchChartData()
+    loadWatchlistState()
+  } else {
+    fetchChartData()
+  }
   fetchTopVolume()
   connectRealtime()
 })
@@ -424,8 +472,22 @@ onMounted(() => {
           </ul>
         </div>
 
+        <!-- 종목 선택 시 관심 등록 버튼 -->
+        <div v-if="selectedIsuSrtCd" class="mt-3 flex items-center justify-between px-1">
+          <span class="text-sm font-medium text-gray-700 truncate">{{ selectedIndex }}</span>
+          <button
+            @click="toggleWatchlist"
+            :title="isInWatchlist ? '관심 종목 해제' : '관심 종목 추가'"
+            class="flex items-center gap-1 px-2 py-1 rounded-lg transition-colors"
+            :class="isInWatchlist ? 'text-amber-500 hover:bg-amber-50' : 'text-gray-400 hover:bg-gray-100'"
+          >
+            <v-icon size="16">{{ isInWatchlist ? 'mdi-star' : 'mdi-star-outline' }}</v-icon>
+            <span class="text-xs">{{ isInWatchlist ? '관심 해제' : '관심 등록' }}</span>
+          </button>
+        </div>
+
         <!-- 선택 종목 실시간 시세 -->
-        <div v-if="selectedRealtimePrice" class="mt-4 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div v-if="selectedRealtimePrice" class="mt-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div class="flex justify-between items-center mb-1">
             <h3 class="font-bold text-gray-800 text-sm">실시간 시세</h3>
             <span class="text-xs text-gray-400">{{ selectedRealtimePrice.time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') }}</span>

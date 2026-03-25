@@ -7,10 +7,11 @@ const route = useRoute()
 const { mdAndUp } = useDisplay()
 
 const navItems = [
-  { to: '/',       label: '홈',    icon: 'mdi-home',                     iconActive: 'mdi-home' },
-  { to: '/news',   label: '뉴스',  icon: 'mdi-newspaper-variant-outline', iconActive: 'mdi-newspaper-variant' },
-  { to: '/stocks', label: '주식',  icon: 'mdi-chart-line',                iconActive: 'mdi-chart-line' },
-  { to: '/ipo',    label: '공모주', icon: 'mdi-briefcase-outline',         iconActive: 'mdi-briefcase' },
+  { to: '/',          label: '홈',     icon: 'mdi-home',                     iconActive: 'mdi-home' },
+  { to: '/news',      label: '뉴스',   icon: 'mdi-newspaper-variant-outline', iconActive: 'mdi-newspaper-variant' },
+  { to: '/stocks',    label: '주식',   icon: 'mdi-chart-line',                iconActive: 'mdi-chart-line' },
+  { to: '/watchlist', label: '관심',   icon: 'mdi-star-outline',              iconActive: 'mdi-star' },
+  { to: '/ipo',       label: '공모주', icon: 'mdi-briefcase-outline',         iconActive: 'mdi-briefcase' },
 ]
 
 const navigateTo = (path: string) => {
