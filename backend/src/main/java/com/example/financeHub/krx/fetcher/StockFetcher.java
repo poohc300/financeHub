@@ -13,7 +13,8 @@ import com.example.financeHub.krx.util.KrxCommonUtil;
 @Service
 public class StockFetcher {
 
-    private final String stockUrl = "sto/stk_bydd_trd";
+    private static final String KOSPI_URL  = "sto/stk_bydd_trd";
+    private static final String KOSDAQ_URL = "sto/ksq_bydd_trd";
     private final KrxApiCaller krxApiCaller;
 
     public StockFetcher(KrxApiCaller krxApiCaller) {
@@ -26,9 +27,16 @@ public class StockFetcher {
 
     public List<StockDailyTradingDTO> fetch(String formattedDate) {
         List<StockDailyTradingDTO> result = new ArrayList<>();
+        result.addAll(fetchFromUrl(KOSPI_URL, formattedDate));
+        result.addAll(fetchFromUrl(KOSDAQ_URL, formattedDate));
+        return result;
+    }
+
+    private List<StockDailyTradingDTO> fetchFromUrl(String url, String formattedDate) {
+        List<StockDailyTradingDTO> result = new ArrayList<>();
 
         try {
-            List<Map<String, Object>> dataList = krxApiCaller.callApi(stockUrl, formattedDate);
+            List<Map<String, Object>> dataList = krxApiCaller.callApi(url, formattedDate);
 
             if (!dataList.isEmpty()) {
                 for (Map<String, Object> item : dataList) {

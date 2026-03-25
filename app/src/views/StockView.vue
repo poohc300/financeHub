@@ -102,6 +102,8 @@ const realtimePrices = ref<Record<string, {
 }>>({})
 // 선택된 종목의 실시간 가격
 const selectedRealtimePrice = ref<typeof realtimePrices.value[string] | null>(null)
+// 선택된 종목의 DB 마지막 종가 (실시간 없을 때 fallback)
+const selectedStaticPrice = ref<{ currentPrice: string; change: string; changeRate: string } | null>(null)
 // 실시간 TOP 5 랭킹 (ranking 메시지 수신 시 갱신)
 interface RankingItem {
   isuSrtCd: string
@@ -361,6 +363,23 @@ const fetchChartData = async () => {
     chartHighs.value = data.highs || []
     chartLows.value = data.lows || []
     if (compareMode.value) await fetchCompareData()
+
+    // STOCK 선택 시 마지막 종가로 정적 가격 카드 구성 (실시간 없을 때 fallback)
+    if (selectedMarket.value === 'STOCK' && chartValues.value.length >= 1) {
+      const parse = (v: string) => parseFloat(v?.replace(/,/g, '') || '0')
+      const vals = chartValues.value
+      const curr = parse(vals[vals.length - 1])
+      const prev = vals.length >= 2 ? parse(vals[vals.length - 2]) : curr
+      const diff = curr - prev
+      const rate = prev !== 0 ? (diff / prev) * 100 : 0
+      selectedStaticPrice.value = {
+        currentPrice: curr.toLocaleString(),
+        change: (diff >= 0 ? '+' : '') + diff.toFixed(0),
+        changeRate: (rate >= 0 ? '+' : '') + rate.toFixed(2),
+      }
+    } else {
+      selectedStaticPrice.value = null
+    }
   } catch (e) {
     console.error('차트 데이터 오류:', e)
   }
@@ -554,27 +573,43 @@ onMounted(() => {
           </button>
         </div>
 
-        <!-- 선택 종목 실시간 시세 -->
-        <div v-if="selectedRealtimePrice" class="mt-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <!-- 선택 종목 시세 카드 (실시간 우선, 없으면 DB 종가 fallback) -->
+        <div v-if="selectedRealtimePrice || selectedStaticPrice" class="mt-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div class="flex justify-between items-center mb-1">
-            <h3 class="font-bold text-gray-800 text-sm">실시간 시세</h3>
-            <span class="text-xs text-gray-400">{{ selectedRealtimePrice.time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') }}</span>
+            <div class="flex items-center gap-1.5">
+              <h3 class="font-bold text-gray-800 text-sm">
+                {{ selectedRealtimePrice ? '실시간 시세' : '전일 종가' }}
+              </h3>
+              <span v-if="selectedRealtimePrice" class="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full font-medium">LIVE</span>
+            </div>
+            <span v-if="selectedRealtimePrice" class="text-xs text-gray-400">
+              {{ selectedRealtimePrice.time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') }}
+            </span>
           </div>
-          <div class="flex justify-between items-end">
-            <p class="text-2xl font-bold text-gray-900">{{ Number(selectedRealtimePrice.currentPrice).toLocaleString() }}원</p>
-            <div class="text-right">
+          <template v-if="selectedRealtimePrice">
+            <div class="flex justify-between items-end">
+              <p class="text-2xl font-bold text-gray-900">{{ Number(selectedRealtimePrice.currentPrice).toLocaleString() }}원</p>
               <p :class="Number(selectedRealtimePrice.change) >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
                 {{ Number(selectedRealtimePrice.change) >= 0 ? '+' : '' }}{{ Number(selectedRealtimePrice.change).toLocaleString() }}
                 ({{ selectedRealtimePrice.changeRate }}%)
               </p>
             </div>
-          </div>
-          <div class="grid grid-cols-3 gap-2 mt-2 text-xs text-gray-500">
-            <div>시 <span class="text-gray-700 font-medium">{{ Number(selectedRealtimePrice.open).toLocaleString() }}</span></div>
-            <div>고 <span class="text-green-600 font-medium">{{ Number(selectedRealtimePrice.high).toLocaleString() }}</span></div>
-            <div>저 <span class="text-red-600 font-medium">{{ Number(selectedRealtimePrice.low).toLocaleString() }}</span></div>
-          </div>
-          <p class="text-xs text-gray-400 mt-1">거래량 {{ Number(selectedRealtimePrice.volume).toLocaleString() }}</p>
+            <div class="grid grid-cols-3 gap-2 mt-2 text-xs text-gray-500">
+              <div>시 <span class="text-gray-700 font-medium">{{ Number(selectedRealtimePrice.open).toLocaleString() }}</span></div>
+              <div>고 <span class="text-green-600 font-medium">{{ Number(selectedRealtimePrice.high).toLocaleString() }}</span></div>
+              <div>저 <span class="text-red-600 font-medium">{{ Number(selectedRealtimePrice.low).toLocaleString() }}</span></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">거래량 {{ Number(selectedRealtimePrice.volume).toLocaleString() }}</p>
+          </template>
+          <template v-else-if="selectedStaticPrice">
+            <div class="flex justify-between items-end">
+              <p class="text-2xl font-bold text-gray-900">{{ selectedStaticPrice.currentPrice }}원</p>
+              <p :class="selectedStaticPrice.changeRate.startsWith('-') ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'">
+                {{ selectedStaticPrice.change }}
+                ({{ selectedStaticPrice.changeRate }}%)
+              </p>
+            </div>
+          </template>
         </div>
       </div>
 
