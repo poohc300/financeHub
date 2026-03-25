@@ -92,16 +92,12 @@ const periodOptions = [
 const marketButtons = [
   { label: 'KOSPI', market: 'KOSPI', index: '코스피' },
   { label: 'KOSDAQ', market: 'KOSDAQ', index: '코스닥' },
-  { label: '금', market: 'GOLD', index: '금현물' },
-  { label: '오일', market: 'OIL', index: '두바이유' },
 ]
 
 const marketColor = computed(() => {
   const map: Record<string, string> = {
     KOSPI: '59, 130, 246',
     KOSDAQ: '234, 88, 12',
-    GOLD: '202, 138, 4',
-    OIL: '107, 114, 128',
     STOCK: '16, 185, 129',
   }
   return map[selectedMarket.value] || '59, 130, 246'
@@ -355,7 +351,6 @@ const changeMarket = (market: string, indexName: string) => {
   selectedMarket.value = market
   selectedIndex.value = indexName
   compareMode.value = false
-  if (market === 'OIL' || market === 'GOLD') chartType.value = 'line'
   fetchChartData()
 }
 
