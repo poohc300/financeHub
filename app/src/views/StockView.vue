@@ -443,72 +443,8 @@ onMounted(() => {
 <template>
   <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- 종목 검색 + 거래량 TOP -->
+      <!-- 사이드 패널 -->
       <div class="lg:col-span-1">
-        <!-- 종목 검색 -->
-        <div class="mb-4 relative">
-          <h2 class="text-xl font-bold text-gray-800 mb-2">종목 검색</h2>
-          <input
-            v-model="searchQuery"
-            @input="onSearchInput"
-            @blur="closeDropdown"
-            type="text"
-            placeholder="종목명 검색..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <ul
-            v-if="showDropdown"
-            class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-52 overflow-y-auto"
-          >
-            <li
-              v-for="stock in searchResults"
-              :key="stock.isuCd"
-              @mousedown.prevent="selectStock(stock)"
-              class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm"
-            >
-              <span class="font-medium text-gray-800">{{ stock.isuNm }}</span>
-              <span class="ml-2 text-gray-400 text-xs">{{ stock.isuSrtCd }}</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 종목 선택 시 관심 등록 버튼 -->
-        <div v-if="selectedIsuSrtCd" class="mt-3 flex items-center justify-between px-1">
-          <span class="text-sm font-medium text-gray-700 truncate">{{ selectedIndex }}</span>
-          <button
-            @click="toggleWatchlist"
-            :title="isInWatchlist ? '관심 종목 해제' : '관심 종목 추가'"
-            class="flex items-center gap-1 px-2 py-1 rounded-lg transition-colors"
-            :class="isInWatchlist ? 'text-amber-500 hover:bg-amber-50' : 'text-gray-400 hover:bg-gray-100'"
-          >
-            <v-icon size="16">{{ isInWatchlist ? 'mdi-star' : 'mdi-star-outline' }}</v-icon>
-            <span class="text-xs">{{ isInWatchlist ? '관심 해제' : '관심 등록' }}</span>
-          </button>
-        </div>
-
-        <!-- 선택 종목 실시간 시세 -->
-        <div v-if="selectedRealtimePrice" class="mt-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div class="flex justify-between items-center mb-1">
-            <h3 class="font-bold text-gray-800 text-sm">실시간 시세</h3>
-            <span class="text-xs text-gray-400">{{ selectedRealtimePrice.time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') }}</span>
-          </div>
-          <div class="flex justify-between items-end">
-            <p class="text-2xl font-bold text-gray-900">{{ Number(selectedRealtimePrice.currentPrice).toLocaleString() }}원</p>
-            <div class="text-right">
-              <p :class="Number(selectedRealtimePrice.change) >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
-                {{ Number(selectedRealtimePrice.change) >= 0 ? '+' : '' }}{{ Number(selectedRealtimePrice.change).toLocaleString() }}
-                ({{ selectedRealtimePrice.changeRate }}%)
-              </p>
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-2 mt-2 text-xs text-gray-500">
-            <div>시 <span class="text-gray-700 font-medium">{{ Number(selectedRealtimePrice.open).toLocaleString() }}</span></div>
-            <div>고 <span class="text-green-600 font-medium">{{ Number(selectedRealtimePrice.high).toLocaleString() }}</span></div>
-            <div>저 <span class="text-red-600 font-medium">{{ Number(selectedRealtimePrice.low).toLocaleString() }}</span></div>
-          </div>
-          <p class="text-xs text-gray-400 mt-1">거래량 {{ Number(selectedRealtimePrice.volume).toLocaleString() }}</p>
-        </div>
-
         <!-- 실시간 TOP 5 / 거래량 TOP -->
         <div>
           <div class="flex items-center gap-2 mb-4">
@@ -575,6 +511,70 @@ onMounted(() => {
               </template>
             </div>
           </div>
+        </div>
+
+        <!-- 종목 검색 -->
+        <div class="mt-5 relative">
+          <h2 class="text-xl font-bold text-gray-800 mb-2">종목 검색</h2>
+          <input
+            v-model="searchQuery"
+            @input="onSearchInput"
+            @blur="closeDropdown"
+            type="text"
+            placeholder="종목명 검색..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <ul
+            v-if="showDropdown"
+            class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-52 overflow-y-auto"
+          >
+            <li
+              v-for="stock in searchResults"
+              :key="stock.isuCd"
+              @mousedown.prevent="selectStock(stock)"
+              class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+            >
+              <span class="font-medium text-gray-800">{{ stock.isuNm }}</span>
+              <span class="ml-2 text-gray-400 text-xs">{{ stock.isuSrtCd }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 종목 선택 시 관심 등록 버튼 -->
+        <div v-if="selectedIsuSrtCd" class="mt-3 flex items-center justify-between px-1">
+          <span class="text-sm font-medium text-gray-700 truncate">{{ selectedIndex }}</span>
+          <button
+            @click="toggleWatchlist"
+            :title="isInWatchlist ? '관심 종목 해제' : '관심 종목 추가'"
+            class="flex items-center gap-1 px-2 py-1 rounded-lg transition-colors"
+            :class="isInWatchlist ? 'text-amber-500 hover:bg-amber-50' : 'text-gray-400 hover:bg-gray-100'"
+          >
+            <v-icon size="16">{{ isInWatchlist ? 'mdi-star' : 'mdi-star-outline' }}</v-icon>
+            <span class="text-xs">{{ isInWatchlist ? '관심 해제' : '관심 등록' }}</span>
+          </button>
+        </div>
+
+        <!-- 선택 종목 실시간 시세 -->
+        <div v-if="selectedRealtimePrice" class="mt-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div class="flex justify-between items-center mb-1">
+            <h3 class="font-bold text-gray-800 text-sm">실시간 시세</h3>
+            <span class="text-xs text-gray-400">{{ selectedRealtimePrice.time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') }}</span>
+          </div>
+          <div class="flex justify-between items-end">
+            <p class="text-2xl font-bold text-gray-900">{{ Number(selectedRealtimePrice.currentPrice).toLocaleString() }}원</p>
+            <div class="text-right">
+              <p :class="Number(selectedRealtimePrice.change) >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
+                {{ Number(selectedRealtimePrice.change) >= 0 ? '+' : '' }}{{ Number(selectedRealtimePrice.change).toLocaleString() }}
+                ({{ selectedRealtimePrice.changeRate }}%)
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-2 text-xs text-gray-500">
+            <div>시 <span class="text-gray-700 font-medium">{{ Number(selectedRealtimePrice.open).toLocaleString() }}</span></div>
+            <div>고 <span class="text-green-600 font-medium">{{ Number(selectedRealtimePrice.high).toLocaleString() }}</span></div>
+            <div>저 <span class="text-red-600 font-medium">{{ Number(selectedRealtimePrice.low).toLocaleString() }}</span></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">거래량 {{ Number(selectedRealtimePrice.volume).toLocaleString() }}</p>
         </div>
       </div>
 
