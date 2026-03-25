@@ -203,18 +203,27 @@ public class KisWebSocketClient {
             if (!"H0STCNT0".equals(parts[1])) return;
 
             String[] f = parts[3].split("\\^");
-            if (f.length < 9) return;
+            if (f.length < 10) return;
+            // KIS H0STCNT0 실제 포맷:
+            // f[0]=종목코드, f[1]=체결시간, f[2]=현재가, f[3]=전일대비부호(1상한/2상승/3보합/4하한/5하락),
+            // f[4]=전일대비(절대), f[5]=등락률, f[6]=가중평균가, f[7]=시가, f[8]=고가, f[9]=저가,
+            // f[13]=누적거래량
+            log.debug("H0STCNT0 raw: {}", String.join("|", java.util.Arrays.copyOf(f, Math.min(f.length, 15))));
+            String stockSign = f[3];
+            boolean stockNeg = "4".equals(stockSign) || "5".equals(stockSign);
+            String stockChange = stockNeg && !f[4].startsWith("-") ? "-" + f[4] : f[4];
+            String stockChangeRate = stockNeg && !f[5].startsWith("-") ? "-" + f[5] : f[5];
 
             KisStockPrice price = KisStockPrice.builder()
                     .isuSrtCd(f[0])
                     .time(f[1])
                     .currentPrice(f[2])
-                    .change(f[3])
-                    .changeRate(f[4])
-                    .open(f[5])
-                    .high(f[6])
-                    .low(f[7])
-                    .volume(f[8])
+                    .change(stockChange)
+                    .changeRate(stockChangeRate)
+                    .open(f[7])
+                    .high(f[8])
+                    .low(f[9])
+                    .volume(f.length > 13 ? f[13] : "")
                     .build();
 
             // DB 쓰기 없이 메모리에만 저장

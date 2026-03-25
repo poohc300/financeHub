@@ -29,6 +29,7 @@ interface RankingItem {
 }
 const realtimeRanking = ref<RankingItem[]>([])
 const isMarketOpen = ref(false)
+const marketReady = ref(false)  // WebSocket에서 첫 market 메시지 수신 후 true
 let ws: WebSocket | null = null
 
 const lastUpdatedText = computed(() => {
@@ -196,6 +197,7 @@ const connectWebSocket = () => {
             )
           }
         })
+        marketReady.value = true
         lastUpdated.value = new Date()
       } else if (msg.type === 'ranking') {
         realtimeRanking.value = msg.items || []
@@ -275,12 +277,16 @@ onUnmounted(() => {
               {{ Number(slot.indicator.value.replace(/,/g, '')).toLocaleString('ko-KR') }}
               <span class="text-xs font-normal text-gray-400 ml-1">{{ slot.indicator.unit }}</span>
             </div>
-            <div
+            <!-- 코스피·코스닥(i<2)은 WebSocket 수신 전까지 등락률 숨김 (KRX 전일 데이터가 오늘과 달라 깜빡임 방지) -->
+            <div v-if="i >= 2 || marketReady"
               :class="slot.indicator.isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'"
               class="inline-flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full"
             >
               <span>{{ slot.indicator.isPositive ? '▲' : '▼' }}</span>
               <span>{{ Math.abs(parseFloat(slot.indicator.change)).toFixed(2) }}%</span>
+            </div>
+            <div v-else class="inline-flex items-center gap-1 text-sm px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">
+              <span class="animate-pulse">···</span>
             </div>
           </template>
           <template v-else>
