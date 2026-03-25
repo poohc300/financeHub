@@ -20,10 +20,10 @@ const navigateTo = (path: string) => {
 </script>
 
 <template>
-  <v-app style="background: linear-gradient(to bottom right, #f9fafb, #f3f4f6);">
+  <v-app style="background: linear-gradient(to bottom right, #f9fafb, #f3f4f6); overflow-y: auto;">
 
     <!-- 데스크탑 상단 네비게이션 (md 이상) -->
-    <nav class="hidden md:block bg-white shadow-sm border-b border-gray-200">
+    <nav class="hidden md:block bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
           <span class="text-xl font-bold text-blue-600">Finance Hub</span>
@@ -43,20 +43,18 @@ const navigateTo = (path: string) => {
     </nav>
 
     <!-- 모바일 상단 헤더 (md 미만) -->
-    <header class="md:hidden bg-white border-b border-gray-200 px-4 h-12 flex items-center">
+    <header class="md:hidden bg-white border-b border-gray-200 px-4 h-12 flex items-center sticky top-0 z-50">
       <span class="text-lg font-bold text-blue-600">Finance Hub</span>
     </header>
 
     <!-- 본문 — 모바일은 하단 탭바 높이만큼 패딩 추가 -->
-    <v-main scrollable>
-      <div class="container mx-auto px-4 py-6 pb-24 md:pb-8">
-        <RouterView v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </RouterView>
-      </div>
-    </v-main>
+    <main class="container mx-auto px-4 py-6 pb-24 md:pb-8">
+      <RouterView v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </RouterView>
+    </main>
 
     <!-- 모바일 하단 탭바 — Vuetify v-bottom-navigation (md 미만) -->
     <v-bottom-navigation
