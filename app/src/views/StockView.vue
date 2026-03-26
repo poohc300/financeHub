@@ -8,7 +8,7 @@ import {
 import {
   CandlestickController, CandlestickElement
 } from 'chartjs-chart-financial'
-import { ref, onMounted, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, onMounted, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchRequest } from '../util/fetchRequest'
 import { StockDailyTradingDTO } from '../model/DashboardDataDTO'
@@ -268,9 +268,10 @@ const renderCandleChart = () => {
   })
 }
 
-watch(chartType, () => {
+watch(chartType, async () => {
   if (chartType.value === 'candle') {
-    setTimeout(renderCandleChart, 50)
+    await nextTick()
+    renderCandleChart()
   } else {
     candleChartInstance?.destroy()
     candleChartInstance = null
@@ -376,7 +377,8 @@ const fetchChartData = async () => {
     if (compareMode.value) await fetchCompareData()
 
     if (chartType.value === 'candle') {
-      setTimeout(renderCandleChart, 50)
+      await nextTick()
+      renderCandleChart()
     }
 
     // STOCK 선택 시 마지막 종가로 정적 가격 카드 구성 (실시간 없을 때 fallback)
@@ -673,32 +675,29 @@ onMounted(() => {
           <!-- 기간 선택 + 차트 타입 -->
           <div class="flex flex-col gap-2 mb-4">
             <!-- 1행: 라인/캔들 + 기간 버튼 -->
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex gap-1 flex-shrink-0">
-                <template v-if="hasOhlc && !compareMode">
-                  <button
-                    @click="chartType = 'line'"
-                    :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors',
-                      chartType === 'line' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
-                  >라인</button>
-                  <button
-                    @click="chartType = 'candle'"
-                    :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors',
-                      chartType === 'candle' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
-                  >캔들</button>
-                </template>
-              </div>
-              <div class="flex gap-1 flex-shrink-0">
+            <div class="flex items-center gap-1 overflow-x-auto pb-0.5">
+              <template v-if="hasOhlc && !compareMode">
                 <button
-                  v-for="option in periodOptions"
-                  :key="option.value"
-                  @click="changePeriod(option.value)"
-                  :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors',
-                    selectedPeriod === option.value
-                      ? 'bg-gray-800 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
-                >{{ option.label }}</button>
-              </div>
+                  @click="chartType = 'line'"
+                  :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors whitespace-nowrap flex-shrink-0',
+                    chartType === 'line' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+                >라인</button>
+                <button
+                  @click="chartType = 'candle'"
+                  :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors whitespace-nowrap flex-shrink-0',
+                    chartType === 'candle' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+                >캔들</button>
+                <span class="w-px h-5 bg-gray-200 mx-1 flex-shrink-0"></span>
+              </template>
+              <button
+                v-for="option in periodOptions"
+                :key="option.value"
+                @click="changePeriod(option.value)"
+                :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors whitespace-nowrap flex-shrink-0',
+                  selectedPeriod === option.value
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+              >{{ option.label }}</button>
             </div>
             <!-- 2행: 날짜 범위 직접 입력 -->
             <div class="flex items-center gap-1">
