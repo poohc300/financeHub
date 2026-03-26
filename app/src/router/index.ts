@@ -4,6 +4,7 @@ import NewsView from '../views/NewsView.vue'
 import StockView from '../views/StockView.vue'
 import IpoView from '../views/IpoView.vue'
 import WatchlistView from '../views/WatchlistView.vue'
+import OverseasView from '../views/OverseasView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -22,6 +23,11 @@ const router = createRouter({
       path: '/stocks',
       name: 'stocks',
       component: StockView
+    },
+    {
+      path: '/overseas',
+      name: 'overseas',
+      component: OverseasView
     },
     {
       path: '/ipo',

@@ -26,8 +26,22 @@ const navigateTo = (path: string) => {
     <nav class="hidden md:block bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
-          <span class="text-xl font-bold text-blue-600">Finance Hub</span>
-          <div class="flex space-x-1">
+          <div class="flex items-center gap-3">
+            <span class="text-xl font-bold text-blue-600">Finance Hub</span>
+            <!-- 해외주식 대시보드 이동 버튼 -->
+            <RouterLink
+              to="/overseas"
+              class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors duration-200"
+              :class="$route.path === '/overseas'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+            >
+              <v-icon size="15">mdi-earth</v-icon>
+              해외주식
+            </RouterLink>
+          </div>
+          <!-- 기존 국내 네비게이션 (해외주식 페이지에서는 숨김) -->
+          <div v-if="$route.path !== '/overseas'" class="flex space-x-1">
             <RouterLink
               v-for="item in navItems"
               :key="item.to"
@@ -43,11 +57,21 @@ const navigateTo = (path: string) => {
     </nav>
 
     <!-- 모바일 상단 헤더 (md 미만) -->
-    <header class="md:hidden bg-white border-b border-gray-200 px-4 h-12 flex items-center sticky top-0 z-50">
+    <header class="md:hidden bg-white border-b border-gray-200 px-4 h-12 flex items-center justify-between sticky top-0 z-50">
       <span class="text-lg font-bold text-blue-600">Finance Hub</span>
+      <RouterLink
+        to="/overseas"
+        class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+        :class="$route.path === '/overseas'
+          ? 'bg-blue-600 text-white'
+          : 'bg-gray-100 text-gray-600'"
+      >
+        <v-icon size="13">mdi-earth</v-icon>
+        해외주식
+      </RouterLink>
     </header>
 
-    <!-- 본문 — 모바일은 하단 탭바 높이만큼 패딩 추가 -->
+    <!-- 본문 -->
     <main class="container mx-auto px-4 py-6 pb-24 md:pb-8">
       <RouterView v-slot="{ Component }">
         <transition name="fade" mode="out-in">
@@ -56,9 +80,9 @@ const navigateTo = (path: string) => {
       </RouterView>
     </main>
 
-    <!-- 모바일 하단 탭바 — Vuetify v-bottom-navigation (md 미만) -->
+    <!-- 모바일 하단 탭바 (해외주식 페이지에서는 숨김) -->
     <v-bottom-navigation
-      v-if="!mdAndUp"
+      v-if="!mdAndUp && $route.path !== '/overseas'"
       :model-value="route.path"
       @update:model-value="navigateTo"
       grow
@@ -93,7 +117,6 @@ const navigateTo = (path: string) => {
 </style>
 
 <style>
-/* Vuetify v-bottom-navigation 사용 시 html에 overflow:hidden 주입됨 → 페이지 스크롤 차단 해제 */
 html,
 body,
 .v-application {
