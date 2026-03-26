@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.financeHub.overseas.mapper.OverseasStockMapper">
+
+    <insert id="batchInsert" parameterType="list">
+        INSERT INTO financehub.overseas_stock_daily_trading
+        (data_hash, bass_dt, isu_cd, isu_nm, excd, curr, cls_prc, opn_prc, hgst_prc, lwst_prc, acc_trd_vol, fluc_rt)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.dataHash}, #{item.bassDt}, #{item.isuCd}, #{item.isuNm}, #{item.excd}, #{item.curr},
+             #{item.clsPrc}, #{item.opnPrc}, #{item.hgstPrc}, #{item.lwstPrc}, #{item.accTrdVol}, #{item.flucRt})
+        </foreach>
+        ON CONFLICT (bass_dt, isu_cd, excd) DO NOTHING
+    </insert>
+
+    <select id="findExistingHashes" resultType="string">
+        SELECT data_hash FROM financehub.overseas_stock_daily_trading
+        WHERE data_hash IN
+        <foreach collection="hashes" item="hash" open="(" separator="," close=")">
+            #{hash}
+        </foreach>
+    </select>
+
+    <!-- 종목명 또는 티커로 검색 (최신 날짜 기준 중복 제거) -->
+    <select id="searchStocks" resultType="com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO">
+        SELECT DISTINCT ON (isu_cd, excd)
+               id, bass_dt AS bassDt, isu_cd AS isuCd, isu_nm AS isuNm, excd,
+               curr, cls_prc AS clsPrc, opn_prc AS opnPrc, hgst_prc AS hgstPrc,
+               lwst_prc AS lwstPrc, acc_trd_vol AS accTrdVol, fluc_rt AS flucRt, data_hash AS dataHash
+        FROM financehub.overseas_stock_daily_trading
+        WHERE isu_nm ILIKE CONCAT('%', #{keyword}, '%')
+           OR isu_cd ILIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY isu_cd, excd, bass_dt DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 특정 종목 이력 조회 (차트용) -->
+    <select id="selectHistory" resultType="com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO">
+        SELECT id, bass_dt AS bassDt, isu_cd AS isuCd, isu_nm AS isuNm, excd,
+               curr, cls_prc AS clsPrc, opn_prc AS opnPrc, hgst_prc AS hgstPrc,
+               lwst_prc AS lwstPrc, acc_trd_vol AS accTrdVol, fluc_rt AS flucRt, data_hash AS dataHash
+        FROM financehub.overseas_stock_daily_trading
+        WHERE isu_cd = #{isuCd}
+          AND excd = #{excd}
+        ORDER BY bass_dt DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 날짜 범위 이력 조회 -->
+    <select id="selectHistoryByDateRange" resultType="com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO">
+        SELECT id, bass_dt AS bassDt, isu_cd AS isuCd, isu_nm AS isuNm, excd,
+               curr, cls_prc AS clsPrc, opn_prc AS opnPrc, hgst_prc AS hgstPrc,
+               lwst_prc AS lwstPrc, acc_trd_vol AS accTrdVol, fluc_rt AS flucRt, data_hash AS dataHash
+        FROM financehub.overseas_stock_daily_trading
+        WHERE isu_cd = #{isuCd}
+          AND excd = #{excd}
+          AND bass_dt &gt;= #{startDate}
+          AND bass_dt &lt;= #{endDate}
+        ORDER BY bass_dt DESC
+    </select>
+
+</mapper>

@@ -118,6 +118,17 @@ public class SchedulerController {
     }
 
     /**
+     * 해외주식 워치리스트 수동 수집
+     * date: YYYYMMDD (생략 시 전날 기준)
+     */
+    @PostMapping("/run-overseas")
+    public ResponseEntity<Map<String, Object>> runOverseas(
+            @RequestParam(required = false) String date) {
+        FetchResult result = scheduler.fetchOverseasStockData(date);
+        return ResponseEntity.ok(toMap("해외주식", date != null ? date : "최신", result));
+    }
+
+    /**
      * 스케줄러 실행 로그 조회
      */
     @GetMapping("/scheduler-logs")

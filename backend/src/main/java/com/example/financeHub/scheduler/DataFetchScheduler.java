@@ -24,6 +24,10 @@ import com.example.financeHub.krx.model.KospiDailyTradingDTO;
 import com.example.financeHub.krx.model.OilMarketDailyTradingDTO;
 import com.example.financeHub.krx.model.StockDailyTradingDTO;
 import com.example.financeHub.krx.service.KrxDataService;
+import com.example.financeHub.overseas.mapper.OverseasStockMapper;
+import com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO;
+import com.example.financeHub.overseas.service.OverseasStockService;
+import com.example.financeHub.overseas.util.OverseasMarketUtil;
 import com.example.financeHub.scheduler.model.SchedulerExecutionLogDTO;
 
 @Component
@@ -36,18 +40,24 @@ public class DataFetchScheduler {
     private final KrxDataService krxDataService;
     private final KrxDataMapper krxDataMapper;
     private final CrawlerDataMapper crawlerDataMapper;
+    private final OverseasStockService overseasStockService;
+    private final OverseasStockMapper overseasStockMapper;
 
     public DataFetchScheduler(
             IpoCrawler ipoCrawlerService,
             NewsCrawler newsCrawlerService,
             KrxDataService krxDataService,
             KrxDataMapper krxDataMapper,
-            CrawlerDataMapper crawlerDataMapper) {
+            CrawlerDataMapper crawlerDataMapper,
+            OverseasStockService overseasStockService,
+            OverseasStockMapper overseasStockMapper) {
         this.ipoCrawlerService = ipoCrawlerService;
         this.newsCrawlerService = newsCrawlerService;
         this.krxDataService = krxDataService;
         this.krxDataMapper = krxDataMapper;
         this.crawlerDataMapper = crawlerDataMapper;
+        this.overseasStockService = overseasStockService;
+        this.overseasStockMapper = overseasStockMapper;
     }
 
     /** KRX + 크롤링 전체 (평일 19시 — KRX API 당일 종가 공개 후 여유 확보) */
@@ -71,6 +81,14 @@ public class DataFetchScheduler {
     public void fetchNewsHourly() {
         log.info("Hourly news fetch at {}", LocalDateTime.now());
         fetchNewsData();
+    }
+
+    /** 해외주식 워치리스트 수집 (평일 07:00 — 미국 야간장 06:00 종료 후) */
+    @Scheduled(cron = "0 0 7 * * MON-FRI", zone = "Asia/Seoul")
+    public void fetchOverseasDataScheduled() {
+        log.info("Starting overseas stock fetch at {}", LocalDateTime.now());
+        fetchOverseasStockData(null);
+        log.info("Completed overseas stock fetch at {}", LocalDateTime.now());
     }
 
     public void fetchKospiData() {
@@ -277,6 +295,55 @@ public class DataFetchScheduler {
     }
 
     public record FetchResult(int processed, int inserted, int skipped, String status, String errorMessage) {}
+
+    public FetchResult fetchOverseasStockData() {
+        return fetchOverseasStockData(null);
+    }
+
+    public FetchResult fetchOverseasStockData(String formattedDate) {
+        String jobName = "OVERSEAS_STOCK_DAILY_TRADING";
+        long startTime = System.currentTimeMillis();
+        int processed = 0;
+        int inserted = 0;
+        int skipped = 0;
+        String status = "SUCCESS";
+        String errorMessage = null;
+
+        try {
+            String targetDate = (formattedDate != null) ? formattedDate : OverseasMarketUtil.getCollectionDate();
+            List<OverseasStockDailyTradingDTO> dataList = overseasStockService.getWatchlistData(targetDate);
+            processed = dataList.size();
+
+            if (!dataList.isEmpty()) {
+                dataList.forEach(dto -> dto.setDataHash(dto.generateHash()));
+
+                Set<String> allHashes = dataList.stream()
+                        .map(OverseasStockDailyTradingDTO::getDataHash)
+                        .collect(Collectors.toSet());
+                Set<String> existingHashes = overseasStockMapper.findExistingHashes(allHashes);
+
+                List<OverseasStockDailyTradingDTO> newData = dataList.stream()
+                        .filter(dto -> !existingHashes.contains(dto.getDataHash()))
+                        .collect(Collectors.toList());
+
+                inserted = newData.size();
+                skipped = processed - inserted;
+
+                if (!newData.isEmpty()) {
+                    overseasStockMapper.batchInsert(newData);
+                }
+            }
+
+            log.info("{}: processed={}, inserted={}, skipped={}", jobName, processed, inserted, skipped);
+        } catch (Exception e) {
+            status = "FAILED";
+            errorMessage = e.getMessage();
+            log.error("{} failed: {}", jobName, e.getMessage(), e);
+        } finally {
+            saveExecutionLog(jobName, startTime, status, processed, inserted, skipped, errorMessage);
+        }
+        return new FetchResult(processed, inserted, skipped, status, errorMessage);
+    }
 
     public void fetchStockData() {
         fetchStockData(null);
