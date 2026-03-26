@@ -131,6 +131,7 @@
 ### 백업 전략
 - [x] **PostgreSQL 자동 백업** — `scripts/backup_db.sh` 작성, cron 평일 20:00 등록, 30개 보관, `/home/jeremy/backups/financehub/` 저장 — 2026-03-26
 - [ ] **SD카드 이미지 백업** — Pi 전체 이미지 주기적 백업 (SD카드 마모/불량 대비)
+- [x] **복구 런북 작성** — `RUNBOOK.md` — OS 재설치부터 서비스 복구까지 12단계 정리 — 2026-03-26
 - [ ] **로그 용량 관리** — Spring Boot / nginx 로그 로테이션 설정 (무제한 쌓임 방지)
 
 ### 보안
