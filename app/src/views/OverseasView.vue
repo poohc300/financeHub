@@ -30,20 +30,55 @@ interface OverseasStockDTO {
   flucRt: number
 }
 
-// ─── 인기 종목 전체 목록 ─────────────────────────────────────
+interface OverseasCurrentPriceDTO {
+  isuCd: string
+  isuNm: string
+  excd: string
+  curr: string
+  lastPrc: number   // 현재가 (USD)
+  basePrc: number   // 전일종가 (USD)
+  diff: number      // 전일대비
+  rate: number      // 등락률 (%)
+  sign: string      // 2:상승 3:보합 5:하락
+  xrat: number      // 환율 (USD/KRW)
+  krwPrc: number    // KRW 환산가
+  tvol: number      // 거래량
+}
+
+// ─── 인기 종목 전체 목록 (30종목) ────────────────────────────
 const ALL_STOCKS = [
+  // NASDAQ
   { excd: 'NAS', symb: 'AAPL',  name: 'Apple' },
   { excd: 'NAS', symb: 'MSFT',  name: 'Microsoft' },
   { excd: 'NAS', symb: 'GOOGL', name: 'Alphabet' },
   { excd: 'NAS', symb: 'AMZN',  name: 'Amazon' },
-  { excd: 'NAS', symb: 'TSLA',  name: 'Tesla' },
   { excd: 'NAS', symb: 'NVDA',  name: 'NVIDIA' },
   { excd: 'NAS', symb: 'META',  name: 'Meta' },
+  { excd: 'NAS', symb: 'TSLA',  name: 'Tesla' },
   { excd: 'NAS', symb: 'AMD',   name: 'AMD' },
+  { excd: 'NAS', symb: 'INTC',  name: 'Intel' },
+  { excd: 'NAS', symb: 'QCOM',  name: 'Qualcomm' },
+  { excd: 'NAS', symb: 'AVGO',  name: 'Broadcom' },
   { excd: 'NAS', symb: 'NFLX',  name: 'Netflix' },
+  { excd: 'NAS', symb: 'ORCL',  name: 'Oracle' },
+  { excd: 'NAS', symb: 'ADBE',  name: 'Adobe' },
+  { excd: 'NAS', symb: 'UBER',  name: 'Uber' },
+  // NYSE
   { excd: 'NYS', symb: 'JPM',   name: 'JPMorgan' },
   { excd: 'NYS', symb: 'V',     name: 'Visa' },
   { excd: 'NYS', symb: 'MA',    name: 'Mastercard' },
+  { excd: 'NYS', symb: 'BAC',   name: 'Bank of America' },
+  { excd: 'NYS', symb: 'GS',    name: 'Goldman Sachs' },
+  { excd: 'NYS', symb: 'JNJ',   name: 'Johnson & Johnson' },
+  { excd: 'NYS', symb: 'UNH',   name: 'UnitedHealth' },
+  { excd: 'NYS', symb: 'PFE',   name: 'Pfizer' },
+  { excd: 'NYS', symb: 'KO',    name: 'Coca-Cola' },
+  { excd: 'NYS', symb: 'WMT',   name: 'Walmart' },
+  { excd: 'NYS', symb: 'HD',    name: 'Home Depot' },
+  { excd: 'NYS', symb: 'NKE',   name: 'Nike' },
+  { excd: 'NYS', symb: 'XOM',   name: 'Exxon Mobil' },
+  { excd: 'NYS', symb: 'CVX',   name: 'Chevron' },
+  { excd: 'NYS', symb: 'DIS',   name: 'Disney' },
 ]
 
 const EXCD_COLOR: Record<string, string> = {
@@ -92,7 +127,7 @@ const selectedStock = ref(ALL_STOCKS[0])
 const selectedPeriod = ref('3M')
 const chartType = ref<'line' | 'candle'>('line')
 const chartData = ref<OverseasStockDTO[]>([])
-const currentPrice = ref<OverseasStockDTO | null>(null)
+const currentPrice = ref<OverseasCurrentPriceDTO | null>(null)
 const priceLoading = ref(false)
 const chartLoading = ref(false)
 
@@ -241,7 +276,7 @@ const loadCurrentPrice = async () => {
   priceLoading.value = true
   currentPrice.value = null
   try {
-    currentPrice.value = await fetchRequest<OverseasStockDTO>(
+    currentPrice.value = await fetchRequest<OverseasCurrentPriceDTO>(
       `/overseas/price?excd=${selectedStock.value.excd}&symb=${selectedStock.value.symb}&name=${encodeURIComponent(selectedStock.value.name)}`,
       'GET'
     )
@@ -431,17 +466,28 @@ onMounted(() => { loadChart(); loadCurrentPrice() })
           </div>
 
           <template v-else-if="currentPrice">
-            <p class="text-3xl font-bold text-gray-900">{{ formatUsd(currentPrice.clsPrc) }}</p>
-            <p class="mt-1 text-sm font-semibold" :class="flucColor(currentPrice.flucRt)">
-              {{ Number(currentPrice.flucRt) >= 0 ? '+' : '' }}{{ Number(currentPrice.flucRt).toFixed(2) }}%
-            </p>
-            <div class="grid grid-cols-3 gap-2 mt-3 text-xs text-gray-500">
-              <div>시 <span class="text-gray-700 font-medium">{{ formatUsd(currentPrice.opnPrc) }}</span></div>
-              <div>고 <span class="text-green-600 font-medium">{{ formatUsd(currentPrice.hgstPrc) }}</span></div>
-              <div>저 <span class="text-red-600 font-medium">{{ formatUsd(currentPrice.lwstPrc) }}</span></div>
+            <!-- USD 현재가 -->
+            <div class="flex items-end justify-between">
+              <p class="text-3xl font-bold text-gray-900">{{ formatUsd(currentPrice.lastPrc) }}</p>
+              <p class="text-sm font-semibold mb-0.5" :class="flucColor(currentPrice.rate)">
+                {{ Number(currentPrice.rate) >= 0 ? '+' : '' }}{{ Number(currentPrice.rate).toFixed(2) }}%
+              </p>
             </div>
-            <p class="text-xs text-gray-400 mt-2">거래량 {{ Number(currentPrice.accTrdVol).toLocaleString() }}</p>
-            <p class="text-xs text-gray-300 mt-1">기준일 {{ currentPrice.bassDt }}</p>
+            <!-- KRW 환산가 -->
+            <div v-if="currentPrice.krwPrc" class="flex items-center gap-2 mt-1">
+              <p class="text-lg font-semibold text-gray-600">
+                ₩{{ Number(currentPrice.krwPrc).toLocaleString() }}
+              </p>
+              <span class="text-xs text-gray-400">
+                (환율 {{ Number(currentPrice.xrat).toLocaleString() }}원)
+              </span>
+            </div>
+            <!-- 전일대비 -->
+            <p class="text-xs mt-1" :class="flucColor(currentPrice.diff)">
+              전일 {{ formatUsd(currentPrice.basePrc) }} 대비
+              {{ Number(currentPrice.diff) >= 0 ? '+' : '' }}{{ formatUsd(Math.abs(Number(currentPrice.diff))) }}
+            </p>
+            <p class="text-xs text-gray-400 mt-2">거래량 {{ Number(currentPrice.tvol).toLocaleString() }}</p>
           </template>
 
           <div v-else class="text-sm text-gray-400">데이터 없음 (수집 전)</div>

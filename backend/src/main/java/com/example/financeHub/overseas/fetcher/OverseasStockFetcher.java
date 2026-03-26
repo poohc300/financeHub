@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.financeHub.kis.KisTokenManager;
+import com.example.financeHub.overseas.model.OverseasCurrentPriceDTO;
 import com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO;
+import com.example.financeHub.overseas.service.ExchangeRateService;
 
 @Service
 public class OverseasStockFetcher {
@@ -25,24 +27,47 @@ public class OverseasStockFetcher {
     private static final Logger log = LoggerFactory.getLogger(OverseasStockFetcher.class);
 
     /** 일별 시세 조회 TR_ID */
-    private static final String TR_DAILY_PRICE = "HHDFS76240000";
+    private static final String TR_DAILY_PRICE    = "HHDFS76240000";
+    /** 현재가 조회 TR_ID (환율 포함) */
+    private static final String TR_CURRENT_PRICE  = "HHDFS00000300";
 
     /**
      * 자동 수집 워치리스트: {거래소코드, 티커, 종목명}
+     * 30종목 (NAS 15 + NYS 15)
      */
     private static final List<String[]> WATCHLIST = List.of(
+        // ── NASDAQ ──────────────────────────────────
         new String[]{"NAS", "AAPL",  "Apple Inc."},
         new String[]{"NAS", "MSFT",  "Microsoft Corp."},
         new String[]{"NAS", "GOOGL", "Alphabet Inc."},
         new String[]{"NAS", "AMZN",  "Amazon.com Inc."},
-        new String[]{"NAS", "TSLA",  "Tesla Inc."},
         new String[]{"NAS", "NVDA",  "NVIDIA Corp."},
         new String[]{"NAS", "META",  "Meta Platforms Inc."},
+        new String[]{"NAS", "TSLA",  "Tesla Inc."},
         new String[]{"NAS", "AMD",   "Advanced Micro Devices Inc."},
+        new String[]{"NAS", "INTC",  "Intel Corp."},
+        new String[]{"NAS", "QCOM",  "Qualcomm Inc."},
+        new String[]{"NAS", "AVGO",  "Broadcom Inc."},
         new String[]{"NAS", "NFLX",  "Netflix Inc."},
+        new String[]{"NAS", "ORCL",  "Oracle Corp."},
+        new String[]{"NAS", "ADBE",  "Adobe Inc."},
+        new String[]{"NAS", "UBER",  "Uber Technologies Inc."},
+        // ── NYSE ────────────────────────────────────
         new String[]{"NYS", "JPM",   "JPMorgan Chase & Co."},
         new String[]{"NYS", "V",     "Visa Inc."},
-        new String[]{"NYS", "MA",    "Mastercard Inc."}
+        new String[]{"NYS", "MA",    "Mastercard Inc."},
+        new String[]{"NYS", "BAC",   "Bank of America Corp."},
+        new String[]{"NYS", "GS",    "Goldman Sachs Group Inc."},
+        new String[]{"NYS", "JNJ",   "Johnson & Johnson"},
+        new String[]{"NYS", "UNH",   "UnitedHealth Group Inc."},
+        new String[]{"NYS", "PFE",   "Pfizer Inc."},
+        new String[]{"NYS", "KO",    "Coca-Cola Co."},
+        new String[]{"NYS", "WMT",   "Walmart Inc."},
+        new String[]{"NYS", "HD",    "Home Depot Inc."},
+        new String[]{"NYS", "NKE",   "Nike Inc."},
+        new String[]{"NYS", "XOM",   "Exxon Mobil Corp."},
+        new String[]{"NYS", "CVX",   "Chevron Corp."},
+        new String[]{"NYS", "DIS",   "Walt Disney Co."}
     );
 
     @Value("${kis.app-key}")
@@ -56,10 +81,13 @@ public class OverseasStockFetcher {
 
     private final KisTokenManager tokenManager;
     private final RestTemplate restTemplate;
+    private final ExchangeRateService exchangeRateService;
 
-    public OverseasStockFetcher(KisTokenManager tokenManager, RestTemplate restTemplate) {
+    public OverseasStockFetcher(KisTokenManager tokenManager, RestTemplate restTemplate,
+                                 ExchangeRateService exchangeRateService) {
         this.tokenManager = tokenManager;
         this.restTemplate = restTemplate;
+        this.exchangeRateService = exchangeRateService;
     }
 
     /**
@@ -153,6 +181,60 @@ public class OverseasStockFetcher {
             log.error("KIS 해외주식 일별시세 조회 실패 - {}/{}: {}", excd, symb, e.getMessage(), e);
         }
         return result;
+    }
+
+    /**
+     * HHDFS00000300 — 해외주식 현재가 조회 (환율 포함)
+     * output.t_xrat = 환율, output.last = 현재가(USD)
+     */
+    @SuppressWarnings("unchecked")
+    public OverseasCurrentPriceDTO fetchCurrentPrice(String excd, String symb, String name) {
+        try {
+            String token = tokenManager.getAccessToken();
+            HttpHeaders headers = buildHeaders(token, TR_CURRENT_PRICE);
+
+            String url = baseUrl + "/uapi/overseas-price/v1/quotations/price"
+                + "?AUTH=&EXCD=" + excd + "&SYMB=" + symb;
+
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) return null;
+
+            Map<String, Object> body = response.getBody();
+            if (!"0".equals(body.get("rt_cd"))) {
+                log.warn("KIS 현재가 API 비정상 응답 - {}/{}: rt_cd={}, msg={}",
+                    excd, symb, body.get("rt_cd"), body.get("msg1"));
+                return null;
+            }
+
+            Map<String, Object> output = (Map<String, Object>) body.get("output");
+            if (output == null) return null;
+
+            OverseasCurrentPriceDTO dto = new OverseasCurrentPriceDTO();
+            dto.setIsuCd(symb);
+            dto.setIsuNm(name);
+            dto.setExcd(excd);
+            dto.setCurr("USD");
+            dto.setLastPrc(parseBigDecimal(output.get("last")));
+            dto.setBasePrc(parseBigDecimal(output.get("base")));
+            dto.setDiff(parseBigDecimal(output.get("diff")));
+            dto.setRate(parseBigDecimal(output.get("rate")));
+            dto.setSign((String) output.get("sign"));
+            dto.setTvol(parseLong(output.get("tvol")));
+
+            // 환율: KIS 응답에 없으므로 ExchangeRateService (frankfurter.app ECB 기준) 사용
+            dto.setXrat(exchangeRateService.getUsdKrw());
+            dto.calcKrwPrice();
+
+            log.info("KIS 현재가 조회 - {}/{}: ${}, 환율={}, ₩{}",
+                excd, symb, dto.getLastPrc(), dto.getXrat(), dto.getKrwPrc());
+            return dto;
+
+        } catch (Exception e) {
+            log.error("KIS 현재가 조회 실패 - {}/{}: {}", excd, symb, e.getMessage(), e);
+            return null;
+        }
     }
 
     private HttpHeaders buildHeaders(String token, String trId) {

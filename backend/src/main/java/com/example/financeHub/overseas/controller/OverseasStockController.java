@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.financeHub.overseas.fetcher.OverseasStockFetcher;
 import com.example.financeHub.overseas.mapper.OverseasStockMapper;
+import com.example.financeHub.overseas.model.OverseasCurrentPriceDTO;
 import com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO;
 import com.example.financeHub.overseas.util.OverseasMarketUtil;
 
@@ -66,8 +67,8 @@ public class OverseasStockController {
     }
 
     /**
-     * 실시간 현재가 조회 (KIS API 직접 호출)
-     * GET /overseas/price?excd=NAS&symb=AAPL
+     * 현재가 조회 — HHDFS00000300 (환율 t_xrat 포함)
+     * GET /overseas/price?excd=NAS&symb=AAPL&name=Apple
      */
     @GetMapping("/price")
     public ResponseEntity<?> price(
@@ -75,14 +76,14 @@ public class OverseasStockController {
             @RequestParam String symb,
             @RequestParam(defaultValue = "") String name) {
         try {
-            OverseasStockDailyTradingDTO dto = overseasStockFetcher.fetchLatest(
+            OverseasCurrentPriceDTO dto = overseasStockFetcher.fetchCurrentPrice(
                 excd.toUpperCase(), symb.toUpperCase(), name);
             if (dto == null) {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
-            log.error("해외주식 실시간 조회 실패 - {}/{}: {}", excd, symb, e.getMessage(), e);
+            log.error("해외주식 현재가 조회 실패 - {}/{}: {}", excd, symb, e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
