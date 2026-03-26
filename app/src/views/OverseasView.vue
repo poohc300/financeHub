@@ -15,7 +15,7 @@ ChartJS.register(
   CandlestickController, CandlestickElement
 )
 
-// ─── 타입 정의 ───────────────────────────────────────────────
+// ─── 타입 ────────────────────────────────────────────────────
 interface OverseasStockDTO {
   bassDt: string
   isuCd: string
@@ -30,8 +30,8 @@ interface OverseasStockDTO {
   flucRt: number
 }
 
-// ─── 인기 종목 사이드바 ────────────────────────────────────────
-const POPULAR = [
+// ─── 인기 종목 전체 목록 ─────────────────────────────────────
+const ALL_STOCKS = [
   { excd: 'NAS', symb: 'AAPL',  name: 'Apple' },
   { excd: 'NAS', symb: 'MSFT',  name: 'Microsoft' },
   { excd: 'NAS', symb: 'GOOGL', name: 'Alphabet' },
@@ -52,27 +52,62 @@ const EXCD_COLOR: Record<string, string> = {
   AMS: 'bg-purple-100 text-purple-700',
 }
 
-// ─── 상태 ────────────────────────────────────────────────────
-const selectedStock = ref(POPULAR[0])
+const PAGE_SIZE = 5
+
+// ─── 거래소 필터 + 페이지네이션 ────────────────────────────────
+const EXCHANGES = ['ALL', 'NAS', 'NYS', 'AMS']
+const selectedExcd = ref('ALL')
+const currentPage = ref(0)  // 0-based
+
+const filteredStocks = computed(() =>
+  selectedExcd.value === 'ALL'
+    ? ALL_STOCKS
+    : ALL_STOCKS.filter(s => s.excd === selectedExcd.value)
+)
+
+const totalPages = computed(() => Math.ceil(filteredStocks.value.length / PAGE_SIZE))
+
+const pagedStocks = computed(() =>
+  filteredStocks.value.slice(currentPage.value * PAGE_SIZE, (currentPage.value + 1) * PAGE_SIZE)
+)
+
+const setExcd = (excd: string) => {
+  selectedExcd.value = excd
+  currentPage.value = 0
+}
+
+const prevPage = () => { if (currentPage.value > 0) currentPage.value-- }
+const nextPage = () => { if (currentPage.value < totalPages.value - 1) currentPage.value++ }
+
+// ─── 모바일 스와이프 ──────────────────────────────────────────
+let touchStartX = 0
+const onTouchStart = (e: TouchEvent) => { touchStartX = e.touches[0].clientX }
+const onTouchEnd = (e: TouchEvent) => {
+  const diff = touchStartX - e.changedTouches[0].clientX
+  if (Math.abs(diff) > 50) diff > 0 ? nextPage() : prevPage()
+}
+
+// ─── 종목 선택 / 차트 ────────────────────────────────────────
+const selectedStock = ref(ALL_STOCKS[0])
 const selectedPeriod = ref('3M')
 const chartType = ref<'line' | 'candle'>('line')
-
 const chartData = ref<OverseasStockDTO[]>([])
 const currentPrice = ref<OverseasStockDTO | null>(null)
 const priceLoading = ref(false)
 const chartLoading = ref(false)
-
-const searchQuery = ref('')
-const searchResults = ref<OverseasStockDTO[]>([])
-const showDropdown = ref(false)
-let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 const candleCanvasRef = ref<HTMLCanvasElement | null>(null)
 let candleChartInstance: Chart | null = null
 
 const periodOptions = ['1W', '1M', '3M', '6M', '1Y']
 
-// ─── 차트 데이터 계산 ─────────────────────────────────────────
+// ─── 검색 ─────────────────────────────────────────────────────
+const searchQuery = ref('')
+const searchResults = ref<OverseasStockDTO[]>([])
+const showDropdown = ref(false)
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+// ─── 차트 계산 ────────────────────────────────────────────────
 const chronoData = computed(() => [...chartData.value].reverse())
 
 const chartLabels = computed(() =>
@@ -102,7 +137,7 @@ const lineChartOptions = computed(() => ({
     legend: { display: false },
     title: {
       display: true,
-      text: `${selectedStock.value.name} (${selectedStock.value.symb}) 추이`,
+      text: `${selectedStock.value.name} (${selectedStock.value.symb})`,
       font: { size: 16, weight: 'bold' as const }
     },
     tooltip: {
@@ -180,95 +215,65 @@ const renderCandleChart = () => {
 }
 
 watch(chartType, async () => {
-  if (chartType.value === 'candle') {
-    await nextTick()
-    renderCandleChart()
-  } else {
-    candleChartInstance?.destroy()
-    candleChartInstance = null
-  }
+  if (chartType.value === 'candle') { await nextTick(); renderCandleChart() }
+  else { candleChartInstance?.destroy(); candleChartInstance = null }
 })
 
 watch(chartData, async () => {
-  if (chartType.value === 'candle') {
-    await nextTick()
-    renderCandleChart()
-  }
+  if (chartType.value === 'candle') { await nextTick(); renderCandleChart() }
 })
 
 onBeforeUnmount(() => { candleChartInstance?.destroy() })
 
-// ─── API 호출 ─────────────────────────────────────────────────
+// ─── API ──────────────────────────────────────────────────────
 const loadChart = async () => {
   chartLoading.value = true
   try {
-    const data = await fetchRequest<OverseasStockDTO[]>(
+    chartData.value = await fetchRequest<OverseasStockDTO[]>(
       `/overseas/chart?excd=${selectedStock.value.excd}&symb=${selectedStock.value.symb}&period=${selectedPeriod.value}`,
       'GET'
-    )
-    chartData.value = data || []
-  } catch (e) {
-    console.error('차트 조회 오류:', e)
-    chartData.value = []
-  } finally {
-    chartLoading.value = false
-  }
+    ) || []
+  } catch { chartData.value = [] }
+  finally { chartLoading.value = false }
 }
 
 const loadCurrentPrice = async () => {
   priceLoading.value = true
   currentPrice.value = null
   try {
-    const data = await fetchRequest<OverseasStockDTO>(
+    currentPrice.value = await fetchRequest<OverseasStockDTO>(
       `/overseas/price?excd=${selectedStock.value.excd}&symb=${selectedStock.value.symb}&name=${encodeURIComponent(selectedStock.value.name)}`,
       'GET'
     )
-    currentPrice.value = data
-  } catch (e) {
-    console.error('현재가 조회 오류:', e)
-  } finally {
-    priceLoading.value = false
-  }
+  } catch { /* no-op */ }
+  finally { priceLoading.value = false }
 }
 
-const selectStock = (stock: typeof POPULAR[0]) => {
+const selectStock = (stock: typeof ALL_STOCKS[0]) => {
   selectedStock.value = stock
   chartType.value = 'line'
   loadChart()
   loadCurrentPrice()
 }
 
-const changePeriod = (period: string) => {
-  selectedPeriod.value = period
-  loadChart()
-}
+const changePeriod = (p: string) => { selectedPeriod.value = p; loadChart() }
 
-// ─── 검색 ─────────────────────────────────────────────────────
 const onSearchInput = () => {
   if (searchTimer) clearTimeout(searchTimer)
-  if (!searchQuery.value.trim()) {
-    searchResults.value = []
-    showDropdown.value = false
-    return
-  }
+  if (!searchQuery.value.trim()) { searchResults.value = []; showDropdown.value = false; return }
   searchTimer = setTimeout(async () => {
     try {
-      const results = await fetchRequest<OverseasStockDTO[]>(
-        `/overseas/search?keyword=${encodeURIComponent(searchQuery.value)}&limit=10`,
-        'GET'
-      )
-      searchResults.value = results || []
+      searchResults.value = await fetchRequest<OverseasStockDTO[]>(
+        `/overseas/search?keyword=${encodeURIComponent(searchQuery.value)}&limit=10`, 'GET'
+      ) || []
       showDropdown.value = searchResults.value.length > 0
-    } catch (e) {
-      console.error('검색 오류:', e)
-    }
+    } catch { /* no-op */ }
   }, 300)
 }
 
 const selectFromSearch = (item: OverseasStockDTO) => {
-  const stock = { excd: item.excd, symb: item.isuCd, name: item.isuNm }
-  selectedStock.value = stock
-  searchQuery.value = `${item.isuCd} - ${item.isuNm}`
+  selectedStock.value = { excd: item.excd, symb: item.isuCd, name: item.isuNm }
+  searchQuery.value = `${item.isuCd} · ${item.isuNm}`
   showDropdown.value = false
   chartType.value = 'line'
   loadChart()
@@ -277,16 +282,12 @@ const selectFromSearch = (item: OverseasStockDTO) => {
 
 const closeDropdown = () => setTimeout(() => { showDropdown.value = false }, 150)
 
-// ─── 가격 포맷 ────────────────────────────────────────────────
 const formatUsd = (v: number) =>
   `$${Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 const flucColor = (v: number) => Number(v) >= 0 ? 'text-green-600' : 'text-red-600'
 
-onMounted(() => {
-  loadChart()
-  loadCurrentPrice()
-})
+onMounted(() => { loadChart(); loadCurrentPrice() })
 </script>
 
 <template>
@@ -296,16 +297,35 @@ onMounted(() => {
       <!-- ── 사이드 패널 ────────────────────────── -->
       <div class="lg:col-span-1 space-y-5">
 
-        <!-- 인기 종목 리스트 -->
+        <!-- 거래소 필터 + 종목 리스트 -->
         <div>
           <h2 class="text-xl font-bold text-gray-800 mb-3">인기 종목</h2>
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+
+          <!-- 거래소 필터 탭 -->
+          <div class="flex gap-1 mb-2">
+            <button
+              v-for="ex in EXCHANGES"
+              :key="ex"
+              @click="setExcd(ex)"
+              class="px-3 py-1 text-xs font-semibold rounded-lg transition-colors flex-shrink-0"
+              :class="selectedExcd === ex
+                ? 'bg-gray-800 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+            >{{ ex }}</button>
+          </div>
+
+          <!-- 종목 리스트 (5개씩) — 모바일 스와이프 -->
+          <div
+            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            @touchstart.passive="onTouchStart"
+            @touchend.passive="onTouchEnd"
+          >
             <div class="divide-y divide-gray-100">
               <div
-                v-for="stock in POPULAR"
+                v-for="stock in pagedStocks"
                 :key="`${stock.excd}-${stock.symb}`"
                 @click="selectStock(stock)"
-                class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
+                class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors"
                 :class="selectedStock.symb === stock.symb ? 'bg-blue-50' : ''"
               >
                 <span
@@ -318,7 +338,48 @@ onMounted(() => {
                 </div>
                 <v-icon v-if="selectedStock.symb === stock.symb" size="14" color="primary">mdi-chevron-right</v-icon>
               </div>
+              <!-- 빈 슬롯 채우기 (레이아웃 고정) -->
+              <div
+                v-for="i in PAGE_SIZE - pagedStocks.length"
+                :key="`empty-${i}`"
+                class="px-4 py-3 h-[52px]"
+              />
             </div>
+
+            <!-- 페이지네이션 -->
+            <div class="flex items-center justify-between px-4 py-2 border-t border-gray-100 bg-gray-50">
+              <button
+                @click="prevPage"
+                :disabled="currentPage === 0"
+                class="p-1 rounded transition-colors"
+                :class="currentPage === 0 ? 'text-gray-300' : 'text-gray-600 hover:bg-gray-200'"
+              >
+                <v-icon size="18">mdi-chevron-left</v-icon>
+              </button>
+
+              <!-- 페이지 점 -->
+              <div class="flex gap-1.5">
+                <button
+                  v-for="p in totalPages"
+                  :key="p"
+                  @click="currentPage = p - 1"
+                  class="w-2 h-2 rounded-full transition-colors"
+                  :class="currentPage === p - 1 ? 'bg-blue-600' : 'bg-gray-300'"
+                />
+              </div>
+
+              <button
+                @click="nextPage"
+                :disabled="currentPage >= totalPages - 1"
+                class="p-1 rounded transition-colors"
+                :class="currentPage >= totalPages - 1 ? 'text-gray-300' : 'text-gray-600 hover:bg-gray-200'"
+              >
+                <v-icon size="18">mdi-chevron-right</v-icon>
+              </button>
+            </div>
+
+            <!-- 모바일 스와이프 힌트 -->
+            <p class="md:hidden text-center text-[10px] text-gray-300 py-1">← 스와이프로 페이지 이동 →</p>
           </div>
         </div>
 
@@ -364,13 +425,11 @@ onMounted(() => {
             <span class="text-xs text-gray-400">{{ selectedStock.name }}</span>
           </div>
 
-          <!-- 로딩 -->
           <div v-if="priceLoading" class="flex items-center gap-2 text-gray-400 text-sm">
             <v-progress-circular indeterminate size="16" width="2" />
             <span>현재가 조회 중...</span>
           </div>
 
-          <!-- 가격 표시 -->
           <template v-else-if="currentPrice">
             <p class="text-3xl font-bold text-gray-900">{{ formatUsd(currentPrice.clsPrc) }}</p>
             <p class="mt-1 text-sm font-semibold" :class="flucColor(currentPrice.flucRt)">
@@ -434,9 +493,9 @@ onMounted(() => {
               <canvas v-if="chartType === 'candle'" ref="candleCanvasRef" />
               <Line v-else :data="lineChartDataset" :options="lineChartOptions" />
             </template>
-            <div v-else class="h-full flex items-center justify-center text-gray-400 text-sm">
-              데이터가 없습니다.<br>
-              <span class="text-xs mt-1">스케줄러 실행(07:00 KST) 후 수집됩니다.</span>
+            <div v-else class="h-full flex flex-col items-center justify-center text-gray-400 text-sm gap-1">
+              <span>데이터가 없습니다.</span>
+              <span class="text-xs">매일 07:00 KST 자동 수집됩니다.</span>
             </div>
           </div>
 
