@@ -426,8 +426,11 @@ const changeMarket = (market: string, indexName: string) => {
 }
 
 const changePeriod = (period: number) => {
-  startDate.value = ''
-  endDate.value = ''
+  const now = new Date()
+  const from = new Date(now)
+  from.setDate(now.getDate() - period)
+  startDate.value = formatDate(from)
+  endDate.value = formatDate(now)
   selectedPeriod.value = period
   fetchChartData()
 }
@@ -668,46 +671,48 @@ onMounted(() => {
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <!-- 기간 선택 + 차트 타입 -->
-          <div class="flex flex-wrap justify-between gap-2 mb-4">
-            <div class="flex gap-1">
-              <template v-if="hasOhlc && !compareMode">
-                <button
-                  @click="chartType = 'line'"
-                  :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors',
-                    chartType === 'line' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
-                >라인</button>
-                <button
-                  @click="chartType = 'candle'"
-                  :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors',
-                    chartType === 'candle' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
-                >캔들</button>
-              </template>
-            </div>
-            <div class="flex flex-wrap gap-2 justify-end">
-              <div class="flex gap-1">
+          <div class="flex flex-col gap-2 mb-4">
+            <!-- 1행: 라인/캔들 + 기간 버튼 -->
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex gap-1 flex-shrink-0">
+                <template v-if="hasOhlc && !compareMode">
+                  <button
+                    @click="chartType = 'line'"
+                    :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors',
+                      chartType === 'line' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+                  >라인</button>
+                  <button
+                    @click="chartType = 'candle'"
+                    :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors',
+                      chartType === 'candle' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+                  >캔들</button>
+                </template>
+              </div>
+              <div class="flex gap-1 flex-shrink-0">
                 <button
                   v-for="option in periodOptions"
                   :key="option.value"
                   @click="changePeriod(option.value)"
                   :class="['px-3 py-1 text-sm rounded-md font-medium transition-colors',
-                    selectedPeriod === option.value && !startDate
+                    selectedPeriod === option.value
                       ? 'bg-gray-800 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
                 >{{ option.label }}</button>
               </div>
-              <div class="flex items-center gap-1">
-                <input type="date" v-model="startDate"
-                  class="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400" />
-                <span class="text-gray-500 text-sm">~</span>
-                <input type="date" v-model="endDate"
-                  class="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400" />
-                <button @click="applyDateRange" :disabled="!startDate || !endDate"
-                  class="px-3 py-1 text-sm bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                >조회</button>
-                <button v-if="startDate || endDate" @click="clearDateRange"
-                  class="px-2 py-1 text-sm text-gray-500 hover:text-gray-700"
-                >✕</button>
-              </div>
+            </div>
+            <!-- 2행: 날짜 범위 직접 입력 -->
+            <div class="flex items-center gap-1">
+              <input type="date" v-model="startDate"
+                class="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400" />
+              <span class="text-gray-500 text-sm flex-shrink-0">~</span>
+              <input type="date" v-model="endDate"
+                class="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400" />
+              <button @click="applyDateRange" :disabled="!startDate || !endDate"
+                class="flex-shrink-0 px-3 py-1 text-sm bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              >조회</button>
+              <button v-if="startDate || endDate" @click="clearDateRange"
+                class="flex-shrink-0 px-2 py-1 text-sm text-gray-500 hover:text-gray-700"
+              >✕</button>
             </div>
           </div>
 
