@@ -129,7 +129,7 @@
 - [x] run-krx-date에 개별 종목(stock) 수집 누락 수정 + 종목 백필 완료
 
 ### 백업 전략
-- [ ] **PostgreSQL 자동 백업** — pg_dump 스크립트 + cron 설정, 외장USB 또는 원격 저장소에 주기적 덤프
+- [x] **PostgreSQL 자동 백업** — `scripts/backup_db.sh` 작성, cron 평일 20:00 등록, 30개 보관, `/home/jeremy/backups/financehub/` 저장 — 2026-03-26
 - [ ] **SD카드 이미지 백업** — Pi 전체 이미지 주기적 백업 (SD카드 마모/불량 대비)
 - [ ] **로그 용량 관리** — Spring Boot / nginx 로그 로테이션 설정 (무제한 쌓임 방지)
 
