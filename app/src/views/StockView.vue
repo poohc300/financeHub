@@ -64,11 +64,22 @@ interface ChartDataDTO {
   indexName: string
 }
 
+const formatDate = (d: Date) => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const todayDate = new Date()
+const weekAgoDate = new Date(todayDate)
+weekAgoDate.setDate(todayDate.getDate() - 7)
+
 const selectedMarket = ref('KOSPI')
 const selectedIndex = ref('코스피')
-const selectedPeriod = ref(30)
-const startDate = ref('')
-const endDate = ref('')
+const selectedPeriod = ref(0)
+const startDate = ref(formatDate(weekAgoDate))
+const endDate = ref(formatDate(todayDate))
 const chartType = ref<'line' | 'candle'>('line')
 const compareMode = ref(false)
 
@@ -257,7 +268,7 @@ const renderCandleChart = () => {
   })
 }
 
-watch([chartType, chartLabels], () => {
+watch(chartType, () => {
   if (chartType.value === 'candle') {
     setTimeout(renderCandleChart, 50)
   } else {
@@ -364,6 +375,10 @@ const fetchChartData = async () => {
     chartLows.value = data.lows || []
     if (compareMode.value) await fetchCompareData()
 
+    if (chartType.value === 'candle') {
+      setTimeout(renderCandleChart, 50)
+    }
+
     // STOCK 선택 시 마지막 종가로 정적 가격 카드 구성 (실시간 없을 때 fallback)
     if (selectedMarket.value === 'STOCK' && chartValues.value.length >= 1) {
       const parse = (v: string) => parseFloat(v?.replace(/,/g, '') || '0')
@@ -425,9 +440,12 @@ const applyDateRange = () => {
 }
 
 const clearDateRange = () => {
-  startDate.value = ''
-  endDate.value = ''
-  selectedPeriod.value = 30
+  const now = new Date()
+  const weekAgo = new Date(now)
+  weekAgo.setDate(now.getDate() - 7)
+  startDate.value = formatDate(weekAgo)
+  endDate.value = formatDate(now)
+  selectedPeriod.value = 0
   fetchChartData()
 }
 
