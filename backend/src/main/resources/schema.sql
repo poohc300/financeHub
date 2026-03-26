@@ -132,6 +132,24 @@ CREATE TABLE IF NOT EXISTS financehub.scheduler_execution_log (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 해외주식 일별 시세
+CREATE TABLE IF NOT EXISTS financehub.overseas_stock_daily_trading (
+    id          BIGSERIAL PRIMARY KEY,
+    data_hash   VARCHAR(64) UNIQUE,
+    bass_dt     VARCHAR(8),
+    isu_cd      VARCHAR(20),
+    isu_nm      VARCHAR(100),
+    excd        VARCHAR(10),
+    curr        VARCHAR(10),
+    cls_prc     NUMERIC(18,4),
+    opn_prc     NUMERIC(18,4),
+    hgst_prc    NUMERIC(18,4),
+    lwst_prc    NUMERIC(18,4),
+    acc_trd_vol BIGINT,
+    fluc_rt     NUMERIC(8,2),
+    created_at  TIMESTAMP DEFAULT NOW()
+);
+
 -- 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_kospi_bas_dd ON financehub.kospi_daily_trading(bas_dd);
 CREATE INDEX IF NOT EXISTS idx_kosdaq_bas_dd ON financehub.kosdaq_daily_trading(bas_dd);
@@ -143,3 +161,6 @@ CREATE INDEX IF NOT EXISTS idx_stock_acc_trdvol ON financehub.stock_daily_tradin
 CREATE INDEX IF NOT EXISTS idx_news_published_at ON financehub.news(published_at);
 CREATE INDEX IF NOT EXISTS idx_scheduler_log_job_name ON financehub.scheduler_execution_log(job_name);
 CREATE INDEX IF NOT EXISTS idx_scheduler_log_execution_time ON financehub.scheduler_execution_log(execution_time);
+CREATE INDEX IF NOT EXISTS idx_overseas_bass_dt ON financehub.overseas_stock_daily_trading(bass_dt);
+CREATE INDEX IF NOT EXISTS idx_overseas_isu_cd ON financehub.overseas_stock_daily_trading(isu_cd);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_overseas_unique ON financehub.overseas_stock_daily_trading(bass_dt, isu_cd, excd);
