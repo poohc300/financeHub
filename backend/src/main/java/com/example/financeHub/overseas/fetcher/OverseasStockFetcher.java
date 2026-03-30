@@ -33,7 +33,7 @@ public class OverseasStockFetcher {
 
     /**
      * 자동 수집 워치리스트: {거래소코드, 티커, 종목명}
-     * 30종목 (NAS 15 + NYS 15)
+     * 30종목 (NAS 13 + NYS 17)
      */
     private static final List<String[]> WATCHLIST = List.of(
         // ── NASDAQ ──────────────────────────────────
@@ -49,10 +49,10 @@ public class OverseasStockFetcher {
         new String[]{"NAS", "QCOM",  "Qualcomm Inc."},
         new String[]{"NAS", "AVGO",  "Broadcom Inc."},
         new String[]{"NAS", "NFLX",  "Netflix Inc."},
-        new String[]{"NAS", "ORCL",  "Oracle Corp."},
         new String[]{"NAS", "ADBE",  "Adobe Inc."},
-        new String[]{"NAS", "UBER",  "Uber Technologies Inc."},
         // ── NYSE ────────────────────────────────────
+        new String[]{"NYS", "ORCL",  "Oracle Corp."},
+        new String[]{"NYS", "UBER",  "Uber Technologies Inc."},
         new String[]{"NYS", "JPM",   "JPMorgan Chase & Co."},
         new String[]{"NYS", "V",     "Visa Inc."},
         new String[]{"NYS", "MA",    "Mastercard Inc."},
@@ -62,7 +62,7 @@ public class OverseasStockFetcher {
         new String[]{"NYS", "UNH",   "UnitedHealth Group Inc."},
         new String[]{"NYS", "PFE",   "Pfizer Inc."},
         new String[]{"NYS", "KO",    "Coca-Cola Co."},
-        new String[]{"NYS", "WMT",   "Walmart Inc."},
+        new String[]{"NAS", "WMT",   "Walmart Inc."},
         new String[]{"NYS", "HD",    "Home Depot Inc."},
         new String[]{"NYS", "NKE",   "Nike Inc."},
         new String[]{"NYS", "XOM",   "Exxon Mobil Corp."},

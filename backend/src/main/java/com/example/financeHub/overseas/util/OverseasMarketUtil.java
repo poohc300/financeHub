@@ -37,10 +37,15 @@ public class OverseasMarketUtil {
     }
 
     /**
-     * 스케줄러 수집 기준일 (07:00 KST 수집 → 전날이 미국 거래일)
+     * 스케줄러 수집 기준일 (07:00 KST 수집 → 직전 미국 거래일)
+     * 월요일 실행 시 전날(일요일)이 아닌 금요일을 반환하도록 주말 스킵
      */
     public static String getCollectionDate() {
-        return LocalDate.now(KST).minusDays(1).format(DATE_FMT);
+        LocalDate date = LocalDate.now(KST).minusDays(1);
+        while (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            date = date.minusDays(1);
+        }
+        return date.format(DATE_FMT);
     }
 
     public static String formatDate(LocalDate date) {
