@@ -733,7 +733,7 @@ onMounted(() => {
           <!-- 지수 차트 -->
           <div class="h-[350px]">
             <template v-if="chartLabels.length > 0">
-              <canvas v-if="chartType === 'candle'" ref="candleCanvasRef" style="width:100%;height:100%;" />
+              <canvas v-if="chartType === 'candle'" ref="candleCanvasRef" />
               <Line v-else :data="lineChartData" :options="lineChartOptions" />
             </template>
             <div v-else class="h-full flex items-center justify-center text-gray-500">

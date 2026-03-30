@@ -537,7 +537,7 @@ onMounted(() => { loadChart(); loadCurrentPrice() })
               <span>차트 로딩 중...</span>
             </div>
             <template v-else-if="chartData.length > 0">
-              <canvas v-if="chartType === 'candle'" ref="candleCanvasRef" style="width:100%;height:100%;" />
+              <canvas v-if="chartType === 'candle'" ref="candleCanvasRef" />
               <Line v-else :data="lineChartDataset" :options="lineChartOptions" />
             </template>
             <div v-else class="h-full flex flex-col items-center justify-center text-gray-400 text-sm gap-1">
