@@ -262,7 +262,7 @@ const renderCandleChart = () => {
         title: { display: true, text: `${selectedIndex.value} 캔들차트`, font: { size: 16, weight: 'bold' } }
       },
       scales: {
-        x: { grid: { display: false } },
+        x: { type: 'timeseries' as any, grid: { display: false } },
         y: { beginAtZero: false }
       }
     }
@@ -733,7 +733,7 @@ onMounted(() => {
           <!-- 지수 차트 -->
           <div class="h-[350px]">
             <template v-if="chartLabels.length > 0">
-              <canvas v-if="chartType === 'candle'" ref="candleCanvasRef" />
+              <canvas v-if="chartType === 'candle'" ref="candleCanvasRef" style="width:100%;height:100%;" />
               <Line v-else :data="lineChartData" :options="lineChartOptions" />
             </template>
             <div v-else class="h-full flex items-center justify-center text-gray-500">
