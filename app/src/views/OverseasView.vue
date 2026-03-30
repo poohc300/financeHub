@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
-  CategoryScale, LinearScale, TimeScale, PointElement, LineElement, BarElement,
+  CategoryScale, LinearScale, TimeScale, TimeSeriesScale, PointElement, LineElement, BarElement,
   Title, Tooltip, Legend, Chart
 } from 'chart.js'
 import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial'
@@ -11,7 +11,7 @@ import 'chartjs-adapter-date-fns'
 import { fetchRequest } from '../util/fetchRequest'
 
 ChartJS.register(
-  CategoryScale, LinearScale, TimeScale, PointElement, LineElement, BarElement,
+  CategoryScale, LinearScale, TimeScale, TimeSeriesScale, PointElement, LineElement, BarElement,
   Title, Tooltip, Legend,
   CandlestickController, CandlestickElement
 )
@@ -243,7 +243,15 @@ const renderCandleChart = () => {
         title: { display: true, text: `${selectedStock.value.symb} 캔들차트`, font: { size: 16, weight: 'bold' } }
       },
       scales: {
-        x: { type: 'timeseries' as any, grid: { display: false } },
+        x: {
+          type: 'timeseries' as any,
+          grid: { display: false },
+          time: {
+            unit: selectedPeriod.value === '1W' || selectedPeriod.value === '1M' ? 'day'
+                : selectedPeriod.value === '3M' || selectedPeriod.value === '6M' ? 'week'
+                : 'month'
+          }
+        },
         y: { beginAtZero: false }
       }
     }
@@ -537,7 +545,7 @@ onMounted(() => { loadChart(); loadCurrentPrice() })
               <span>차트 로딩 중...</span>
             </div>
             <template v-else-if="chartData.length > 0">
-              <canvas v-show="chartType === 'candle'" ref="candleCanvasRef" class="w-full h-full" />
+              <canvas v-show="chartType === 'candle'" ref="candleCanvasRef" />
               <Line v-if="chartType !== 'candle'" :data="lineChartDataset" :options="lineChartOptions" />
             </template>
             <div v-else class="h-full flex flex-col items-center justify-center text-gray-400 text-sm gap-1">

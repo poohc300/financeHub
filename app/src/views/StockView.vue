@@ -2,7 +2,7 @@
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
-  CategoryScale, LinearScale, TimeScale, PointElement, LineElement, BarElement,
+  CategoryScale, LinearScale, TimeScale, TimeSeriesScale, PointElement, LineElement, BarElement,
   Title, Tooltip, Legend, Chart
 } from 'chart.js'
 import {
@@ -50,7 +50,7 @@ const toggleWatchlist = () => {
 }
 
 ChartJS.register(
-  CategoryScale, LinearScale, TimeScale, PointElement, LineElement, BarElement,
+  CategoryScale, LinearScale, TimeScale, TimeSeriesScale, PointElement, LineElement, BarElement,
   Title, Tooltip, Legend,
   CandlestickController, CandlestickElement
 )
@@ -262,7 +262,13 @@ const renderCandleChart = () => {
         title: { display: true, text: `${selectedIndex.value} 캔들차트`, font: { size: 16, weight: 'bold' } }
       },
       scales: {
-        x: { type: 'timeseries' as any, grid: { display: false } },
+        x: {
+          type: 'timeseries' as any,
+          grid: { display: false },
+          time: {
+            unit: selectedPeriod.value <= 30 ? 'day' : selectedPeriod.value <= 90 ? 'week' : 'month'
+          }
+        },
         y: { beginAtZero: false }
       }
     }
@@ -731,7 +737,7 @@ onMounted(() => {
           <!-- 지수 차트 -->
           <div class="h-[350px]">
             <template v-if="chartLabels.length > 0">
-              <canvas v-show="chartType === 'candle'" ref="candleCanvasRef" class="w-full h-full" />
+              <canvas v-show="chartType === 'candle'" ref="candleCanvasRef" />
               <Line v-if="chartType !== 'candle'" :data="lineChartData" :options="lineChartOptions" />
             </template>
             <div v-else class="h-full flex items-center justify-center text-gray-500">
