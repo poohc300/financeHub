@@ -269,10 +269,9 @@ const renderCandleChart = () => {
   })
 }
 
-watch(chartType, async () => {
+watch(chartType, () => {
   if (chartType.value === 'candle') {
-    await nextTick()
-    renderCandleChart()
+    requestAnimationFrame(renderCandleChart)
   } else {
     candleChartInstance?.destroy()
     candleChartInstance = null
@@ -378,8 +377,7 @@ const fetchChartData = async () => {
     if (compareMode.value) await fetchCompareData()
 
     if (chartType.value === 'candle') {
-      await nextTick()
-      renderCandleChart()
+      requestAnimationFrame(renderCandleChart)
     }
 
     // STOCK 선택 시 마지막 종가로 정적 가격 카드 구성 (실시간 없을 때 fallback)
@@ -733,8 +731,8 @@ onMounted(() => {
           <!-- 지수 차트 -->
           <div class="h-[350px]">
             <template v-if="chartLabels.length > 0">
-              <canvas v-if="chartType === 'candle'" ref="candleCanvasRef" />
-              <Line v-else :data="lineChartData" :options="lineChartOptions" />
+              <canvas v-show="chartType === 'candle'" ref="candleCanvasRef" class="w-full h-full" />
+              <Line v-if="chartType !== 'candle'" :data="lineChartData" :options="lineChartOptions" />
             </template>
             <div v-else class="h-full flex items-center justify-center text-gray-500">
               차트 데이터가 없습니다. 스케줄러 실행 후 데이터가 수집됩니다.
