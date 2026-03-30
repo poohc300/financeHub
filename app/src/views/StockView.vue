@@ -128,6 +128,8 @@ interface RankingItem {
 const realtimeRanking = ref<RankingItem[]>([])
 const isMarketOpen = ref(false)
 let ws: WebSocket | null = null
+let wsReconnectTimer: ReturnType<typeof setTimeout> | null = null
+let wsIntentionalClose = false
 
 const candleCanvasRef = ref<HTMLCanvasElement | null>(null)
 let candleChartInstance: Chart | null = null
@@ -284,8 +286,16 @@ watch(chartType, () => {
   }
 })
 
+watch(chartLabels, () => {
+  if (chartType.value === 'candle') {
+    requestAnimationFrame(renderCandleChart)
+  }
+})
+
 onBeforeUnmount(() => {
   candleChartInstance?.destroy()
+  wsIntentionalClose = true
+  if (wsReconnectTimer) clearTimeout(wsReconnectTimer)
   ws?.close()
 })
 
@@ -336,6 +346,7 @@ const selectStock = (stock: StockDailyTradingDTO) => {
 
 const connectRealtime = () => {
   if (ws) ws.close()
+  wsIntentionalClose = false
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
   ws = new WebSocket(`${protocol}//${location.host}/ws/stock`)
 
@@ -343,16 +354,13 @@ const connectRealtime = () => {
     try {
       const msg = JSON.parse(event.data)
       if (msg.type === 'ranking') {
-        // 랭킹 메시지: TOP 5 리스트 갱신
         realtimeRanking.value = msg.items || []
         isMarketOpen.value = true
       } else if (msg.isuSrtCd) {
-        // 체결가 메시지: 가격 캐시 갱신
         realtimePrices.value = { ...realtimePrices.value, [msg.isuSrtCd]: msg }
         if (selectedIsuSrtCd.value === msg.isuSrtCd) {
           selectedRealtimePrice.value = msg
         }
-        // 랭킹 내 해당 종목 가격도 갱신
         const idx = realtimeRanking.value.findIndex(r => r.isuSrtCd === msg.isuSrtCd)
         if (idx !== -1) {
           realtimeRanking.value = realtimeRanking.value.map((r, i) =>
@@ -364,7 +372,12 @@ const connectRealtime = () => {
       console.error('WS 파싱 오류', e)
     }
   }
-  ws.onerror = (e) => console.error('WS 오류', e)
+  ws.onerror = () => { /* onclose에서 재연결 처리 */ }
+  ws.onclose = () => {
+    if (wsIntentionalClose) return
+    if (wsReconnectTimer) clearTimeout(wsReconnectTimer)
+    wsReconnectTimer = setTimeout(connectRealtime, 5000)
+  }
 }
 
 const closeDropdown = () => {
