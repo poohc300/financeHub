@@ -382,7 +382,9 @@ const fetchChartData = async () => {
     chartLows.value = data.lows || []
     if (compareMode.value) await fetchCompareData()
 
-    if (chartType.value === 'candle') {
+    if (chartLabels.value.length === 0) {
+      alert('선택한 기간의 데이터가 없습니다.\n더 짧은 기간을 선택하거나 데이터 수집 후 다시 시도하세요.')
+    } else if (chartType.value === 'candle') {
       requestAnimationFrame(renderCandleChart)
     }
 

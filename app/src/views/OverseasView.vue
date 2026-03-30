@@ -277,6 +277,9 @@ const loadChart = async () => {
       `/overseas/chart?excd=${selectedStock.value.excd}&symb=${selectedStock.value.symb}&period=${selectedPeriod.value}`,
       'GET'
     ) || []
+    if (chartData.value.length === 0) {
+      alert(`${selectedPeriod.value} 기간의 데이터가 없습니다.\n더 짧은 기간을 선택하거나 데이터 수집 후 다시 시도하세요.`)
+    }
   } catch { chartData.value = [] }
   finally { chartLoading.value = false }
 }
