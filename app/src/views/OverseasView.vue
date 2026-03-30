@@ -270,17 +270,20 @@ watch(chartData, () => {
 onBeforeUnmount(() => { candleChartInstance?.destroy() })
 
 // ─── API ──────────────────────────────────────────────────────
-const loadChart = async () => {
+const loadChart = async (): Promise<boolean> => {
   chartLoading.value = true
   try {
-    chartData.value = await fetchRequest<OverseasStockDTO[]>(
+    const fetched = await fetchRequest<OverseasStockDTO[]>(
       `/overseas/chart?excd=${selectedStock.value.excd}&symb=${selectedStock.value.symb}&period=${selectedPeriod.value}`,
       'GET'
     ) || []
-    if (chartData.value.length === 0) {
+    if (fetched.length === 0) {
       alert(`${selectedPeriod.value} 기간의 데이터가 없습니다.\n더 짧은 기간을 선택하거나 데이터 수집 후 다시 시도하세요.`)
+      return false
     }
-  } catch { chartData.value = [] }
+    chartData.value = fetched
+    return true
+  } catch { return false }
   finally { chartLoading.value = false }
 }
 
@@ -303,7 +306,12 @@ const selectStock = (stock: typeof ALL_STOCKS[0]) => {
   loadCurrentPrice()
 }
 
-const changePeriod = (p: string) => { selectedPeriod.value = p; loadChart() }
+const changePeriod = async (p: string) => {
+  const prev = selectedPeriod.value
+  selectedPeriod.value = p
+  const ok = await loadChart()
+  if (!ok) selectedPeriod.value = prev
+}
 
 const onSearchInput = () => {
   if (searchTimer) clearTimeout(searchTimer)

@@ -384,22 +384,21 @@ const closeDropdown = () => {
   setTimeout(() => { showDropdown.value = false }, 150)
 }
 
-const fetchChartData = async () => {
+const fetchChartData = async (): Promise<boolean> => {
   try {
     const data = await fetchRequest<ChartDataDTO>(buildUrl(selectedMarket.value, selectedIndex.value), 'GET')
-    chartLabels.value = data.labels || []
+    const labels = data.labels || []
+    if (labels.length === 0) {
+      alert('선택한 기간의 데이터가 없습니다.\n더 짧은 기간을 선택하거나 데이터 수집 후 다시 시도하세요.')
+      return false
+    }
+    chartLabels.value = labels
     chartValues.value = data.values || []
     chartVolumes.value = data.volumes || []
     chartOpens.value = data.opens || []
     chartHighs.value = data.highs || []
     chartLows.value = data.lows || []
     if (compareMode.value) await fetchCompareData()
-
-    if (chartLabels.value.length === 0) {
-      alert('선택한 기간의 데이터가 없습니다.\n더 짧은 기간을 선택하거나 데이터 수집 후 다시 시도하세요.')
-    } else if (chartType.value === 'candle') {
-      requestAnimationFrame(renderCandleChart)
-    }
 
     // STOCK 선택 시 마지막 종가로 정적 가격 카드 구성 (실시간 없을 때 fallback)
     if (selectedMarket.value === 'STOCK' && chartValues.value.length >= 1) {
@@ -417,8 +416,10 @@ const fetchChartData = async () => {
     } else {
       selectedStaticPrice.value = null
     }
+    return true
   } catch (e) {
     console.error('차트 데이터 오류:', e)
+    return false
   }
 }
 
@@ -447,14 +448,22 @@ const changeMarket = (market: string, indexName: string) => {
   fetchChartData()
 }
 
-const changePeriod = (period: number) => {
+const changePeriod = async (period: number) => {
+  const prevPeriod = selectedPeriod.value
+  const prevStart = startDate.value
+  const prevEnd = endDate.value
   const now = new Date()
   const from = new Date(now)
   from.setDate(now.getDate() - period)
   startDate.value = formatDate(from)
   endDate.value = formatDate(now)
   selectedPeriod.value = period
-  fetchChartData()
+  const ok = await fetchChartData()
+  if (!ok) {
+    selectedPeriod.value = prevPeriod
+    startDate.value = prevStart
+    endDate.value = prevEnd
+  }
 }
 
 const applyDateRange = () => {
