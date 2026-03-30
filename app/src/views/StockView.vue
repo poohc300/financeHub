@@ -2,12 +2,13 @@
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
-  CategoryScale, LinearScale, PointElement, LineElement, BarElement,
+  CategoryScale, LinearScale, TimeScale, PointElement, LineElement, BarElement,
   Title, Tooltip, Legend, Chart
 } from 'chart.js'
 import {
   CandlestickController, CandlestickElement
 } from 'chartjs-chart-financial'
+import 'chartjs-adapter-date-fns'
 import { ref, onMounted, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchRequest } from '../util/fetchRequest'
@@ -49,7 +50,7 @@ const toggleWatchlist = () => {
 }
 
 ChartJS.register(
-  CategoryScale, LinearScale, PointElement, LineElement, BarElement,
+  CategoryScale, LinearScale, TimeScale, PointElement, LineElement, BarElement,
   Title, Tooltip, Legend,
   CandlestickController, CandlestickElement
 )

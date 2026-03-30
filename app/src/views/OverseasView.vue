@@ -3,14 +3,15 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
-  CategoryScale, LinearScale, PointElement, LineElement, BarElement,
+  CategoryScale, LinearScale, TimeScale, PointElement, LineElement, BarElement,
   Title, Tooltip, Legend, Chart
 } from 'chart.js'
 import { CandlestickController, CandlestickElement } from 'chartjs-chart-financial'
+import 'chartjs-adapter-date-fns'
 import { fetchRequest } from '../util/fetchRequest'
 
 ChartJS.register(
-  CategoryScale, LinearScale, PointElement, LineElement, BarElement,
+  CategoryScale, LinearScale, TimeScale, PointElement, LineElement, BarElement,
   Title, Tooltip, Legend,
   CandlestickController, CandlestickElement
 )
@@ -60,10 +61,10 @@ const ALL_STOCKS = [
   { excd: 'NAS', symb: 'QCOM',  name: 'Qualcomm' },
   { excd: 'NAS', symb: 'AVGO',  name: 'Broadcom' },
   { excd: 'NAS', symb: 'NFLX',  name: 'Netflix' },
-  { excd: 'NAS', symb: 'ORCL',  name: 'Oracle' },
   { excd: 'NAS', symb: 'ADBE',  name: 'Adobe' },
-  { excd: 'NAS', symb: 'UBER',  name: 'Uber' },
   // NYSE
+  { excd: 'NYS', symb: 'ORCL',  name: 'Oracle' },
+  { excd: 'NYS', symb: 'UBER',  name: 'Uber' },
   { excd: 'NYS', symb: 'JPM',   name: 'JPMorgan' },
   { excd: 'NYS', symb: 'V',     name: 'Visa' },
   { excd: 'NYS', symb: 'MA',    name: 'Mastercard' },
@@ -73,7 +74,7 @@ const ALL_STOCKS = [
   { excd: 'NYS', symb: 'UNH',   name: 'UnitedHealth' },
   { excd: 'NYS', symb: 'PFE',   name: 'Pfizer' },
   { excd: 'NYS', symb: 'KO',    name: 'Coca-Cola' },
-  { excd: 'NYS', symb: 'WMT',   name: 'Walmart' },
+  { excd: 'NAS', symb: 'WMT',   name: 'Walmart' },
   { excd: 'NYS', symb: 'HD',    name: 'Home Depot' },
   { excd: 'NYS', symb: 'NKE',   name: 'Nike' },
   { excd: 'NYS', symb: 'XOM',   name: 'Exxon Mobil' },
