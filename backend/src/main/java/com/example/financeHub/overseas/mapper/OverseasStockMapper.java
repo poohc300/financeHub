@@ -6,6 +6,7 @@ import java.util.Set;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.financeHub.overseas.model.Overseas52WeekDTO;
 import com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO;
 
 @Mapper
@@ -26,4 +27,6 @@ public interface OverseasStockMapper {
                                                                  @Param("excd") String excd,
                                                                  @Param("startDate") String startDate,
                                                                  @Param("endDate") String endDate);
+
+    List<Overseas52WeekDTO> select52WeekStats();
 }

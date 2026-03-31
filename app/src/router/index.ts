@@ -5,6 +5,7 @@ import StockView from '../views/StockView.vue'
 import IpoView from '../views/IpoView.vue'
 import WatchlistView from '../views/WatchlistView.vue'
 import OverseasView from '../views/OverseasView.vue'
+import InsightView from '../views/InsightView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/watchlist',
       name: 'watchlist',
       component: WatchlistView
+    },
+    {
+      path: '/insight',
+      name: 'insight',
+      component: InsightView
     }
   ]
 })

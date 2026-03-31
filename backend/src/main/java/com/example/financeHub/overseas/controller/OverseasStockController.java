@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.financeHub.overseas.fetcher.OverseasStockFetcher;
 import com.example.financeHub.overseas.mapper.OverseasStockMapper;
+import com.example.financeHub.overseas.model.Overseas52WeekDTO;
 import com.example.financeHub.overseas.model.OverseasCurrentPriceDTO;
 import com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO;
 import com.example.financeHub.overseas.util.OverseasMarketUtil;
@@ -86,6 +87,17 @@ public class OverseasStockController {
             log.error("해외주식 현재가 조회 실패 - {}/{}: {}", excd, symb, e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    /**
+     * 52주 신고가/저가 대비 현재가 통계
+     * GET /overseas/52week
+     */
+    @GetMapping("/52week")
+    public ResponseEntity<List<Overseas52WeekDTO>> weekStats52() {
+        List<Overseas52WeekDTO> result = overseasStockMapper.select52WeekStats();
+        result.forEach(Overseas52WeekDTO::calcPct);
+        return ResponseEntity.ok(result);
     }
 
     private String calcStartDate(String period) {

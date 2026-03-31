@@ -59,4 +59,23 @@
         ORDER BY bass_dt DESC
     </select>
 
+
+    <!-- 52주 신고가/저가 대비 현재가 통계 -->
+    <select id="select52WeekStats" resultType="com.example.financeHub.overseas.model.Overseas52WeekDTO">
+        SELECT
+            t.isu_cd     AS isuCd,
+            MAX(t.isu_nm) AS isuNm,
+            t.excd,
+            (SELECT cls_prc
+             FROM financehub.overseas_stock_daily_trading t2
+             WHERE t2.isu_cd = t.isu_cd AND t2.excd = t.excd
+             ORDER BY t2.bass_dt DESC LIMIT 1) AS curPrc,
+            MAX(t.hgst_prc) AS high52w,
+            MIN(t.lwst_prc)  AS low52w
+        FROM financehub.overseas_stock_daily_trading t
+        WHERE t.bass_dt >= TO_CHAR(CURRENT_DATE - INTERVAL '365 days', 'YYYYMMDD')
+        GROUP BY t.isu_cd, t.excd
+        ORDER BY t.excd, t.isu_cd
+    </select>
+
 </mapper>
