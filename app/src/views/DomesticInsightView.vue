@@ -19,12 +19,18 @@ const stocks = ref<Stock52Week[]>([])
 const loading = ref(false)
 const mktFilter = ref('ALL')
 const showTooltip = ref(false)
+const searchQuery = ref('')
 
 const mktFilters = ['ALL', 'KOSPI', 'KOSDAQ']
 
 const filtered = computed(() => {
-  if (mktFilter.value === 'ALL') return stocks.value
-  return stocks.value.filter(s => s.mktNm === mktFilter.value)
+  let result = stocks.value
+  if (mktFilter.value !== 'ALL') result = result.filter(s => s.mktNm === mktFilter.value)
+  const q = searchQuery.value.trim().toLowerCase()
+  if (q) result = result.filter(s =>
+    s.isuSrtCd.toLowerCase().includes(q) || s.isuNm.toLowerCase().includes(q)
+  )
+  return result
 })
 
 const rangeBarColor = (pct: number) => {
@@ -106,8 +112,19 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- 검색 -->
+      <div class="relative mt-3 mb-3">
+        <v-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size="16">mdi-magnify</v-icon>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="종목명 또는 코드 검색"
+          class="w-full pl-8 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
+        />
+      </div>
+
       <!-- 시장 필터 -->
-      <div class="flex gap-2 mt-3 mb-4">
+      <div class="flex gap-2 mb-4">
         <button
           v-for="f in mktFilters"
           :key="f"

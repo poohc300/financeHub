@@ -18,12 +18,18 @@ const stocks = ref<Stock52Week[]>([])
 const loading = ref(false)
 const exFilter = ref('ALL')
 const showTooltip = ref(false)
+const searchQuery = ref('')
 
 const exFilters = ['ALL', 'NAS', 'NYS']
 
 const filtered = computed(() => {
-  if (exFilter.value === 'ALL') return stocks.value
-  return stocks.value.filter(s => s.excd === exFilter.value)
+  let result = stocks.value
+  if (exFilter.value !== 'ALL') result = result.filter(s => s.excd === exFilter.value)
+  const q = searchQuery.value.trim().toLowerCase()
+  if (q) result = result.filter(s =>
+    s.isuCd.toLowerCase().includes(q) || s.isuNm.toLowerCase().includes(q)
+  )
+  return result
 })
 
 // 52주 범위 위치에 따른 색상: 낮을수록 매수 고려 구간(녹색), 높을수록 고점(적색)
@@ -112,8 +118,19 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- 검색 -->
+      <div class="relative mt-3 mb-3">
+        <v-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size="16">mdi-magnify</v-icon>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="티커 또는 종목명 검색"
+          class="w-full pl-8 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
+        />
+      </div>
+
       <!-- 거래소 필터 -->
-      <div class="flex gap-2 mt-3 mb-4">
+      <div class="flex gap-2 mb-4">
         <button
           v-for="f in exFilters"
           :key="f"
