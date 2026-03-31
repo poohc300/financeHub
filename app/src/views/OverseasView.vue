@@ -250,9 +250,10 @@ const renderCandleChart = (period: string = selectedPeriod.value) => {
       },
       scales: {
         x: {
-          type: 'time' as any,
+          type: 'timeseries' as any,
           grid: { display: false },
-          time: { unit: getTimeUnit(period) }
+          time: { unit: getTimeUnit(period) },
+          ticks: { source: 'auto' as any }
         },
         y: { beginAtZero: false }
       }

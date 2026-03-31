@@ -78,7 +78,7 @@ weekAgoDate.setDate(todayDate.getDate() - 7)
 
 const selectedMarket = ref('KOSPI')
 const selectedIndex = ref('코스피')
-const selectedPeriod = ref(0)
+const selectedPeriod = ref(7)
 const startDate = ref(formatDate(weekAgoDate))
 const endDate = ref(formatDate(todayDate))
 const chartType = ref<'line' | 'candle'>('line')
@@ -271,9 +271,10 @@ const renderCandleChart = (period: number = selectedPeriod.value) => {
       },
       scales: {
         x: {
-          type: 'time' as any,
+          type: 'timeseries' as any,
           grid: { display: false },
-          time: { unit: getTimeUnit(period) }
+          time: { unit: getTimeUnit(period) },
+          ticks: { source: 'auto' as any }
         },
         y: { beginAtZero: false }
       }
