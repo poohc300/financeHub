@@ -17,6 +17,7 @@ interface Stock52Week {
 const stocks = ref<Stock52Week[]>([])
 const loading = ref(false)
 const exFilter = ref('ALL')
+const showTooltip = ref(false)
 
 const exFilters = ['ALL', 'NAS', 'NYS']
 
@@ -65,8 +66,39 @@ onMounted(async () => {
       <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
         <v-icon color="amber-darken-2">mdi-lightbulb</v-icon>
         투자 인사이트
+        <!-- 물음표 버튼 -->
+        <button
+          @click="showTooltip = !showTooltip"
+          class="ml-1 w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-500 text-xs font-bold flex items-center justify-center transition-colors"
+        >?</button>
       </h1>
       <p class="text-sm text-gray-500 mt-1">중장기 투자 판단을 위한 데이터 기반 지표</p>
+
+      <!-- 설명 패널 -->
+      <div v-if="showTooltip" class="mt-3 bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-gray-700 space-y-3">
+        <p class="font-semibold text-blue-800">📌 이 지표는 어떻게 활용하나요?</p>
+
+        <p>
+          주식은 <strong>언제 사느냐</strong>가 수익률을 크게 좌우합니다.
+          하지만 "지금이 싼 건지 비싼 건지" 판단하기가 어렵습니다.
+          52주 신고가/저가는 이 판단에 가장 많이 쓰이는 기준점입니다.
+        </p>
+
+        <div>
+          <p class="font-semibold mb-1">📊 바(Bar)의 의미</p>
+          <p>바의 왼쪽 끝은 <strong>52주 최저가</strong>, 오른쪽 끝은 <strong>52주 최고가</strong>입니다. 바가 채워진 위치가 현재 주가의 위치입니다.</p>
+          <ul class="mt-1.5 space-y-1 pl-2">
+            <li>🟢 <strong>저점 근처 (0~30%)</strong> — 최근 1년 중 바닥 가격대. 분할 매수를 고려할 수 있는 구간</li>
+            <li>🟡 <strong>중간 (30~60%)</strong> — 고점도 저점도 아닌 구간. 추세 확인 후 판단</li>
+            <li>🔴 <strong>고점 근처 (60~100%)</strong> — 최근 1년 고점에 근접. 신규 매수보다 보유 또는 관망 고려</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="font-semibold mb-1">⚠️ 주의사항</p>
+          <p>이 지표는 <strong>단독으로 매수 신호가 아닙니다.</strong> 저점 근처라도 실적 악화·거시 위기 중에는 더 내려갈 수 있습니다. 시장 전체 흐름(금리·VIX 등)과 함께 참고하세요. 현재가는 DB에 수집된 최신 종가 기준이며, 실시간 시세가 아닙니다.</p>
+        </div>
+      </div>
     </div>
 
     <!-- 52주 신고가/저가 섹션 -->
