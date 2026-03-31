@@ -167,6 +167,43 @@ const lineChartDataset = computed(() => ({
   }]
 }))
 
+// 기간별 레이블 표시 인덱스 계산 (라인/거래량 차트 공용)
+const lineLabelIndices = computed(() => {
+  const unit = getTimeUnit(selectedPeriod.value)
+  const data = chronoData.value
+  const indices = new Set<number>()
+  let prevMonth = -1, prevYear = -1
+  data.forEach((d, i) => {
+    const date = new Date(`${d.bassDt.substring(0,4)}-${d.bassDt.substring(4,6)}-${d.bassDt.substring(6,8)}`)
+    if (unit === 'day') {
+      indices.add(i)
+    } else if (unit === 'week') {
+      if (i === 0 || date.getDay() === 1) indices.add(i)
+    } else {
+      const m = date.getMonth(), y = date.getFullYear()
+      if (m !== prevMonth || y !== prevYear) { indices.add(i); prevMonth = m; prevYear = y }
+    }
+  })
+  if (indices.size === 0 && data.length > 0) indices.add(0)
+  return indices
+})
+
+const lineTickCallback = computed(() => {
+  const unit = getTimeUnit(selectedPeriod.value)
+  const data = chronoData.value
+  const indices = lineLabelIndices.value
+  return (_val: any, index: number) => {
+    if (!indices.has(index)) return null
+    const d = data[index]
+    if (!d) return null
+    if (unit === 'month') {
+      const date = new Date(`${d.bassDt.substring(0,4)}-${d.bassDt.substring(4,6)}-${d.bassDt.substring(6,8)}`)
+      return date.toLocaleString('en-US', { month: 'short', year: 'numeric' })
+    }
+    return `${d.bassDt.substring(4,6)}/${d.bassDt.substring(6,8)}`
+  }
+})
+
 const lineChartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
@@ -189,7 +226,10 @@ const lineChartOptions = computed(() => ({
       grid: { color: 'rgba(0,0,0,0.1)' },
       ticks: { callback: (v: any) => `$${Number(v).toFixed(0)}` }
     },
-    x: { grid: { display: false } }
+    x: {
+      grid: { display: false },
+      ticks: { autoSkip: false, maxRotation: 0, callback: lineTickCallback.value }
+    }
   }
 }))
 
@@ -204,7 +244,7 @@ const volumeChartDataset = computed(() => ({
   }]
 }))
 
-const volumeChartOptions = {
+const volumeChartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -213,9 +253,12 @@ const volumeChartOptions = {
   },
   scales: {
     y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.1)' } },
-    x: { grid: { display: false } }
+    x: {
+      grid: { display: false },
+      ticks: { autoSkip: false, maxRotation: 0, callback: lineTickCallback.value }
+    }
   }
-}
+}))
 
 // ─── 캔들 차트 ────────────────────────────────────────────────
 const getTimeUnit = (period: string): 'day' | 'week' | 'month' => {
