@@ -231,22 +231,38 @@ const renderCandleChart = (period: string = selectedPeriod.value) => {
   candleChartInstance?.destroy()
   candleChartInstance = null
   if (chronoData.value.length === 0) return
+
+  const unit = getTimeUnit(period)
   const now = Date.now()
   const minTs = now - getPeriodDays(period) * 86400000
+
+  const chartPoints = chronoData.value.map(d => ({
+    x: new Date(`${d.bassDt.substring(0,4)}-${d.bassDt.substring(4,6)}-${d.bassDt.substring(6,8)}`).getTime(),
+    o: Number(d.opnPrc),
+    h: Number(d.hgstPrc),
+    l: Number(d.lwstPrc),
+    c: Number(d.clsPrc),
+  }))
+
+  // 레이블 붙일 인덱스 직접 계산 (Chart.js auto-detection 우회)
+  const labelIndices = new Set<number>()
+  let prevMonth = -1, prevYear = -1
+  chartPoints.forEach((pt, i) => {
+    const d = new Date(pt.x)
+    if (unit === 'day') {
+      labelIndices.add(i)
+    } else if (unit === 'week') {
+      if (d.getDay() === 1) labelIndices.add(i) // 월요일만
+    } else {
+      const m = d.getMonth(), y = d.getFullYear()
+      if (m !== prevMonth || y !== prevYear) { labelIndices.add(i); prevMonth = m; prevYear = y }
+    }
+  })
+  if (labelIndices.size === 0 && chartPoints.length > 0) labelIndices.add(0)
+
   candleChartInstance = new Chart(candleCanvasRef.value, {
     type: 'candlestick' as any,
-    data: {
-      datasets: [{
-        label: selectedStock.value.symb,
-        data: chronoData.value.map(d => ({
-          x: new Date(`${d.bassDt.substring(0,4)}-${d.bassDt.substring(4,6)}-${d.bassDt.substring(6,8)}`).getTime(),
-          o: Number(d.opnPrc),
-          h: Number(d.hgstPrc),
-          l: Number(d.lwstPrc),
-          c: Number(d.clsPrc),
-        })),
-      }]
-    },
+    data: { datasets: [{ label: selectedStock.value.symb, data: chartPoints }] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -260,8 +276,17 @@ const renderCandleChart = (period: string = selectedPeriod.value) => {
           min: minTs,
           max: now,
           grid: { display: false },
-          time: { unit: getTimeUnit(period) },
-          ticks: { source: 'auto' as any }
+          ticks: {
+            source: 'data' as any,
+            autoSkip: false,
+            maxRotation: 0,
+            callback: (_val: any, index: number) => {
+              if (!labelIndices.has(index)) return null
+              const d = new Date(chartPoints[index].x)
+              if (unit === 'month') return d.toLocaleString('en-US', { month: 'short', year: 'numeric' })
+              return `${d.getMonth() + 1}/${d.getDate()}`
+            }
+          }
         },
         y: { beginAtZero: false }
       }
