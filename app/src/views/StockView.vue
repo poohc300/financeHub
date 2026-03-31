@@ -234,7 +234,13 @@ const volumeChartOptions = {
   }
 }
 
-const renderCandleChart = () => {
+const getTimeUnit = (period: number): 'day' | 'week' | 'month' => {
+  if (period <= 30) return 'day'
+  if (period <= 90) return 'week'
+  return 'month'
+}
+
+const renderCandleChart = (period: number = selectedPeriod.value) => {
   if (!candleCanvasRef.value) return
   if (candleChartInstance) {
     candleChartInstance.destroy()
@@ -265,11 +271,9 @@ const renderCandleChart = () => {
       },
       scales: {
         x: {
-          type: 'timeseries' as any,
+          type: 'time' as any,
           grid: { display: false },
-          time: {
-            unit: selectedPeriod.value <= 30 ? 'day' : selectedPeriod.value <= 90 ? 'week' : 'month'
-          }
+          time: { unit: getTimeUnit(period) }
         },
         y: { beginAtZero: false }
       }
@@ -279,7 +283,8 @@ const renderCandleChart = () => {
 
 watch(chartType, () => {
   if (chartType.value === 'candle') {
-    requestAnimationFrame(renderCandleChart)
+    const p = selectedPeriod.value
+    requestAnimationFrame(() => renderCandleChart(p))
   } else {
     candleChartInstance?.destroy()
     candleChartInstance = null
@@ -288,7 +293,8 @@ watch(chartType, () => {
 
 watch(chartLabels, () => {
   if (chartType.value === 'candle') {
-    requestAnimationFrame(renderCandleChart)
+    const p = selectedPeriod.value
+    requestAnimationFrame(() => renderCandleChart(p))
   }
 })
 

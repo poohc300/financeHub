@@ -217,7 +217,13 @@ const volumeChartOptions = {
 }
 
 // ─── 캔들 차트 ────────────────────────────────────────────────
-const renderCandleChart = () => {
+const getTimeUnit = (period: string): 'day' | 'week' | 'month' => {
+  if (period === '1W' || period === '1M') return 'day'
+  if (period === '3M' || period === '6M') return 'week'
+  return 'month'
+}
+
+const renderCandleChart = (period: string = selectedPeriod.value) => {
   if (!candleCanvasRef.value) return
   candleChartInstance?.destroy()
   candleChartInstance = null
@@ -244,13 +250,9 @@ const renderCandleChart = () => {
       },
       scales: {
         x: {
-          type: 'timeseries' as any,
+          type: 'time' as any,
           grid: { display: false },
-          time: {
-            unit: selectedPeriod.value === '1W' || selectedPeriod.value === '1M' ? 'day'
-                : selectedPeriod.value === '3M' || selectedPeriod.value === '6M' ? 'week'
-                : 'month'
-          }
+          time: { unit: getTimeUnit(period) }
         },
         y: { beginAtZero: false }
       }
@@ -259,12 +261,17 @@ const renderCandleChart = () => {
 }
 
 watch(chartType, () => {
-  if (chartType.value === 'candle') { requestAnimationFrame(renderCandleChart) }
-  else { candleChartInstance?.destroy(); candleChartInstance = null }
+  if (chartType.value === 'candle') {
+    const p = selectedPeriod.value
+    requestAnimationFrame(() => renderCandleChart(p))
+  } else { candleChartInstance?.destroy(); candleChartInstance = null }
 })
 
 watch(chartData, () => {
-  if (chartType.value === 'candle') { requestAnimationFrame(renderCandleChart) }
+  if (chartType.value === 'candle') {
+    const p = selectedPeriod.value
+    requestAnimationFrame(() => renderCandleChart(p))
+  }
 })
 
 onBeforeUnmount(() => { candleChartInstance?.destroy() })
