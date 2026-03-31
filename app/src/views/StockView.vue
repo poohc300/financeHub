@@ -240,12 +240,18 @@ const getTimeUnit = (period: number): 'day' | 'week' | 'month' => {
   return 'month'
 }
 
+const parseYYYYMMDD = (d: string) =>
+  d.length === 8
+    ? new Date(`${d.substring(0,4)}-${d.substring(4,6)}-${d.substring(6,8)}`).getTime()
+    : new Date(d).getTime()
+
 const renderCandleChart = (period: number = selectedPeriod.value) => {
   if (!candleCanvasRef.value) return
   if (candleChartInstance) {
     candleChartInstance.destroy()
     candleChartInstance = null
   }
+  if (chartLabels.value.length === 0) return
   candleChartInstance = new Chart(candleCanvasRef.value, {
     type: 'candlestick' as any,
     data: {
@@ -272,6 +278,8 @@ const renderCandleChart = (period: number = selectedPeriod.value) => {
       scales: {
         x: {
           type: 'timeseries' as any,
+          min: parseYYYYMMDD(startDate.value),
+          max: parseYYYYMMDD(endDate.value),
           grid: { display: false },
           time: { unit: getTimeUnit(period) },
           ticks: { source: 'auto' as any }

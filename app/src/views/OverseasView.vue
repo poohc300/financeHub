@@ -223,10 +223,16 @@ const getTimeUnit = (period: string): 'day' | 'week' | 'month' => {
   return 'month'
 }
 
+const getPeriodDays = (p: string): number =>
+  ({ '1W': 7, '1M': 30, '3M': 90, '6M': 180, '1Y': 365 }[p] ?? 90)
+
 const renderCandleChart = (period: string = selectedPeriod.value) => {
   if (!candleCanvasRef.value) return
   candleChartInstance?.destroy()
   candleChartInstance = null
+  if (chronoData.value.length === 0) return
+  const now = Date.now()
+  const minTs = now - getPeriodDays(period) * 86400000
   candleChartInstance = new Chart(candleCanvasRef.value, {
     type: 'candlestick' as any,
     data: {
@@ -251,6 +257,8 @@ const renderCandleChart = (period: string = selectedPeriod.value) => {
       scales: {
         x: {
           type: 'timeseries' as any,
+          min: minTs,
+          max: now,
           grid: { display: false },
           time: { unit: getTimeUnit(period) },
           ticks: { source: 'auto' as any }
