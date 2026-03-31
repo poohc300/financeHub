@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { Line, Bar } from 'vue-chartjs'
+import InsightView from './InsightView.vue'
 import {
   Chart as ChartJS,
   CategoryScale, LinearScale, TimeScale, TimeSeriesScale, PointElement, LineElement, BarElement,
@@ -383,12 +384,37 @@ const formatUsd = (v: number) =>
 
 const flucColor = (v: number) => Number(v) >= 0 ? 'text-green-600' : 'text-red-600'
 
+const overseasTab = ref<'시세' | '인사이트'>('시세')
+
 onMounted(() => { loadChart(); loadCurrentPrice() })
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- 해외주식 내부 탭 -->
+    <div class="flex gap-2 mb-5">
+      <button
+        @click="overseasTab = '시세'"
+        class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
+        :class="overseasTab === '시세' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        <v-icon size="15" class="mr-1">mdi-chart-line</v-icon>시세
+      </button>
+      <button
+        @click="overseasTab = '인사이트'"
+        class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
+        :class="overseasTab === '인사이트' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        <v-icon size="15" class="mr-1">mdi-lightbulb-outline</v-icon>인사이트
+      </button>
+    </div>
+
+    <!-- 인사이트 탭 -->
+    <InsightView v-if="overseasTab === '인사이트'" />
+
+    <!-- 시세 탭 -->
+    <div v-show="overseasTab === '시세'" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
       <!-- ── 사이드 패널 ────────────────────────── -->
       <div class="lg:col-span-1 space-y-5">
@@ -617,5 +643,7 @@ onMounted(() => { loadChart(); loadCurrentPrice() })
         </div>
       </div>
     </div>
+    <!-- /시세 탭 -->
+
   </div>
 </template>

@@ -12,7 +12,6 @@ const navItems = [
   { to: '/stocks',    label: '주식',   icon: 'mdi-chart-line',                iconActive: 'mdi-chart-line' },
   { to: '/watchlist', label: '관심',   icon: 'mdi-star-outline',              iconActive: 'mdi-star' },
   { to: '/ipo',       label: '공모주', icon: 'mdi-briefcase-outline',         iconActive: 'mdi-briefcase' },
-  { to: '/insight',   label: '인사이트', icon: 'mdi-lightbulb-outline',        iconActive: 'mdi-lightbulb' },
 ]
 
 const navigateTo = (path: string) => {
