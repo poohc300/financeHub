@@ -300,4 +300,29 @@
         ORDER BY bas_dd DESC
     </select>
 
+    <select id="select52WeekStats" resultType="com.example.financeHub.krx.model.Domestic52WeekDTO">
+        SELECT
+            t.isu_cd      AS isuCd,
+            MAX(t.isu_srt_cd) AS isuSrtCd,
+            MAX(t.isu_nm) AS isuNm,
+            MAX(t.mkt_nm) AS mktNm,
+            (SELECT CAST(REPLACE(t2.tdd_clsprc, ',', '') AS NUMERIC)
+             FROM financehub.stock_daily_trading t2
+             WHERE t2.isu_cd = t.isu_cd
+               AND t2.tdd_clsprc NOT IN ('', '-', '0')
+             ORDER BY t2.bas_dd DESC
+             LIMIT 1) AS curPrc,
+            MAX(CAST(REPLACE(t.tdd_hgprc, ',', '') AS NUMERIC)) AS high52w,
+            MIN(CASE WHEN t.tdd_lwprc NOT IN ('', '-', '0')
+                     THEN CAST(REPLACE(t.tdd_lwprc, ',', '') AS NUMERIC)
+                     ELSE NULL END) AS low52w
+        FROM financehub.stock_daily_trading t
+        WHERE t.bas_dd &gt;= TO_CHAR(CURRENT_DATE - INTERVAL '365 days', 'YYYYMMDD')
+          AND t.tdd_hgprc NOT IN ('', '-', '0')
+          AND t.mkt_nm IN ('KOSPI', 'KOSDAQ')
+        GROUP BY t.isu_cd
+        HAVING MAX(CAST(REPLACE(t.tdd_hgprc, ',', '') AS NUMERIC)) > 0
+        ORDER BY MAX(t.mkt_nm), t.isu_cd
+    </select>
+
 </mapper>

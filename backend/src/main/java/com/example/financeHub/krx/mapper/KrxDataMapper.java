@@ -6,6 +6,7 @@ import java.util.Set;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.example.financeHub.krx.model.Domestic52WeekDTO;
 import com.example.financeHub.krx.model.GoldMarketDailyTradingDTO;
 import com.example.financeHub.krx.model.KosdaqDailyTradingDTO;
 import com.example.financeHub.krx.model.KospiDailyTradingDTO;
@@ -52,4 +53,5 @@ public interface KrxDataMapper {
     List<StockDailyTradingDTO> searchStocks(@Param("keyword") String keyword, @Param("limit") int limit);
     List<StockDailyTradingDTO> selectStockHistory(@Param("isuCd") String isuCd, @Param("limit") int limit);
     List<StockDailyTradingDTO> selectStockHistoryByDateRange(@Param("isuCd") String isuCd, @Param("startDate") String startDate, @Param("endDate") String endDate);
+    List<Domestic52WeekDTO> select52WeekStats();
 }

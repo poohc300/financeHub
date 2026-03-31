@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DomesticInsightView from './DomesticInsightView.vue'
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -83,6 +84,7 @@ const startDate = ref(formatDate(weekAgoDate))
 const endDate = ref(formatDate(todayDate))
 const chartType = ref<'line' | 'candle'>('line')
 const compareMode = ref(false)
+const stockTab = ref<'시세' | '인사이트'>('시세')
 
 const searchQuery = ref('')
 const searchResults = ref<StockDailyTradingDTO[]>([])
@@ -552,7 +554,26 @@ onMounted(() => {
 
 <template>
   <div class="max-w-6xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- 탭 -->
+    <div class="flex gap-2 mb-5">
+      <button
+        @click="stockTab = '시세'"
+        class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
+        :class="stockTab === '시세' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >시세</button>
+      <button
+        @click="stockTab = '인사이트'"
+        class="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
+        :class="stockTab === '인사이트' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >인사이트</button>
+    </div>
+
+    <!-- 인사이트 탭 -->
+    <DomesticInsightView v-if="stockTab === '인사이트'" />
+
+    <!-- 시세 탭 -->
+    <div v-show="stockTab === '시세'" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- 사이드 패널 -->
       <div class="lg:col-span-1">
         <!-- 실시간 TOP 5 / 거래량 TOP -->
@@ -815,5 +836,6 @@ onMounted(() => {
         </div>
       </div>
     </div>
+    <!-- /시세 탭 -->
   </div>
 </template>
