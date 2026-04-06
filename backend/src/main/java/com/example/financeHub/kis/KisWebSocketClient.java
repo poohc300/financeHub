@@ -104,15 +104,18 @@ public class KisWebSocketClient {
         if (connected && webSocket != null) return;
         try {
             String approvalKey = tokenManager.getApprovalKey();
-            HttpClient client = HttpClient.newHttpClient();
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
             webSocket = client.newWebSocketBuilder()
                     .buildAsync(URI.create(wsUrl), new KisWebSocketListener(approvalKey))
+                    .orTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
                     .join();
             connected = true;
             log.info("KIS WebSocket 연결: {}", wsUrl);
         } catch (Exception e) {
             connected = false;
-            log.error("KIS WebSocket 연결 실패: {}", e.getMessage(), e);
+            log.error("KIS WebSocket 연결 실패 (15초 타임아웃): {}", e.getMessage());
         }
     }
 
