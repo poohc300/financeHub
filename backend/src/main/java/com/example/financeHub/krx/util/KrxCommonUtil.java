@@ -12,11 +12,11 @@ public class KrxCommonUtil {
      * @return
      */
    public static LocalDate getLastTradingDay() {
-       LocalDate date = LocalDate.now();
+       LocalDate date = LocalDate.now().minusDays(1); // 전일 기준 (KRX 당일 데이터는 19시 이후 게시)
 
        switch (date.getDayOfWeek()) {
-           case DayOfWeek.SATURDAY: return date.minusDays(1);
-           case DayOfWeek.SUNDAY:   return date.minusDays(2);
+           case DayOfWeek.SATURDAY: return date.minusDays(1); // 금요일
+           case DayOfWeek.SUNDAY:   return date.minusDays(2); // 금요일
            default:                  return date;
        }
    }
