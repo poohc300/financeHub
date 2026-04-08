@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.example.financeHub.kis.model.KisFuturesPrice;
 import com.example.financeHub.kis.model.KisMarketIndex;
 import com.example.financeHub.kis.model.KisStockPrice;
 import com.example.financeHub.websocket.StockPriceWebSocketHandler;
@@ -36,10 +37,13 @@ public class KisWebSocketClient {
     private final Map<String, KisStockPrice> priceCache = new ConcurrentHashMap<>();
     // 업종지수 실시간 캐시 (H0UPCNT0)
     private final Map<String, KisMarketIndex> indexCache = new ConcurrentHashMap<>();
+    // 선물 실시간 캐시 (H0IFCNT0)
+    private final Map<String, KisFuturesPrice> futuresCache = new ConcurrentHashMap<>();
 
     private WebSocket webSocket;
     private final Set<String> subscribedSymbols = ConcurrentHashMap.newKeySet();
     private final Set<String> subscribedIndexCodes = ConcurrentHashMap.newKeySet();
+    private final Set<String> subscribedFutures = ConcurrentHashMap.newKeySet();
     private volatile boolean connected = false;
 
     public KisWebSocketClient(KisTokenManager tokenManager,
@@ -70,6 +74,10 @@ public class KisWebSocketClient {
         return indexCache;
     }
 
+    public Map<String, KisFuturesPrice> getFuturesCache() {
+        return futuresCache;
+    }
+
     /** 업종지수 실시간 구독 (H0UPCNT0) — 0001=KOSPI, 1001=KOSDAQ */
     public void subscribeIndex(String indexCode) {
         ensureConnected();
@@ -77,6 +85,15 @@ public class KisWebSocketClient {
         sendMessageWithTrId("H0UPCNT0", indexCode, "1");
         subscribedIndexCodes.add(indexCode);
         log.info("업종지수 구독: {}", indexCode);
+    }
+
+    /** 선물 실시간 구독 (H0IFCNT0) — 101W2606 형식 */
+    public void subscribeFutures(String futuresCode) {
+        ensureConnected();
+        if (subscribedFutures.contains(futuresCode)) return;
+        sendMessageWithTrId("H0IFCNT0", futuresCode, "1");
+        subscribedFutures.add(futuresCode);
+        log.info("선물 구독: {}", futuresCode);
     }
 
     /**
@@ -133,6 +150,17 @@ public class KisWebSocketClient {
         subscribedSymbols.remove(isuSrtCd);
         priceCache.remove(isuSrtCd);
         log.info("구독 해제: {}", isuSrtCd);
+    }
+
+    /** 101W2606 → "K200선물 6월" */
+    private String futuresCodeToName(String code) {
+        if (code == null || code.length() < 6) return code;
+        try {
+            String mm = code.substring(code.length() - 2);
+            return "K200선물 " + Integer.parseInt(mm) + "월";
+        } catch (Exception e) {
+            return "K200선물";
+        }
     }
 
     private void sendSubscribeMessage(String isuSrtCd, String trType) {
@@ -200,6 +228,39 @@ public class KisWebSocketClient {
                 indexCache.put(code, idx);
                 broadcastHandler.broadcastMarket(new java.util.ArrayList<>(indexCache.values()));
                 log.debug("업종지수 갱신: {} {}", idxNm, f[2]);
+                return;
+            }
+
+            // 선물 실시간 체결 (H0IFCNT0)
+            if ("H0IFCNT0".equals(parts[1])) {
+                String[] f = parts[3].split("\\^");
+                if (f.length < 10) return;
+                // f[0]=종목코드, f[1]=체결시간, f[2]=현재가, f[3]=전일대비부호(2:상승/5:하락),
+                // f[4]=전일대비, f[5]=등락률, f[6]=시가, f[7]=고가, f[8]=저가, f[9]=누적체결량
+                log.debug("H0IFCNT0 raw: {}", String.join("|", java.util.Arrays.copyOf(f, Math.min(f.length, 12))));
+                String sign = f[3];
+                boolean neg = "4".equals(sign) || "5".equals(sign);
+                String change = neg && !f[4].startsWith("-") ? "-" + f[4] : f[4];
+                String changeRate = neg && !f[5].startsWith("-") ? "-" + f[5] : f[5];
+                String code = f[0];
+                String isuNm = futuresCodeToName(code);
+
+                KisFuturesPrice fp = KisFuturesPrice.builder()
+                        .isuCd(code)
+                        .isuNm(isuNm)
+                        .time(f[1])
+                        .currentPrice(f[2])
+                        .change(change)
+                        .changeRate(changeRate)
+                        .open(f[6])
+                        .high(f[7])
+                        .low(f[8])
+                        .volume(f.length > 9 ? f[9] : "")
+                        .build();
+
+                futuresCache.put(code, fp);
+                broadcastHandler.broadcastFutures(new java.util.ArrayList<>(futuresCache.values()));
+                log.debug("선물 갱신: {} {}", isuNm, f[2]);
                 return;
             }
 
@@ -281,8 +342,11 @@ public class KisWebSocketClient {
                         for (String idxCode : subscribedIndexCodes) {
                             sendMessageWithTrId("H0UPCNT0", idxCode, "1");
                         }
-                        log.info("KIS WS 재연결 후 {}종목 + {}지수 재구독",
-                                subscribedSymbols.size(), subscribedIndexCodes.size());
+                        for (String futCode : subscribedFutures) {
+                            sendMessageWithTrId("H0IFCNT0", futCode, "1");
+                        }
+                        log.info("KIS WS 재연결 후 {}종목 + {}지수 + {}선물 재구독",
+                                subscribedSymbols.size(), subscribedIndexCodes.size(), subscribedFutures.size());
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }

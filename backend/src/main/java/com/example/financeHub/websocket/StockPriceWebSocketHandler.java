@@ -13,9 +13,11 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.example.financeHub.kis.KisFuturesPoller;
 import com.example.financeHub.kis.KisMarketPoller;
 import com.example.financeHub.kis.KisRankingPoller;
 import com.example.financeHub.kis.KisWebSocketClient;
+import com.example.financeHub.kis.model.KisFuturesPrice;
 import com.example.financeHub.kis.model.KisMarketIndex;
 import com.example.financeHub.kis.model.KisRankingItem;
 import com.example.financeHub.kis.model.KisStockPrice;
@@ -39,6 +41,7 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
     private KisWebSocketClient kisWebSocketClient;
     private KisRankingPoller rankingPoller;
     private KisMarketPoller marketPoller;
+    private KisFuturesPoller futuresPoller;
 
     // 순환 의존 방지를 위해 setter 주입
     public void setKisWebSocketClient(KisWebSocketClient kisWebSocketClient) {
@@ -51,6 +54,10 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
 
     public void setMarketPoller(KisMarketPoller marketPoller) {
         this.marketPoller = marketPoller;
+    }
+
+    public void setFuturesPoller(KisFuturesPoller futuresPoller) {
+        this.futuresPoller = futuresPoller;
     }
 
     @Override
@@ -75,6 +82,11 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
             if (marketPoller != null && !marketPoller.getMarketCache().isEmpty()) {
                 String marketJson = buildMarketMessage(marketPoller.getMarketCache());
                 session.sendMessage(new TextMessage(marketJson));
+            }
+            // 접속 즉시 캐시된 선물 시세 전송
+            if (futuresPoller != null && !futuresPoller.getFuturesCache().isEmpty()) {
+                String futuresJson = buildFuturesMessage(futuresPoller.getFuturesCache());
+                session.sendMessage(new TextMessage(futuresJson));
             }
         } catch (Exception e) {
             log.error("초기 데이터 전송 실패: {}", e.getMessage());
@@ -187,6 +199,31 @@ public class StockPriceWebSocketHandler extends TextWebSocketHandler {
         } catch (Exception e) {
             log.error("broadcastMarket 오류: {}", e.getMessage());
         }
+    }
+
+    public void broadcastFutures(List<KisFuturesPrice> items) {
+        try {
+            String json = buildFuturesMessage(items);
+            TextMessage msg = new TextMessage(json);
+            for (WebSocketSession session : sessions.values()) {
+                if (session.isOpen()) {
+                    try {
+                        session.sendMessage(msg);
+                    } catch (IOException e) {
+                        log.error("선물 전송 실패 sessionId={}: {}", session.getId(), e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("broadcastFutures 오류: {}", e.getMessage());
+        }
+    }
+
+    private String buildFuturesMessage(List<KisFuturesPrice> items) throws Exception {
+        java.util.Map<String, Object> msg = new java.util.HashMap<>();
+        msg.put("type", "futures");
+        msg.put("items", items);
+        return mapper.writeValueAsString(msg);
     }
 
     private String buildRankingMessage(List<KisRankingItem> items) throws Exception {

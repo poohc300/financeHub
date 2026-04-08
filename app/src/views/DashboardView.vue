@@ -26,7 +26,18 @@ interface RankingItem {
   changeRate: string
   volume: string
 }
+interface FuturesItem {
+  isuCd: string
+  isuNm: string
+  currentPrice: string
+  change: string
+  changeRate: string
+  open: string
+  high: string
+  low: string
+}
 const realtimeRanking = ref<RankingItem[]>([])
+const realtimeFutures = ref<FuturesItem | null>(null)
 const isMarketOpen = ref(false)
 const marketReady = ref(false)  // WebSocket에서 첫 market 메시지 수신 후 true
 let ws: WebSocket | null = null
@@ -104,17 +115,19 @@ const refreshData = async () => {
 
 interface KeySlot { icon: string; label: string; indicator: Indicator | null }
 
-// 핵심 4개 (디폴트 표시) — 데이터 없을 때 안내 문구 표시
+// 핵심 5개 (디폴트 표시) — 데이터 없을 때 안내 문구 표시
 const keyIndicators = computed<KeySlot[]>(() => {
   const kospi = kospiInfo.value.find(x => x.idxNm === '코스피');
   const kosdaq = kosdaqInfo.value.find(x => x.idxNm === '코스닥');
   const gold = goldMarketInfo.value.find(x => x.isuNm.includes('금 99.99_1kg'));
   const gasoline = oilMarketInfo.value.find(x => x.oilNm === '휘발유');
+  const futures = realtimeFutures.value;
   return [
-    { icon: '📈', label: '코스피',      indicator: kospi    ? toIndicator('📈', '코스피',      kospi.clsprcIdx,    kospi.flucRt)              : null },
-    { icon: '📊', label: '코스닥',      indicator: kosdaq   ? toIndicator('📊', '코스닥',      kosdaq.clsprcIdx,   kosdaq.flucRt)             : null },
-    { icon: '🥇', label: '금 현물 1kg', indicator: gold     ? toIndicator('🥇', '금 현물 1kg', gold.tddClsprc,     gold.flucRt,     '원/g')   : null },
-    { icon: '⛽', label: '휘발유',      indicator: gasoline ? toIndicator('⛽', '휘발유',      gasoline.wtAvgPrc,  gasoline.flucRt, '원/ℓ')  : null },
+    { icon: '📈', label: '코스피',        indicator: kospi    ? toIndicator('📈', '코스피',        kospi.clsprcIdx,    kospi.flucRt)              : null },
+    { icon: '📊', label: '코스닥',        indicator: kosdaq   ? toIndicator('📊', '코스닥',        kosdaq.clsprcIdx,   kosdaq.flucRt)             : null },
+    { icon: '📉', label: 'K200 선물',     indicator: futures  ? toIndicator('📉', futures.isuNm,   futures.currentPrice, futures.changeRate)        : null },
+    { icon: '🥇', label: '금 현물 1kg',  indicator: gold     ? toIndicator('🥇', '금 현물 1kg',  gold.tddClsprc,     gold.flucRt,     '원/g')   : null },
+    { icon: '⛽', label: '휘발유',        indicator: gasoline ? toIndicator('⛽', '휘발유',        gasoline.wtAvgPrc,  gasoline.flucRt, '원/ℓ')  : null },
   ];
 })
 
@@ -221,7 +234,13 @@ const connectWebSocket = () => {
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data)
-      if (msg.type === 'market') {
+      if (msg.type === 'futures') {
+        // KOSPI200 선물 근월물 실시간 갱신 (items 배열에서 첫 번째 = 근월물)
+        if (msg.items?.length > 0) {
+          realtimeFutures.value = msg.items[0]
+          lastUpdated.value = new Date()
+        }
+      } else if (msg.type === 'market') {
         // KOSPI/KOSDAQ 현재지수 갱신 — ref.value 교체로 Vue 반응성 확실히 보장
         msg.items?.forEach((item: any) => {
           if (item.idxNm === '코스피' && kospiInfo.value.length > 0) {
@@ -299,8 +318,8 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <!-- 핵심 4개 카드 -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 핵심 5개 카드 (2열 모바일 / 3열 md / 5열 lg) -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div
           v-for="(slot, i) in keyIndicators"
           :key="i"
@@ -312,10 +331,12 @@ onUnmounted(() => {
           </div>
           <template v-if="slot.indicator">
             <div class="text-2xl font-bold text-gray-900 mb-2 tabular-nums">
-              {{ Number(slot.indicator.value.replace(/,/g, '')).toLocaleString('ko-KR') }}
+              <!-- 선물(i===2)은 소수점 포맷, 나머지는 정수 천단위 포맷 -->
+              <template v-if="i === 2">{{ parseFloat(slot.indicator.value).toFixed(2) }}</template>
+              <template v-else>{{ Number(slot.indicator.value.replace(/,/g, '')).toLocaleString('ko-KR') }}</template>
               <span class="text-xs font-normal text-gray-400 ml-1">{{ slot.indicator.unit }}</span>
             </div>
-            <!-- 코스피·코스닥(i<2)은 WebSocket 수신 전까지 등락률 숨김 (KRX 전일 데이터가 오늘과 달라 깜빡임 방지) -->
+            <!-- 코스피·코스닥(i<2)은 WebSocket 수신 전까지 등락률 숨김. 선물(i===2)은 futuresReady -->
             <div v-if="i >= 2 || marketReady"
               :class="slot.indicator.isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'"
               class="inline-flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full"
@@ -329,7 +350,9 @@ onUnmounted(() => {
           </template>
           <template v-else>
             <div class="text-2xl font-bold text-gray-200 mb-2">—</div>
-            <div class="text-xs text-gray-400">데이터 없음 · 평일 16시 수집</div>
+            <div class="text-xs text-gray-400">
+              {{ i === 2 ? '장 중 실시간 수신' : '데이터 없음 · 평일 16시 수집' }}
+            </div>
           </template>
         </div>
       </div>
