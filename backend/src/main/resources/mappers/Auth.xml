@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.financeHub.auth.mapper.UserMapper">
+
+    <!-- 사용자 + 역할 + 권한 한 번에 조회 -->
+    <resultMap id="UserResultMap" type="com.example.financeHub.auth.model.User">
+        <id     property="id"        column="id"/>
+        <result property="username"  column="username"/>
+        <result property="password"  column="password"/>
+        <result property="email"     column="email"/>
+        <result property="loginType" column="login_type"/>
+        <result property="enabled"   column="enabled"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <collection property="roles"       ofType="com.example.financeHub.auth.model.Role"
+                    javaType="java.util.ArrayList" column="id" select="selectRolesByUserId"/>
+        <collection property="permissions" ofType="string"
+                    javaType="java.util.ArrayList" column="id" select="selectPermissionNamesByUserId"/>
+    </resultMap>
+
+    <select id="findByUsername" resultMap="UserResultMap">
+        SELECT id, username, password, email, login_type, enabled, created_at, updated_at
+        FROM financehub.users
+        WHERE username = #{username}
+    </select>
+
+    <select id="findById" resultMap="UserResultMap">
+        SELECT id, username, password, email, login_type, enabled, created_at, updated_at
+        FROM financehub.users
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectRolesByUserId" resultType="com.example.financeHub.auth.model.Role">
+        SELECT r.id, r.name, r.description
+        FROM financehub.roles r
+        JOIN financehub.user_roles ur ON r.id = ur.role_id
+        WHERE ur.user_id = #{id}
+    </select>
+
+    <select id="selectPermissionNamesByUserId" resultType="string">
+        SELECT DISTINCT p.name
+        FROM financehub.permissions p
+        JOIN financehub.role_permissions rp ON p.id = rp.permission_id
+        JOIN financehub.user_roles ur       ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{id}
+    </select>
+
+</mapper>

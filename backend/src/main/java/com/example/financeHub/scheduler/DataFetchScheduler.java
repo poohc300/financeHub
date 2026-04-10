@@ -27,6 +27,7 @@ import com.example.financeHub.krx.service.KrxDataService;
 import com.example.financeHub.overseas.mapper.OverseasStockMapper;
 import com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO;
 import com.example.financeHub.overseas.service.OverseasStockService;
+import com.example.financeHub.auth.service.AuthService;
 import com.example.financeHub.overseas.util.OverseasMarketUtil;
 import com.example.financeHub.scheduler.model.SchedulerExecutionLogDTO;
 
@@ -42,6 +43,7 @@ public class DataFetchScheduler {
     private final CrawlerDataMapper crawlerDataMapper;
     private final OverseasStockService overseasStockService;
     private final OverseasStockMapper overseasStockMapper;
+    private final AuthService authService;
 
     public DataFetchScheduler(
             IpoCrawler ipoCrawlerService,
@@ -50,7 +52,8 @@ public class DataFetchScheduler {
             KrxDataMapper krxDataMapper,
             CrawlerDataMapper crawlerDataMapper,
             OverseasStockService overseasStockService,
-            OverseasStockMapper overseasStockMapper) {
+            OverseasStockMapper overseasStockMapper,
+            AuthService authService) {
         this.ipoCrawlerService = ipoCrawlerService;
         this.newsCrawlerService = newsCrawlerService;
         this.krxDataService = krxDataService;
@@ -58,6 +61,14 @@ public class DataFetchScheduler {
         this.crawlerDataMapper = crawlerDataMapper;
         this.overseasStockService = overseasStockService;
         this.overseasStockMapper = overseasStockMapper;
+        this.authService = authService;
+    }
+
+    /** 만료된 Refresh Token 정리 (매일 새벽 3시) */
+    @Scheduled(cron = "0 0 3 * * *", zone = "Asia/Seoul")
+    public void cleanupExpiredRefreshTokens() {
+        authService.cleanupExpiredTokens();
+        log.info("만료된 Refresh Token 정리 완료");
     }
 
     /** KRX + 크롤링 전체 (평일 19시 — KRX API 당일 종가 공개 후 여유 확보) */
