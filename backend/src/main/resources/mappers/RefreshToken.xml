@@ -4,7 +4,7 @@
 
     <insert id="insert" parameterType="com.example.financeHub.auth.model.RefreshToken">
         INSERT INTO financehub.refresh_tokens (user_id, token_hash, family, expires_at)
-        VALUES (#{userId}, #{tokenHash}, #{family}::uuid, #{expiresAt})
+        VALUES (#{userId}, #{tokenHash}, #{family,jdbcType=OTHER}, #{expiresAt})
     </insert>
 
     <select id="findByTokenHash" resultType="com.example.financeHub.auth.model.RefreshToken">
@@ -17,7 +17,7 @@
     <update id="revokeByFamily">
         UPDATE financehub.refresh_tokens
         SET revoked = TRUE
-        WHERE family = #{family}::uuid
+        WHERE family = #{family,jdbcType=OTHER}
     </update>
 
     <update id="revokeByTokenHash">

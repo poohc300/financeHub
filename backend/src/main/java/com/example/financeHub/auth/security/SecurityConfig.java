@@ -40,7 +40,7 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // 인증 엔드포인트 공개
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/auth/**").permitAll()
                 // WebSocket 공개
                 .requestMatchers("/ws/**").permitAll()
                 // Admin → ROLE_ADMIN 만 접근

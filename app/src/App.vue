@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
+import { useAuth } from './composables/useAuth'
+import { logout } from './api/authAPI'
 
 const router = useRouter()
 const route = useRoute()
 const { mdAndUp } = useDisplay()
+const { auth, clearAuth } = useAuth()
 
 const navItems = [
   { to: '/',          label: '홈',     icon: 'mdi-home',                     iconActive: 'mdi-home' },
@@ -17,10 +20,23 @@ const navItems = [
 const navigateTo = (path: string) => {
   if (path && path !== route.path) router.push(path)
 }
+
+async function handleLogout() {
+  await logout()
+  clearAuth()
+  router.push('/login')
+}
 </script>
 
 <template>
   <v-app style="background: linear-gradient(to bottom right, #f9fafb, #f3f4f6); overflow-y: auto;">
+
+    <!-- 로그인 페이지: 네비바 없이 RouterView만 렌더링 -->
+    <template v-if="$route.name === 'login'">
+      <RouterView />
+    </template>
+
+    <template v-else>
 
     <!-- 데스크탑 상단 네비게이션 (md 이상) -->
     <nav class="hidden md:block bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -50,8 +66,8 @@ const navigateTo = (path: string) => {
             국내주식
           </RouterLink>
 
-          <!-- 기존 국내 네비게이션 -->
-          <div v-else class="flex space-x-1">
+          <!-- 기존 국내 네비게이션 + 사용자 정보 -->
+          <div v-else class="flex items-center gap-2">
             <RouterLink
               v-for="item in navItems"
               :key="item.to"
@@ -61,6 +77,16 @@ const navigateTo = (path: string) => {
             >
               {{ item.label }}
             </RouterLink>
+            <div class="ml-4 flex items-center gap-2 border-l border-gray-200 pl-4">
+              <span class="text-sm text-gray-600 font-medium">{{ auth.username }}</span>
+              <button
+                @click="handleLogout"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 hover:bg-gray-100 transition-colors"
+              >
+                <v-icon size="14">mdi-logout</v-icon>
+                로그아웃
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -121,6 +147,8 @@ const navigateTo = (path: string) => {
         <span class="text-[11px] mt-0.5">{{ item.label }}</span>
       </v-btn>
     </v-bottom-navigation>
+
+    </template><!-- end v-else (not login page) -->
 
   </v-app>
 </template>

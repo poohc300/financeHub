@@ -1,34 +1,47 @@
-const BASE_URL = "/api"; // API 기본 URL (nginx /api/ → http://172.17.0.1:8080 프록시)
+import { useAuth } from '../composables/useAuth'
+import { refreshToken } from '../api/authAPI'
+import router from '../router'
 
-/**
- * 공통 fetch 유틸리티 함수
- * @param {string} endpoint - API 엔드포인트 (예: "/dashboard/data")
- * @param {string} method - HTTP 메서드 ("GET", "POST", "PUT", "PATCH")
- * @param {Object} [body] - 요청 본문 (JSON 데이터, 옵션)
- * @returns {Promise<T>} - DTO 타입을 반환하는 Promise
- */
-export async function fetchRequest<T>(endpoint: string, method: string = "GET", body?: unknown): Promise<T> {
-    const options: RequestInit = {
-        method,
-        headers: {
-            "Content-Type": "application/json", // 공통 헤더
-        },
-    };
+const BASE_URL = '/api'
 
-    if (body) {
-        options.body = JSON.stringify(body); // 요청 본문 추가
-    }
+async function doFetch(url: string, options: RequestInit): Promise<Response> {
+  const { auth } = useAuth()
+  const headers = new Headers(options.headers as HeadersInit)
+  if (auth.accessToken) {
+    headers.set('Authorization', `Bearer ${auth.accessToken}`)
+  }
+  return fetch(url, { ...options, headers, credentials: 'include' })
+}
 
+export async function fetchRequest<T>(endpoint: string, method: string = 'GET', body?: unknown): Promise<T> {
+  const { setAuth, clearAuth } = useAuth()
+
+  const options: RequestInit = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  }
+  if (body) {
+    options.body = JSON.stringify(body)
+  }
+
+  let response = await doFetch(`${BASE_URL}${endpoint}`, options)
+
+  // 401: Access Token 만료 → Refresh 시도 후 1회 재요청
+  if (response.status === 401) {
     try {
-        const response = await fetch(`${BASE_URL}${endpoint}`, options);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return await response.json(); // 응답 데이터를 DTO 타입으로 반환
-    } catch (error) {
-        console.error("Fetch error:", error);
-        throw error; // 에러를 호출한 곳으로 전달
+      const refreshed = await refreshToken()
+      setAuth(refreshed.accessToken, refreshed.username, refreshed.roles, refreshed.permissions)
+      response = await doFetch(`${BASE_URL}${endpoint}`, options)
+    } catch {
+      clearAuth()
+      router.push('/login')
+      throw new Error('Session expired. Please log in again.')
     }
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
+  return response.json()
 }
