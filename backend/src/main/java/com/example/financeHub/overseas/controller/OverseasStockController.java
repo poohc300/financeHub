@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,6 @@ import com.example.financeHub.overseas.mapper.OverseasStockMapper;
 import com.example.financeHub.overseas.model.Overseas52WeekDTO;
 import com.example.financeHub.overseas.model.OverseasCurrentPriceDTO;
 import com.example.financeHub.overseas.model.OverseasStockDailyTradingDTO;
-import com.example.financeHub.overseas.util.OverseasMarketUtil;
 
 @RestController
 @RequestMapping("/overseas")
@@ -37,19 +37,39 @@ public class OverseasStockController {
     }
 
     /**
-     * 종목명/티커 검색 (DB 기준)
-     * GET /overseas/search?keyword=AAPL
+     * 종목명/티커 검색
+     * 1순위: DB 수집 종목에서 검색
+     * 2순위: DB에 없으면 KIS API로 직접 조회 (NAS → NYS → AMS 순 시도)
+     * GET /overseas/search?keyword=PLTR
      */
     @GetMapping("/search")
     public ResponseEntity<List<OverseasStockDailyTradingDTO>> search(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "20") int limit) {
-        return ResponseEntity.ok(overseasStockMapper.searchStocks(keyword, limit));
+
+        List<OverseasStockDailyTradingDTO> dbResults = overseasStockMapper.searchStocks(keyword, limit);
+        if (!dbResults.isEmpty()) return ResponseEntity.ok(dbResults);
+
+        // DB에 없는 경우 티커로 판단되면 KIS API 직접 조회
+        String kw = keyword.trim().toUpperCase();
+        if (kw.length() <= 6 && kw.matches("[A-Z0-9.]+")) {
+            try {
+                OverseasCurrentPriceDTO live = overseasStockFetcher.lookupByTicker(kw);
+                if (live != null) {
+                    return ResponseEntity.ok(List.of(toDaily(live)));
+                }
+            } catch (Exception e) {
+                log.warn("KIS 직접 조회 실패 - {}: {}", kw, e.getMessage());
+            }
+        }
+        return ResponseEntity.ok(List.of());
     }
 
     /**
-     * 차트 데이터 조회 (DB 이력)
-     * GET /overseas/chart?excd=NAS&symb=AAPL&period=1M
+     * 차트 데이터 조회
+     * 1순위: DB 이력
+     * 2순위: DB에 없으면 KIS API 직접 조회 (저장 없이 반환)
+     * GET /overseas/chart?excd=NYS&symb=PLTR&period=3M
      * period: 1W, 1M, 3M, 6M, 1Y
      */
     @GetMapping("/chart")
@@ -63,6 +83,17 @@ public class OverseasStockController {
 
         List<OverseasStockDailyTradingDTO> data = overseasStockMapper.selectHistoryByDateRange(
             symb.toUpperCase(), excd.toUpperCase(), startDate, endDate);
+
+        if (data.isEmpty()) {
+            log.info("DB 데이터 없음, KIS API 직접 조회: {}/{}", excd, symb);
+            List<OverseasStockDailyTradingDTO> live = overseasStockFetcher.fetchDailyPriceList(
+                excd.toUpperCase(), symb.toUpperCase(), symb.toUpperCase());
+            data = live.stream()
+                .filter(d -> d.getBassDt() != null
+                          && d.getBassDt().compareTo(startDate) >= 0
+                          && d.getBassDt().compareTo(endDate) <= 0)
+                .collect(Collectors.toList());
+        }
 
         return ResponseEntity.ok(data);
     }
@@ -109,5 +140,19 @@ public class OverseasStockController {
             case "1Y" -> today.minusYears(1).format(DATE_FMT);
             default   -> today.minusMonths(3).format(DATE_FMT); // 3M
         };
+    }
+
+    /** OverseasCurrentPriceDTO → OverseasStockDailyTradingDTO 변환 (검색 fallback용) */
+    private OverseasStockDailyTradingDTO toDaily(OverseasCurrentPriceDTO live) {
+        OverseasStockDailyTradingDTO dto = new OverseasStockDailyTradingDTO();
+        dto.setIsuCd(live.getIsuCd());
+        dto.setIsuNm(live.getIsuNm() != null && !live.getIsuNm().isEmpty()
+                     ? live.getIsuNm() : live.getIsuCd());
+        dto.setExcd(live.getExcd());
+        dto.setCurr("USD");
+        dto.setClsPrc(live.getLastPrc());
+        dto.setFlucRt(live.getRate());
+        dto.setBassDt(LocalDate.now().format(DATE_FMT));
+        return dto;
     }
 }

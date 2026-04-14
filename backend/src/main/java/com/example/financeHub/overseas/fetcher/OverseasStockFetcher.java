@@ -247,6 +247,30 @@ public class OverseasStockFetcher {
         return headers;
     }
 
+    /**
+     * 거래소 코드 없이 티커만으로 종목 탐색 (NAS → NYS → AMS 순 시도)
+     * 현재가가 0보다 큰 첫 번째 성공 응답을 반환, 없으면 null
+     */
+    public OverseasCurrentPriceDTO lookupByTicker(String symb) {
+        for (String excd : new String[]{"NAS", "NYS", "AMS"}) {
+            try {
+                OverseasCurrentPriceDTO dto = fetchCurrentPrice(excd, symb, symb);
+                if (dto != null && dto.getLastPrc() != null
+                        && dto.getLastPrc().compareTo(BigDecimal.ZERO) > 0) {
+                    log.info("lookupByTicker 성공 - {}/{}", excd, symb);
+                    return dto;
+                }
+                Thread.sleep(150);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception e) {
+                log.debug("lookupByTicker {}/{} 실패: {}", excd, symb, e.getMessage());
+            }
+        }
+        return null;
+    }
+
     private BigDecimal parseBigDecimal(Object val) {
         if (val == null || val.toString().isBlank()) return BigDecimal.ZERO;
         try {
